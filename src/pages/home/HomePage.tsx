@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { ArrowRight, ChevronRight, MessageCircle, Quote, Sparkles, X } from 'lucide-react'
+import { ArrowRight, ChevronRight, MessageCircle, Quote, Sparkles } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import Header from '../../components/layout/Header'
 import './HomePage.css'
 
@@ -11,13 +12,11 @@ const examples = [
 
 export default function HomePage() {
   const [condition, setCondition] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const navigate = useNavigate()
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const dialogRef = useRef<HTMLDialogElement>(null)
 
   function selectExample(example: string) {
     setCondition(example.replace('\n', ' '))
-    setSubmitted(false)
     inputRef.current?.focus()
   }
 
@@ -33,8 +32,7 @@ export default function HomePage() {
         <form className="condition-form" onSubmit={(event) => {
           event.preventDefault()
           if (!condition.trim()) return
-          setSubmitted(true)
-          dialogRef.current?.showModal()
+          navigate('/consultation', { state: { condition: condition.trim() } })
         }}>
           <MessageCircle className="input-icon" size={32} aria-hidden="true" />
           <label className="sr-only" htmlFor="condition">생활거점과 예산, 원하는 동네 조건</label>
@@ -42,7 +40,7 @@ export default function HomePage() {
             ref={inputRef}
             id="condition"
             value={condition}
-            onChange={(event) => { setCondition(event.target.value); setSubmitted(false) }}
+            onChange={(event) => { setCondition(event.target.value) }}
             placeholder={'어디에 자주 가시나요? 예산은 어느 정도예요?\n자연어로 자유롭게 입력해주세요.'}
           />
           <div className="input-actions">
@@ -63,16 +61,7 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-      <dialog ref={dialogRef} className="start-dialog" onClick={(event) => {
-        if (event.target === event.currentTarget) dialogRef.current?.close()
-      }}>
-        <button className="dialog-close" aria-label="닫기" onClick={() => dialogRef.current?.close()}><X size={22} /></button>
-        <MessageCircle size={32} className="dialog-icon" />
-        <h2>조건을 입력했어요</h2>
-        {submitted && <p className="submitted-condition">{condition}</p>}
-        <p>AI와 조건을 정리하는 대화 화면은 준비 중이에요.</p>
-        <button className="dialog-confirm" onClick={() => dialogRef.current?.close()}>계속 수정하기</button>
-      </dialog>
+
     </div>
   )
 }
