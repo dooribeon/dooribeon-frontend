@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowLeft, Building2, Heart, House, SlidersHorizontal, Sparkles, TrainFront, X } from 'lucide-react'
+import { ArrowLeft, Building2, Heart, House, SlidersHorizontal, TrainFront, X } from 'lucide-react'
 import Header from '../../components/layout/Header'
 import NeighborhoodMap from '../../components/map/NeighborhoodMap'
 import { recommendations } from '../../mocks/recommendations'
@@ -25,7 +25,6 @@ export default function RecommendationsPage({ saved, onToggleSaved }: { saved: s
 
   return <div className="results-page">
     <Header />
-    <div className="results-notice"><Sparkles size={15} /> 화면 미리보기 · 순위, 이동시간, 가격은 예시이며 입력 조건으로 계산한 결과가 아니에요.</div>
     <main className="results-layout">
       <div className="results-map-panel">
         <div className="results-toolbar">
