@@ -1,8 +1,8 @@
 ---
 name: 기능 개발
 about: 새로운 기능이나 개선 작업을 등록합니다.
-title: "[Feature] "
-labels: ""
+title: ""
+type: "Feature"
 assignees: ""
 ---
 
