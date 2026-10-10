@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Building2, House, Wallet, Trees, MapPin, Sparkles, Infinity as InfinityIcon, Pencil, Check } from 'lucide-react'
 import Header from '../../components/layout/Header'
 import '../home/HomePage.css'
@@ -18,18 +18,18 @@ type Conditions = Record<string, string>
 
 export default function ConsultationPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const initial = typeof location.state?.condition === 'string' ? location.state.condition : ''
   const [messages, setMessages] = useState<Message[]>(() => [
     { role: 'assistant', text: '안녕하세요! 여러 생활거점과 예산을 함께 고려해 살고 싶은 동네의 조건을 정리해볼게요.' },
     ...(initial ? [{ role: 'user' as const, text: initial }] : []),
     { role: 'assistant', text: initial ? '입력하신 내용을 확인했어요. 현재는 체험용 대화로, 아래 질문에 답하면 오른쪽 조건 카드에 반영돼요.' : '현재는 체험용 대화예요. 아래 질문에 답하며 조건을 하나씩 정리해보세요.' },
   ])
-  const [conditions, setConditions] = useState<Conditions>({})
-  const [step, setStep] = useState(0)
+  const [conditions, setConditions] = useState<Conditions>(location.state?.conditions ?? {})
+  const [step, setStep] = useState(location.state?.conditions ? fields.length : 0)
   const [draft, setDraft] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [notice, setNotice] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const question = fields[step]
 
@@ -48,7 +48,6 @@ export default function ConsultationPage() {
     ])
     if (!question) setConditions(current => ({ ...current, preference: [current.preference, text].filter(Boolean).join('\n') }))
     setDraft('')
-    setNotice(false)
   }
 
   return (
@@ -88,16 +87,15 @@ export default function ConsultationPage() {
                 if (!editValue.trim()) return
                 setConditions(current => ({ ...current, [key]: editValue.trim() }))
                 setEditing(null)
-                setNotice(false)
-              }}>
+                          }}>
                 <label className="sr-only" htmlFor={`edit-${key}`}>{title}</label>
                 <textarea autoFocus id={`edit-${key}`} value={editValue} onChange={event => setEditValue(event.target.value)} placeholder={placeholder} rows={2} />
                 <div><button type="button" onClick={() => setEditing(null)}>취소</button><button type="submit" disabled={!editValue.trim()}><Check size={14} /> 저장</button></div>
               </form> : <p className={conditions[key] ? '' : 'condition-empty'}>{conditions[key] || '아직 입력하지 않았어요'}</p>}
             </section>)}
           </div>
-          <div className="recommend-action"><button disabled={fields.some(field => !conditions[field.key]) || editing !== null} onClick={() => setNotice(true)}><Sparkles size={19} /> 이 조건으로 추천받기 <ArrowRight size={20} /></button>
-          {notice && <p role="status">조건이 준비됐어요. 동네 추천 화면은 준비 중이에요.</p>}</div>
+          <div className="recommend-action"><button disabled={fields.some(field => !conditions[field.key]) || editing !== null} onClick={() => navigate('/recommendations', { state: { condition: initial, conditions } })}><Sparkles size={19} /> 이 조건으로 추천받기 <ArrowRight size={20} /></button>
+</div>
         </aside>
       </main>
     </div>
