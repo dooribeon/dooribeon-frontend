@@ -21,3 +21,21 @@ body {
   background-color: var(--color-background);
   color: var(--color-text-primary);
 }
+
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 4px;
+}
