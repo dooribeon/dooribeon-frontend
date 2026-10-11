@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, CircleAlert, Heart, House, MapPin, Sparkles, TrainFront, Trees } from 'lucide-react'
-import Header from '../../components/layout/Header'
-import NeighborhoodMap from '../../components/map/NeighborhoodMap'
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2, CircleAlert, Heart, House, MapPin, TrainFront, Trees } from 'lucide-react'
 import { recommendations } from '../../mocks/recommendations'
 import '../home/HomePage.css'
 import './RecommendationsPage.css'
@@ -26,33 +24,23 @@ export default function NeighborhoodDetailPage({ saved, onToggleSaved }: { saved
   useEffect(() => { panelRef.current?.scrollTo({ top: 0 }) }, [id])
   const returnState = { ...location.state, listState: { ...location.state?.listState, selectedId: id } }
 
-  if (!item) return <div className="results-page"><Header /><main className="results-empty"><MapPin size={32} /><h1>동네 정보를 찾을 수 없어요</h1><p>추천 목록에서 동네를 다시 선택해주세요.</p><Link className="detail-link" to="/recommendations" state={location.state}>추천 목록으로 돌아가기</Link></main></div>
+  if (!item) return <main className="results-empty"><MapPin size={32} /><h1>동네 정보를 찾을 수 없어요</h1><p>추천 목록에서 동네를 다시 선택해주세요.</p><Link className="detail-link" to="/recommendations" state={location.state}>추천 목록으로 돌아가기</Link></main>
   const detail = details[item.id]
   function changeNeighborhood(nextId: string) { navigate(`/recommendations/${nextId}`, { replace: true, state: location.state }) }
 
-  return <div className="results-page">
-    <Header />
-    <div className="results-notice"><Sparkles size={15} /> 화면 미리보기 · 모든 순위·이동시간·주거비·추천 설명은 예시이며 실제 조회 결과가 아니에요.</div>
-    <main className="results-layout detail-layout">
-      <div className="results-map-panel">
-        <div className="results-toolbar"><Link to="/consultation" state={location.state}><ArrowLeft size={15} /> 조건 수정하기</Link><span className="detail-map-caption"><MapPin size={15} /> 선택한 동네: {item.name}</span></div>
-        <NeighborhoodMap neighborhoods={recommendations} selectedId={item.id} onSelect={changeNeighborhood} />
-      </div>
-      <section className="detail-panel" ref={panelRef} aria-labelledby="neighborhood-title">
-        <nav className="detail-navigation" aria-label="동네 탐색"><Link to="/recommendations" state={returnState}><ArrowLeft size={15} /> 추천 목록</Link><div><button disabled={index === 0} onClick={() => changeNeighborhood(recommendations[index - 1].id)} aria-label="이전 동네"><ArrowLeft size={14} /> 이전</button><button disabled={index === recommendations.length - 1} onClick={() => changeNeighborhood(recommendations[index + 1].id)} aria-label="다음 동네">다음 <ArrowRight size={14} /></button></div></nav>
+  return <section className="detail-panel shared-detail-panel" ref={panelRef} aria-labelledby="neighborhood-title">
+        <nav className="detail-navigation" aria-label="동네 탐색"><Link to="/recommendations" state={returnState}><ArrowLeft size={15} /> 추천 목록으로 돌아가기</Link><div><button disabled={index === 0} onClick={() => changeNeighborhood(recommendations[index - 1].id)} aria-label="이전 동네"><ArrowLeft size={14} /> 이전 동네</button><button disabled={index === recommendations.length - 1} onClick={() => changeNeighborhood(recommendations[index + 1].id)} aria-label="다음 동네">다음 동네 <ArrowRight size={14} /></button></div></nav>
         <div className="detail-title"><span className="result-rank">{item.rank}</span><h1 id="neighborhood-title">{item.name}</h1><span className="detail-rank-label">추천 {item.rank}위 · 예시</span><button className={`save-neighborhood ${saved.includes(item.id) ? 'is-saved' : ''}`} aria-label={`${item.name} 관심 동네 ${saved.includes(item.id) ? '해제' : '저장'}`} aria-pressed={saved.includes(item.id)} onClick={() => onToggleSaved(item.id)}><Heart size={23} /></button></div>
         <p className="detail-description">{item.description}</p>
         <div className={`detail-illustration tone-${item.tone}`}><Trees size={52} strokeWidth={1} /><Building2 size={84} strokeWidth={1} /><House size={60} strokeWidth={1} /><span>{item.name} 둘러보기</span><small>동네 사진 연결 예정 · 예시 일러스트</small></div>
         <div className="result-tags detail-tags">{item.tags.map(tag => <span key={tag}>{tag}</span>)}</div>
-        <section className="detail-section"><h2><TrainFront size={20} /> 주요 거점까지 이동 시간</h2><p className="detail-section-note">예시 기준: 동네 대표 지점 → 여의도 회사 / 수원 본가</p>
+        <section className="detail-section"><h2><TrainFront size={20} /> 주요 거점까지 이동 시간</h2>
           <dl className="detail-travel"><div><dt><Building2 size={18} /> 회사 <span>여의도</span></dt><dd><strong>{item.work}분</strong><span>환승 {item.transfers}회</span><small>도보 {detail.walking}분 포함</small></dd></div><div><dt><House size={18} /> 본가 <span>수원</span></dt><dd><strong>{item.family}분</strong><span>환승 1회</span><small>도보 8분 포함</small></dd></div></dl>
-          <p className="detail-section-note">실제 경로와 출발 시각별 이동시간은 지도·경로 API 연결 후 제공돼요.</p>
+          
         </section>
-        <section className="detail-section"><h2><House size={20} /> 주거비 정보 <span>예시</span></h2><dl className="detail-cost"><div><dt>월세</dt><dd>{item.rent}만 원</dd></div><div><dt>보증금</dt><dd>{detail.deposit}만 원</dd></div></dl><p className="detail-section-note">실거래 통계가 아니에요. 주택 유형·면적·계약 기간별 데이터는 연결 예정이에요.</p></section>
+        <section className="detail-section"><h2><House size={20} /> 주거비 정보 <span>예시</span></h2><dl className="detail-cost"><div><dt>월세</dt><dd>{item.rent}만 원</dd></div><div><dt>보증금</dt><dd>{detail.deposit}만 원</dd></div></dl></section>
         <section className="detail-section"><h2><CheckCircle2 size={20} /> 이렇게 좋아요 <span>추천 이유 예시</span></h2><ul className="detail-reasons">{detail.reasons.map(reason => <li key={reason}><CheckCircle2 size={16} />{reason}</li>)}</ul></section>
         <section className="detail-section detail-cautions"><h2><CircleAlert size={20} /> 이 점은 고려해보세요</h2><ul className="detail-reasons">{detail.cautions.map(caution => <li key={caution}><CircleAlert size={16} />{caution}</li>)}</ul></section>
-        <p className="saved-session-note">관심 동네는 목록과 공유되며 새로고침하면 초기화돼요.</p>
+        <p className="saved-session-note">이동시간·주거비·추천 이유는 예시 데이터예요.<br />관심 동네는 새로고침 전까지 유지돼요.</p>
       </section>
-    </main>
-  </div>
 }

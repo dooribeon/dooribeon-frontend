@@ -1,0 +1,156 @@
+/* 목록 화면에만 적용하여 상세 페이지 레이아웃을 유지합니다. */
+.recommendations-refresh .site-header { height: 64px; padding: 0 36px; gap: 40px; }
+.header-edit-conditions { display: flex; align-items: center; gap: 8px; margin-right: auto; font-size: 13px; color: #52627a; }
+.recommendations-refresh .results-layout { grid-template-columns: minmax(0, 3fr) minmax(480px, 2fr); }
+.recommendations-refresh .results-map-panel { position: relative; border: 0; }
+.recommendations-refresh .neighborhood-map { height: 100%; border-radius: 0 20px 0 0; }
+.recommendations-refresh .results-toolbar { position: absolute; top: 15px; left: 20px; z-index: 10; padding: 0; }
+.recommendations-refresh .results-tabs { background: #ffffffed; padding: 6px; border: 1px solid #edf0f3; box-shadow: 0 4px 14px #172c4110; gap: 5px; }
+.recommendations-refresh .results-tabs button { padding: 10px 17px; font-weight: 550; background: #f4f6f8; }
+.recommendations-refresh .results-tabs button[aria-pressed=true] { background: var(--color-primary); color: white; }
+.recommendations-refresh .results-tabs button:last-child { background: white; border: 1px solid #eef1f5; color: #24364a; }
+.recommendations-refresh .results-filters { position: absolute; top: 15px; right: 16px; z-index: 10; padding: 6px; gap: 5px; background: #ffffffed; border-radius: 30px; box-shadow: 0 4px 14px #172c4110; }
+.recommendations-refresh .results-filters label { border-color: #eef1f5; padding: 9px 12px; background: white; }
+.recommendations-refresh .results-filters select { max-width: 115px; font-size: 12px; }
+.recommendations-refresh .map-show-all { top: 85px; right: 20px; left: auto; }
+.recommendations-refresh .live-map-note { top: auto; bottom: 38px; left: 20px; padding: 12px 16px; box-shadow: 0 4px 20px #172c4110; }
+.recommendations-refresh .results-list { padding: 24px 20px; border-left: 1px solid #edf0f3; border-radius: 20px 0 0; background: #fff; }
+.recommendations-refresh .results-list-heading h1 { display: flex; align-items: center; gap: 6px; font-size: 22px; color: #102535; }
+.recommendations-refresh .results-list-heading h1 svg { color: #7dcdb6; }
+.recommendations-refresh .results-list-heading h1 span { color: inherit; }
+.recommendations-refresh .results-list-heading select { padding: 9px 13px; border-color: #edf0f3; }
+.recommendations-refresh .results-data-note { font-size: 10px; margin: 8px 0 14px; color: #8893a2; }
+.recommendations-refresh .result-cards { gap: 12px; }
+.recommendations-refresh .result-card { position: relative; padding: 14px 15px 12px; border-color: #edf0f3; border-radius: 13px; box-shadow: 0 2px 8px #10253502; }
+.recommendations-refresh .result-card.is-selected { border-color: #80cfb8; background: linear-gradient(110deg, #f4fcf9, #fff); }
+.recommendations-refresh .result-select { gap: 12px; }
+.recommendations-refresh .result-select h2 { color: #102535; font-size: 21px; }
+.recommendations-refresh .result-rank { width: 30px; height: 30px; background: linear-gradient(135deg, #08b589, #008562); }
+.recommendations-refresh .result-description { margin: 3px 25px 12px 42px; font-size: 11px; line-height: 1.5; }
+.recommendations-refresh .result-card-body { gap: 13px; }
+.recommendations-refresh .neighborhood-illustration { display: flex; width: 96px; height: 82px; background-image: linear-gradient(155deg, #ffffff80, transparent); }
+.recommendations-refresh .result-tags { margin-bottom: 14px; gap: 5px; }
+.recommendations-refresh .result-tags span { background: #f4f6f8; padding: 3px 8px; }
+.recommendations-refresh .result-metrics { gap: 8px; align-items: center; }
+.recommendations-refresh .result-metrics > div:nth-child(2) { order: -1; }
+.recommendations-refresh .result-metrics svg { width: 21px; height: 21px; }
+.recommendations-refresh .result-metrics strong { color: #102535; }
+.recommendations-refresh .result-metrics small { font-size: 11px; }
+.recommendations-refresh .save-neighborhood { color: #344a62; }.recommendations-refresh .save-neighborhood.is-saved { color: var(--color-primary); }
+.recommendations-refresh .detail-link { display: block; margin: 7px 0 0 auto; width: fit-content; font-size: 11px; color: #568273; }
+.recommendations-refresh .kakao-neighborhood-marker { border-radius: 22px; padding: 6px 16px 6px 6px; gap: 12px; font-size: 14px; }
+.recommendations-refresh .kakao-neighborhood-marker.is-selected { padding: 9px 19px 9px 8px; border-radius: 24px 24px 24px 5px; font-size: 16px; box-shadow: 0 5px 20px #006d4540; }
+.recommendations-refresh .kakao-neighborhood-marker.is-selected > span { width: 35px; height: 35px; font-size: 19px; }
+@media (max-width: 1350px) { .recommendations-refresh .results-filters { top: 77px; left: 20px; right: auto; }.recommendations-refresh .map-show-all { top: 140px; }.recommendations-refresh .results-layout { grid-template-columns: minmax(0, 1fr) minmax(450px, 1fr); } }
+@media (max-width: 1000px) { .recommendations-refresh .results-layout { grid-template-columns: minmax(0, 1fr) minmax(390px, 1fr); }.recommendations-refresh .neighborhood-illustration { width: 68px; height: 78px; }.recommendations-refresh .results-list { padding: 20px 14px; }.recommendations-refresh .result-metrics { font-size: 11px; }.recommendations-refresh .result-metrics svg { width: 16px; }.recommendations-refresh .result-rent strong { font-size: 13px; } }
+@media (max-width: 760px) { .recommendations-refresh .site-header { padding: 0 20px; gap: 18px; }.header-edit-conditions { font-size: 11px; }.recommendations-refresh .site-header .login-button { padding: 6px 12px; }.recommendations-refresh .results-layout { display: flex; }.recommendations-refresh .results-map-panel { height: 480px; flex-shrink: 0; }.recommendations-refresh .results-list { border: 0; border-radius: 0; padding: 22px 16px; }.recommendations-refresh .results-tabs button { padding: 9px 13px; }.recommendations-refresh .results-filters { right: 16px; left: 16px; width: fit-content; flex-wrap: wrap; }.recommendations-refresh .neighborhood-illustration { width: 84px; }.recommendations-refresh .live-map-note { font-size: 10px; bottom: 35px; }.recommendations-refresh .result-metrics { font-size: 12px; } }
+
+/* 시안처럼 제목/설명 한 줄과 썸네일/지표 한 줄로 구성합니다. */
+.recommendations-refresh .result-card { padding: 14px 15px; }
+.recommendations-refresh .result-card-top { gap: 12px; margin-bottom: 12px; }
+.recommendations-refresh .result-select { flex-shrink: 0; }
+.recommendations-refresh .result-description { flex: 1; min-width: 0; margin: 0; font-size: 11px; line-height: 1.5; word-break: keep-all; }
+.recommendations-refresh .save-neighborhood { flex-shrink: 0; padding: 3px; }
+.recommendations-refresh .result-card-body { align-items: stretch; }
+.recommendations-refresh .neighborhood-illustration { width: 100px; height: 86px; border-radius: 8px; text-decoration: none; }
+.recommendations-refresh .neighborhood-illustration:hover { filter: brightness(.97); }
+.recommendations-refresh .result-info { display: flex; flex-direction: column; justify-content: space-between; padding: 3px 0; }
+.recommendations-refresh .result-tags { margin-bottom: 10px; }
+.recommendations-refresh .result-metrics { justify-content: flex-start; gap: clamp(12px, 1.6vw, 25px); flex-wrap: nowrap; }
+.recommendations-refresh .result-metrics > div { flex-shrink: 0; }
+.recommendations-refresh .result-metrics .result-rent { margin-left: auto; }
+.recommendations-refresh .results-data-note { margin: 7px 0 11px; }
+@media (min-width: 761px) and (max-width: 1100px) {
+  .recommendations-refresh .result-card-top { gap: 8px; }
+  .recommendations-refresh .result-select h2 { font-size: 18px; }
+  .recommendations-refresh .result-description { font-size: 10px; }
+  .recommendations-refresh .neighborhood-illustration { width: 65px; }
+  .recommendations-refresh .result-card-body { gap: 9px; }
+  .recommendations-refresh .result-metrics { gap: 8px; font-size: 10px; }
+  .recommendations-refresh .result-metrics small { font-size: 10px; }
+  .recommendations-refresh .result-rent strong { font-size: 12px; }
+}
+@media (max-width: 480px) {
+  .recommendations-refresh .result-card-top { flex-wrap: wrap; gap: 5px 10px; }
+  .recommendations-refresh .result-description { order: 3; flex-basis: 100%; margin-left: 42px; }
+  .recommendations-refresh .save-neighborhood { margin-left: auto; }
+  .recommendations-refresh .neighborhood-illustration { width: 65px; height: 90px; }
+  .recommendations-refresh .result-card-body { gap: 10px; }
+  .recommendations-refresh .result-metrics { gap: 7px; font-size: 10px; flex-wrap: wrap; }
+  .recommendations-refresh .result-metrics small { font-size: 9px; }
+  .recommendations-refresh .result-metrics svg { width: 14px; }
+  .recommendations-refresh .result-rent strong { font-size: 12px; }
+}
+
+.recommendations-refresh .results-list-heading { margin-bottom: 20px; }
+
+/* 목록과 상세의 지도 영역 크기 및 경계선을 통일합니다. */
+.recommendations-refresh .results-layout { grid-template-columns: minmax(0, 1.7fr) minmax(440px, 1fr); }
+.recommendations-refresh .neighborhood-map { border-radius: 0; }
+.recommendations-refresh .results-list { border-radius: 0; padding: 14px 26px 24px; }
+.recommendations-refresh .site-header { padding: 0 34px; gap: 48px; }
+@media (max-width: 1250px) {
+  .recommendations-refresh .results-layout { grid-template-columns: minmax(0, 1.2fr) minmax(420px, 1fr); }
+}
+@media (max-width: 760px) {
+  .recommendations-refresh .results-layout { display: flex; }
+  .recommendations-refresh .results-map-panel { height: 420px; }
+  .recommendations-refresh .neighborhood-map { height: 420px; min-height: 340px; }
+  .recommendations-refresh .results-list { padding: 20px 18px; }
+  .recommendations-refresh .site-header { padding: 0 18px; gap: 18px; }
+}
+
+.shared-result-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.shared-result-panel > .results-list { flex: 1; min-height: 0; }
+.shared-detail-wrapper { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.shared-detail-wrapper .shared-detail-panel { flex: 1; min-height: 0; }
+@media (max-width: 760px) {
+  .shared-result-panel, .shared-detail-wrapper { display: block; }
+}
+
+/* 썸네일 링크의 클릭 영역을 카드 전체로 확장하되 하트는 별도로 유지합니다. */
+.recommendations-refresh .clickable-result-card { cursor: pointer; transition: border-color .15s, background .15s; }
+.recommendations-refresh .clickable-result-card:hover,
+.recommendations-refresh .clickable-result-card:has(a:focus-visible) { border-color: #80cfb8; background: linear-gradient(110deg, #f4fcf9, #fff); }
+.clickable-result-card .neighborhood-illustration::after { content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+.clickable-result-card .save-neighborhood { position: relative; z-index: 2; }
+.recommendations-refresh .clickable-result-card .neighborhood-illustration:hover { filter: none; }
+.clickable-result-card:has(a:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .recommendations-refresh .clickable-result-card { transition: none; } }
+
+.recommendation-score { width: 56px; height: 56px; padding: 3px; border-radius: 50%; flex-shrink: 0; align-self: flex-end; margin-bottom: 3px; color: var(--color-primary); }
+.recommendation-score > div { width: 100%; height: 100%; border-radius: 50%; background: #fbfffd; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.recommendation-score span { font-size: 9px; line-height: 1.1; }
+.recommendation-score strong { font-size: 21px; line-height: 1.1; font-weight: 750; }
+.recommendation-score small { font-size: 8px; line-height: 1.1; color: #71877e; }
+.recommendations-refresh .result-metrics { flex-wrap: wrap; gap: 8px 12px; }
+@media (min-width: 761px) and (max-width: 1250px) {
+  .recommendations-refresh .result-card-body { gap: 9px; }
+  .recommendations-refresh .neighborhood-illustration { width: 65px; }
+  .recommendation-score { width: 48px; height: 48px; }
+  .recommendation-score strong { font-size: 18px; }
+}
+@media (max-width: 480px) {
+  .recommendation-score { width: 46px; height: 46px; }
+  .recommendation-score strong { font-size: 17px; }
+}
+
+/* 이동 정보 두 개와 월세를 동일한 간격의 한 줄로 배치합니다. */
+.recommendations-refresh .result-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 8px;
+}
+.recommendations-refresh .result-metrics > div { min-width: 0; gap: 4px; }
+.recommendations-refresh .result-metrics > div > span { white-space: nowrap; }
+.recommendations-refresh .result-metrics .result-rent { margin-left: 0; }
+.recommendations-refresh .result-rent > small { margin-top: 0; }
+.recommendations-refresh .result-rent > strong { display: block; margin-top: 3px; white-space: nowrap; }
+.recommendations-refresh .result-metrics svg { width: 16px; height: 18px; flex-shrink: 0; }
+@media (min-width: 761px) and (max-width: 1250px), (max-width: 480px) {
+  .recommendations-refresh .result-metrics { gap: 6px; font-size: 10px; }
+  .recommendations-refresh .result-metrics svg { display: none; }
+  .recommendations-refresh .result-metrics small { font-size: 9px; }
+  .recommendations-refresh .result-rent > strong { font-size: 12px; }
+}
