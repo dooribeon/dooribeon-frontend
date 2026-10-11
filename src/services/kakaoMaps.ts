@@ -1,5 +1,8 @@
 export interface MapPoint { getLat(): number; getLng(): number }
 export interface MapInstance {
+  getLevel(): number
+  setLevel(level: number): void
+  setMapTypeId(type: number): void
   panTo(point: MapPoint): void
   setCenter(point: MapPoint): void
   getCenter(): MapPoint
@@ -15,7 +18,8 @@ export interface MapsSDK {
   Map: new (container: HTMLElement, options: { center: MapPoint; level: number }) => MapInstance
   CustomOverlay: new (options: { map: MapInstance; position: MapPoint; content: HTMLElement; yAnchor: number; zIndex: number; clickable: boolean }) => { setMap(map: MapInstance | null): void }
   ZoomControl: new () => object
-  ControlPosition: { RIGHT: number }
+  MapTypeId: { ROADMAP: number; HYBRID: number }
+  ControlPosition: { BOTTOMRIGHT: number }
 }
 declare global { interface Window { kakao?: { maps: MapsSDK } } }
 let loading: Promise<MapsSDK> | undefined

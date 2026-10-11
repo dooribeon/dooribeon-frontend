@@ -7,3 +7,18 @@
 .kakao-neighborhood-marker { display: flex; align-items: center; gap: 8px; padding: 6px 13px 6px 6px; border: 2px solid white; border-radius: 30px; background: white; color: var(--color-text-primary); box-shadow: 0 3px 12px #183c2326; white-space: nowrap; font-size: 13px; font-weight: 650; }
 .kakao-neighborhood-marker > span { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; background: var(--color-primary); color: white; }
 .kakao-neighborhood-marker.is-selected { background: var(--color-primary); color: white; }.kakao-neighborhood-marker.is-selected > span { color: var(--color-primary); background: white; }
+.base-marker { display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 8px; border-radius: 14px; background: white; box-shadow: 0 4px 18px #17334a25; border: 2px solid white; white-space: nowrap; }
+.base-marker-icon { display: grid; place-items: center; width: 40px; height: 44px; border-radius: 22px 22px 22px 4px; background: #2388ff; color: white; font-size: 28px; line-height: 1; }
+.base-marker-family .base-marker-icon { background: #ff557c; }
+.base-marker strong { display: block; font-size: 14px; color: #102535; }
+.base-marker small { display: block; margin-top: 3px; font-size: 11px; color: #64748b; }
+
+.map-navigation-controls { position: absolute; right: 20px; bottom: 40px; z-index: 5; display: flex; flex-direction: column; gap: 14px; color: #102535; }
+.map-zoom-buttons { overflow: hidden; border-radius: 17px; background: white; box-shadow: 0 3px 14px #17334a16; border: 1px solid #edf0f3; }
+.map-navigation-controls button { width: 54px; height: 54px; display: grid; place-items: center; background: white; color: inherit; }
+.map-zoom-buttons button + button { border-top: 1px solid #edf0f3; }
+.map-navigation-controls .map-recenter-button { border-radius: 17px; border: 1px solid #edf0f3; box-shadow: 0 3px 14px #17334a16; }
+.map-navigation-controls button:hover:not(:disabled) { background: #f3faf7; color: var(--color-primary); }
+.map-navigation-controls button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -4px; }
+.map-navigation-controls button:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 760px) { .map-navigation-controls { right: 14px; bottom: 35px; gap: 10px; }.map-navigation-controls button { width: 46px; height: 46px; } }
