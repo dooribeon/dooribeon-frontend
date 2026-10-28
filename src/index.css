@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+:root {
+  --g: #059669;
+  --gd: #047857;
+  --hover: #065F46;
+  --gl: #ECFDF5;
+  --ink: #0B1F1A;
+  --text: #1F2937;
+  --muted: #4B5563;
+  --muted-light: #6B7280;
+  --line: #E5E7EB;
+  --line-secondary: #D5E0DB;
+  --line-panel: #DCE7E2;
+  --line-subtle: #E3EAE7;
+  --accent-yellow: #EAB308;
+  --accent-pink: #F43F6B;
+  --badge-text: #9A3412;
+  --badge-background: #FFF7ED;
+  --font-design: "Pretendard", "Noto Sans KR", sans-serif;
+  --radius-control: 10px;
+  --radius-card: 12px;
+  --radius-panel: 20px;
+  --radius-pill: 999px;
+  --shadow-card: 0 18px 50px rgba(15, 45, 35, .07);
+  --shadow-modal: 0 30px 80px rgba(0, 0, 0, .25);
+  --header-height: 68px;
+  --header-background: rgba(255, 255, 255, .94);
+}
+
 @theme {
   --color-primary: #059669;
   --color-primary-hover: #047857;
@@ -21,7 +49,7 @@
     min-width: 320px;
     background-color: var(--color-background);
     color: var(--color-text-primary);
-    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+    font-family: var(--font-design);
     -webkit-font-smoothing: antialiased;
   }
 
@@ -43,4 +71,95 @@
       transition: none !important;
     }
   }
+}
+
+/* The chat stays mounted while its adjacent panel is revealed. */
+.consultation-transition {
+  --consultation-panel-height: min(900px, max(280px, calc(100svh - 132px)));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
+  column-gap: 0;
+  transition: grid-template-columns 550ms cubic-bezier(.2,.7,.2,1), column-gap 550ms;
+}
+.consultation-transition.is-expanded {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 24px;
+}
+.condition-reveal {
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 450ms, transform 550ms, visibility 550ms;
+}
+.is-expanded > .condition-reveal {
+  height: var(--consultation-panel-height);
+  max-height: none;
+  overflow: visible;
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(0);
+}
+.chat-thinking { animation: chat-thinking 1s ease-in-out infinite; }
+@keyframes chat-thinking {
+  0%, 80%, 100% { opacity: .3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+@media (max-width:959px) {
+  .consultation-transition { --consultation-panel-height: clamp(420px, calc(100svh - 172px), 720px); }
+  .consultation-transition, .consultation-transition.is-expanded { grid-template-columns: minmax(0,1fr); }
+  .condition-reveal { display: none; }
+  .is-expanded > .condition-reveal { display: block; margin-top: 24px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .chat-thinking { animation: none; }
+  .consultation-transition, .condition-reveal { transition: none; }
+}
+
+.search-scan {
+  background: linear-gradient(90deg,transparent,rgba(16,185,129,.22),transparent);
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: search-scan 1.8s linear infinite;
+}
+.search-look-pin { transform-origin: 50% 100%; animation: search-sway 2.4s ease-in-out infinite; }
+.search-pupils { animation: search-look 2.4s ease-in-out infinite; }
+.search-candidate-pin {
+  display: grid; place-items: center; width: 30px; height: 36px;
+  border-radius: 50% 50% 50% 4px; background: #047857; color: white;
+  font-size: 13px; font-weight: 800; box-shadow: 0 4px 10px #04785755;
+  animation: search-drop .5s ease-out both;
+}
+@keyframes search-scan { from { background-position: -160% 0; } to { background-position: 260% 0; } }
+@keyframes search-sway { 0%,100% { transform: rotate(0); } 25%,40% { transform: rotate(-6deg); } 60%,75% { transform: rotate(6deg); } }
+@keyframes search-look { 0%,100% { transform: translateX(0); } 25%,40% { transform: translateX(-4px); } 60%,75% { transform: translateX(4px); } }
+@keyframes search-drop { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion:reduce) {
+  .search-scan,.search-look-pin,.search-pupils,.search-candidate-pin { animation: none; }
+}
+
+/* Keep only the scroll thumb visible inside conversation panels. */
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #bfbfbf transparent;
+}
+@supports selector(::-webkit-scrollbar) {
+  .panel-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+  .panel-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .panel-scroll::-webkit-scrollbar-track,
+  .panel-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  .panel-scroll::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 999px;
+    border: none;
+  }
+  .panel-scroll::-webkit-scrollbar-thumb:hover { background: #a6a6a6; }
+  .panel-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 }

@@ -1,0 +1,2092 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>두리번 시연</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F8F6}
+a{color:#047857}a:hover{color:#065f46}
+*{box-sizing:border-box}
+.page{--g:#059669;--gd:#047857;--gl:#ECFDF5;--ink:#0B1F1A;--text:#1F2937;--muted:#4B5563;--line:#E5E7EB;--warn:#C2410C;font-family:"Pretendard","Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:#F4F8F6;-webkit-font-smoothing:antialiased;word-break:keep-all;min-width:320px;min-height:100vh}
+.page button{font:inherit;color:inherit;cursor:pointer}
+.page :focus-visible{outline:3px solid #059669;outline-offset:2px;border-radius:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 고정 상단 (채팅 페이지와 동일) */
+.top{position:sticky;top:0;z-index:50;background:rgba(244,248,246,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.top-in{height:68px;padding:0 clamp(20px,2.6vw,40px);display:flex;align-items:center;gap:8px}
+.brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink);font-size:23px;font-weight:800;letter-spacing:-.06em;min-height:44px}
+.brand:hover{color:var(--ink)}
+.brand svg{width:26px;height:34px;flex-shrink:0}
+.nav{display:flex;align-items:center;gap:4px;margin-left:auto}
+.nav-link{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#374151;text-decoration:none;font-size:15px;font-weight:500;letter-spacing:-.03em;border-radius:10px;white-space:nowrap}
+.nav-link:hover{color:var(--gd);background:var(--gl)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600;letter-spacing:-.03em;white-space:nowrap;text-decoration:none}
+.pill-fill{border:1px solid var(--gd);background:var(--gd);color:#fff;margin-left:6px}
+.pill-fill:hover{background:#065f46;color:#fff}
+.page .pill-fill,.page .pill-fill:hover{color:#fff}
+.pill-line{border:1px solid var(--g);background:#fff;color:var(--gd);margin-left:8px}
+.pill-line:hover{background:var(--gl)}
+
+.wrap{max-width:1680px;margin:0 auto;padding:24px clamp(20px,3vw,48px) 64px}
+
+/* 제목 줄 */
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.title-row{display:flex;align-items:center;gap:6px}
+.title-row h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.05em;color:var(--ink)}
+.star{position:relative;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#6B7280}
+.star:hover{background:#FFFBEB}
+.star svg{width:28px;height:28px}
+.star-on{color:#EAB308}
+.star-on svg path{fill:#FACC15;stroke:#EAB308}
+.star::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);padding:6px 10px;border-radius:8px;background:#0B1F1A;color:#fff;font-size:12px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:5}
+.star:hover::after,.star:focus-visible::after{opacity:1}
+.summary{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;height:28px;padding:0 11px;border-radius:999px;background:#fff;border:1px solid #DCE7E2;font-size:13px;color:#374151;white-space:nowrap}
+.chip b{color:var(--ink);margin-right:4px}
+.edit{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 16px;border:1px solid #CFE3DA;border-radius:12px;background:#fff;color:var(--gd);font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap}
+.edit:hover{background:var(--gl)}
+.edit svg{width:16px;height:16px}
+
+/* 탐색 이력 목록 */
+.hist{max-width:960px}
+.hist-title{margin:8px 0 18px;font-size:30px;font-weight:800;letter-spacing:-.05em;color:var(--ink)}
+.tabs{display:inline-flex;padding:4px;border-radius:14px;background:#E7EFEB;gap:4px;margin-bottom:18px}
+.tab{height:40px;padding:0 20px;border:0;border-radius:10px;background:transparent;font-size:15px;font-weight:700;color:#4B5563}
+.tab-on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(15,45,35,.08)}
+.hist-list{display:flex;flex-direction:column;gap:12px}
+.hcard{position:relative;display:flex;align-items:center;background:#fff;border:1px solid #DCE7E2;border-radius:20px;box-shadow:0 8px 24px rgba(15,45,35,.05)}
+.hcard:hover{border-color:#A7D9C2}
+.hcard-main{flex:1;min-width:0;display:flex;align-items:center;gap:20px;padding:22px 8px 22px 24px;border:0;background:transparent;text-align:left;border-radius:20px}
+.h-left{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.h-title{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+.h-budget{font-size:14px;color:#4B5563}
+.h-right{flex-shrink:0;display:flex;flex-direction:column;align-items:center;min-width:76px;padding-left:20px;border-left:1px solid #EEF2F0}
+.h-right small{font-size:12.5px;color:#6B7280}
+.h-right b{font-size:22px;font-weight:800;color:var(--gd)}
+.hstar{flex-shrink:0;width:52px;height:52px;margin-right:12px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#9CA3AF}
+.hstar:hover{background:#FEFCE8;color:#EAB308}
+.hstar svg{width:28px;height:28px}
+.hstar-on{color:#EAB308}
+.hstar-on svg path{fill:#FACC15;stroke:#EAB308}
+.hist-empty{margin:8px 0;padding:28px;border-radius:16px;background:#fff;border:1px dashed #CFE3DA;text-align:center;color:#6B7280;font-size:14.5px}
+/* 관심 동네 */
+.likes-note{margin:-8px 0 18px;font-size:14.5px;color:#4B5563;line-height:1.6}
+.like-cards{max-width:720px}
+.likes-sample{margin-top:14px;font-size:12px;color:#9A3412}
+/* 저장한 탐색 상세 */
+.back{display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 12px 0 6px;margin:0 0 6px -6px;border:0;border-radius:10px;background:transparent;color:var(--gd);font-size:14.5px;font-weight:700}
+.back:hover{background:var(--gl)}
+.back svg{width:18px;height:18px}
+.fav-btn{display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 14px;margin-left:6px;border:1px solid #E5E7EB;border-radius:999px;background:#fff;font-size:14px;font-weight:700;color:#4B5563}
+.fav-btn span{font-size:16px;color:#9CA3AF}
+.fav-on{border-color:#FDE68A;background:#FEFCE8;color:#854D0E}
+.fav-on span{color:#EAB308}
+
+/* 지도 왼쪽 · 후보 오른쪽 */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(400px,min(40%,560px));grid-template-areas:". head" "map cards";column-gap:24px;align-items:start}
+.map-col{grid-area:map;position:sticky;top:88px}
+.list-head{grid-area:head}
+.cards{grid-area:cards}
+.mapbox{position:relative;background:#F4F4F1;aspect-ratio:3 / 2;max-height:calc(100vh - 112px);border-radius:24px;overflow:hidden;background:#EEF0EC;border:1px solid #DCE7E2}
+.map-inner{position:absolute;left:0;top:0;width:2846px;height:1648px;transform-origin:0 0;transition:transform .8s cubic-bezier(.22,.8,.25,1)}
+.map-inner img{display:block;width:2846px;height:1648px;user-select:none;-webkit-user-drag:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 90px,#000 calc(100% - 90px),transparent),linear-gradient(180deg,transparent,#000 90px,#000 calc(100% - 90px),transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 90px,#000 calc(100% - 90px),transparent),linear-gradient(180deg,transparent,#000 90px,#000 calc(100% - 90px),transparent);mask-composite:intersect}
+.map-tint{position:absolute;inset:0;background:rgba(255,255,255,.12);pointer-events:none}
+.mk{position:absolute;z-index:3;transform:translate(-50%,-100%);transition:left .8s cubic-bezier(.22,.8,.25,1),top .8s cubic-bezier(.22,.8,.25,1)}
+.mk-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px 0 5px;border-radius:999px;border:2px solid #fff;background:#fff;color:var(--ink);font-size:14px;font-weight:800;letter-spacing:-.03em;white-space:nowrap;box-shadow:0 6px 18px rgba(11,31,26,.25)}
+.mk-btn i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#047857;color:#fff;font-style:normal;font-size:13px}
+.mk-on .mk-btn{background:#064E3B;color:#fff}
+.mk-on .mk-btn i{background:#fff;color:#064E3B}
+.mk-tail{display:block;width:12px;height:12px;margin:-7px auto 0;background:#fff;transform:rotate(45deg);border-radius:2px;box-shadow:3px 3px 6px rgba(11,31,26,.12)}
+.mk-on .mk-tail{background:#064E3B}
+.run{position:absolute;z-index:2;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:#fff;border:1.5px solid #16A34A;font-size:12.5px;font-weight:700;color:#14532D;white-space:nowrap;box-shadow:0 4px 12px rgba(11,31,26,.18);transition:left .8s cubic-bezier(.22,.8,.25,1),top .8s cubic-bezier(.22,.8,.25,1)}
+.run i{width:22px;height:22px;border-radius:50%;background:#16A34A;color:#fff;display:grid;place-items:center}
+.run svg{width:13px;height:13px}
+.map-top{position:absolute;left:14px;top:14px;z-index:4;display:flex;gap:8px;flex-wrap:wrap}
+.map-chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.95);border:1px solid #DCE7E2;font-size:13px;font-weight:700;color:#374151;box-shadow:0 2px 10px rgba(11,31,26,.08)}
+.map-back{border:1px solid #CFE3DA;color:var(--gd)}
+.map-back svg{width:15px;height:15px}
+.attr{position:absolute;left:10px;bottom:8px;z-index:4;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.85);font-size:11px;color:#4B5563}
+
+/* 후보 목록 */
+.list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.list-head strong{font-size:16px;color:var(--ink);letter-spacing:-.03em}
+.list-head strong span{color:var(--gd)}
+.sample{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;background:#FFF7ED;border:1px solid #FCD9B6;color:#9A3412;font-size:12px;font-weight:600}
+.cards{display:flex;flex-direction:column;gap:14px}
+.card{position:relative;scroll-margin-top:88px;background:#fff;border:1px solid #DCE7E2;border-radius:22px;box-shadow:0 8px 24px rgba(15,45,35,.05);transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:#A7D9C2}
+.card-open{border-color:#059669;box-shadow:0 18px 44px rgba(15,45,35,.12)}
+.card-main{display:block;width:100%;padding:20px 20px 18px;border:0;background:transparent;text-align:left;border-radius:22px}
+.c-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-right:48px;min-height:34px}
+.rank{width:28px;height:28px;border-radius:50%;background:#064E3B;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800;flex-shrink:0}
+.c-name{font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+.c-strength{font-size:13.5px;font-weight:700;color:#047857;background:#ECFDF5;padding:3px 10px;border-radius:999px}
+.score{margin-left:auto;display:inline-flex;align-items:baseline;gap:5px;font-size:12.5px;color:#6B7280;white-space:nowrap}
+.score b{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.score b small{font-size:14px;font-weight:700;margin-left:1px}
+.c-money{margin-top:14px;display:flex;gap:22px}
+.c-money div small{display:block;font-size:12px;color:#6B7280}
+.c-money div b{display:block;margin-top:2px;font-size:17px;color:var(--ink);letter-spacing:-.03em}
+.c-places{margin-top:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pl{padding:10px 8px;border-radius:12px;background:#F7FAF9;border:1px solid #EAF0ED;text-align:center;min-width:0}
+.pl small{display:flex;align-items:center;justify-content:center;gap:4px;font-size:12px;color:#4B5563;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl small svg{width:13px;height:13px;flex-shrink:0;color:#6B7280}
+.pl b{display:block;margin-top:3px;font-size:17px;color:var(--ink)}
+.pl em{display:block;font-style:normal;font-size:11px;color:var(--warn);font-weight:700;min-height:14px}
+.pl-over{background:#FFF7ED;border-color:#FCD9B6}
+.pl-over b{color:var(--warn)}
+.heart{position:absolute;top:14px;right:14px;z-index:2;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#9CA3AF}
+.heart:hover{background:#FFF1F4;color:#F43F6B}
+.heart svg{width:24px;height:24px}
+.heart-on{color:#F43F6B}
+.heart-on svg path{fill:#FB5C85;stroke:#F43F6B}
+
+/* 펼친 상세 */
+.detail-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s cubic-bezier(.22,.8,.25,1)}
+.detail-open{grid-template-rows:1fr}
+.detail-instant{transition:none}
+.detail{overflow:hidden;min-height:0}
+.detail-in{padding:4px 20px 20px;display:flex;flex-direction:column;gap:20px}
+.photo{position:relative;height:200px;border-radius:16px;overflow:hidden;background:repeating-linear-gradient(135deg,#EEF4F1 0 14px,#F6F9F8 14px 28px);border:1px dashed #C9D6D0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#6B7280;text-align:center}
+.photo svg{width:28px;height:28px}
+.photo strong{font-size:14px;color:#374151}
+.photo small{font-size:12px}
+.sec h4{margin:0 0 10px;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.sec h4 svg{width:18px;height:18px}
+.money-box{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.money-box div{padding:12px 14px;border-radius:12px;background:#F7FAF9;border:1px solid #EAF0ED}
+.money-box small{display:block;font-size:12px;color:#6B7280}
+.money-box b{display:block;margin-top:2px;font-size:18px;color:var(--ink)}
+.money-box .lim{display:block;margin-top:2px;font-size:12px;color:#047857;font-weight:600}
+.note{margin-top:8px;font-size:12px;color:#6B7280}
+.trips{display:flex;flex-direction:column;gap:8px}
+.trip{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid #EAF0ED}
+.trip-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#ECFDF5;color:#047857}
+.trip-ic svg{width:18px;height:18px}
+.trip-name{font-size:14.5px;font-weight:700;color:var(--ink)}
+.trip-sub{display:block;font-size:12px;color:#6B7280;margin-top:1px}
+.trip-right{text-align:right;white-space:nowrap}
+.trip-right b{font-size:16px;color:var(--ink)}
+.trip-right small{display:block;font-size:11.5px;color:#047857;font-weight:600}
+.trip-over{background:#FFFBF7;border-color:#FCD9B6}
+.trip-over .trip-right b{color:var(--warn)}
+.trip-over .trip-right small{color:var(--warn)}
+.trip-ref .trip-right small{color:#6B7280}
+.pc{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.pc li{display:flex;gap:8px;font-size:14px;line-height:1.6;color:#374151}
+.pc li svg{width:17px;height:17px;flex-shrink:0;margin-top:2px}
+.pros h4 svg,.pros li svg{color:#047857}
+.cons h4 svg{color:var(--warn)}
+.cons li svg{color:#6B7280}
+.fold{align-self:center;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 16px;border:1px solid #D5E0DB;border-radius:999px;background:#fff;color:#374151;font-size:13.5px;font-weight:700}
+.fold svg{width:15px;height:15px}
+
+/* ☰ 메뉴 (로그인 후) */
+.menu-wrap{position:relative;margin-left:8px}
+.menu-btn{width:44px;height:44px;display:grid;place-items:center;border:1px solid #D5E0DB;border-radius:12px;background:#fff;color:var(--ink)}
+.menu-btn:hover{background:var(--gl)}
+.menu-btn svg{width:22px;height:22px}
+.menu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:200px;padding:8px;border-radius:16px;background:#fff;border:1px solid #DCE7E2;box-shadow:0 18px 44px rgba(11,31,26,.16)}
+.menu-user{padding:10px 12px 12px;margin-bottom:4px;border-bottom:1px solid #EEF2F0;font-size:14.5px;font-weight:800;color:var(--ink);cursor:default}
+.menu-item{display:flex;align-items:center;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:#1F2937;font-size:14.5px;font-weight:600;text-decoration:none;text-align:left}
+.menu-item:hover{background:var(--gl);color:var(--gd)}
+.page .menu-item{font-weight:500}
+.page .menu-current{background:var(--gl);color:var(--gd);font-weight:800}
+.page .menu-out{color:#6B7280;font-size:13px;font-weight:500;min-height:40px}
+.menu-user{display:flex;align-items:center;gap:8px}
+.menu-avatar{width:28px;height:28px;border-radius:50%;background:var(--gl);color:var(--gd);display:grid;place-items:center;flex-shrink:0}
+.menu-avatar svg{width:16px;height:16px}
+
+/* 로그인 창 */
+.login{width:min(100%,400px);background:#fff;border-radius:24px;padding:32px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:10px}
+.login{position:relative}
+.login-x{position:absolute;top:14px;right:14px;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:#6B7280;cursor:pointer}
+.login-x:hover{background:#F3F4F6;color:#111827}
+.login-x svg{width:20px;height:20px}
+.login-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:12px}
+.login-pin{width:44px;height:57px}
+.login-head h3{margin:0;font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.05em}
+.login-input{height:50px;padding:0 16px;border:1.5px solid #D5E0DB;border-radius:12px;font:inherit;font-size:15px;color:var(--ink);background:#fff}
+.login-input:focus{outline:none;border-color:#059669;box-shadow:0 0 0 1.5px #059669}
+.login-input::placeholder{color:#6B7280}
+.login-err{margin:0;font-size:12.5px;color:#B45309}
+.login-btn{margin-top:6px;height:52px;border:0;border-radius:12px;background:#047857;color:#fff;font-size:16px;font-weight:800}
+.login-btn:hover:not(:disabled){background:#065f46}
+.page .login-btn{color:#fff}
+.login-btn:disabled{opacity:.45;cursor:not-allowed}
+.join-btn{height:50px;border:1px solid #CFE3DA;border-radius:12px;background:#fff;color:var(--gd);font-size:15px;font-weight:700}
+.join-btn:hover{background:var(--gl)}
+.sns-line{display:flex;align-items:center;gap:10px;margin:14px 0 4px;color:#6B7280;font-size:13px}
+.sns-line::before,.sns-line::after{content:"";flex:1;height:1px;background:#E5E7EB}
+.sns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.sns-item{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0;border:0;background:transparent;border-radius:14px}
+.sns-item:hover .sns-ic{transform:translateY(-2px)}
+.sns-ic{display:block;width:64px;height:64px;border-radius:50%;transition:transform .15s}
+.sns-ic svg{width:28px;height:28px}
+.sns-label{font-size:13.5px;font-weight:600;color:#1F2937;letter-spacing:-.03em;white-space:nowrap}
+.sns-google{background:#F3F4F6;color:#4B5563}
+.sns-naver{background:#03C75A;color:#fff}
+.sns-kakao{background:#FEE500;color:#191919}
+.find-links{margin-top:14px;padding-top:16px;border-top:1px solid #E5E7EB;display:flex;justify-content:center;align-items:center;gap:14px}
+.find-links a{font-size:14px;font-weight:600;color:#374151;text-decoration:none}
+.find-links a:hover{color:var(--gd)}
+.find-links span{width:1px;height:13px;background:#D1D5DB}
+
+/* 새 대화 확인 창 */
+.dim{position:fixed;inset:0;z-index:90;background:rgba(11,31,26,.45);display:grid;place-items:center;padding:16px}
+.dialog{width:min(100%,400px);background:#fff;border-radius:22px;padding:28px 24px 22px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.dialog h3{margin:0;font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+.dialog p{margin:10px 0 0;font-size:15px;line-height:1.65;color:var(--muted)}
+.dialog-actions{margin-top:22px;display:flex;gap:10px}
+.dialog-actions button{flex:1;height:48px;border-radius:12px;font-size:15px;font-weight:700}
+.btn-cancel{border:1px solid #D5E0DB;background:#fff;color:#374151}
+.btn-new{flex:1;height:48px;border-radius:12px;font-size:15px;font-weight:700;display:grid;place-items:center;text-decoration:none;border:1px solid #047857;background:#047857;color:#fff}
+.btn-new:hover{color:#fff;background:#065f46}
+
+/* 하단 (시작 페이지와 동일) */
+/* 내용이 짧아도 하단은 화면 맨 아래에 */
+.page{display:flex;flex-direction:column;min-height:100vh}
+.page > .top,.page > main,.page > .foot{flex-shrink:0;width:100%}
+.foot{margin-top:auto}
+.foot{padding:28px clamp(20px,2.6vw,40px);background:rgb(244,248,246)}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;font-size:13px;color:#6B7280}
+.foot .brand{font-size:18px}
+.foot .brand svg{width:20px;height:26px}
+
+/* 휴대전화: 지도 위 · 후보 아래 */
+@media (max-width:960px){
+.layout{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+.cards{display:contents}
+.list-head{order:1;margin-bottom:0}
+.map-col{position:relative;top:auto;scroll-margin-top:80px}
+.mapbox{aspect-ratio:auto;height:clamp(260px,calc(100vh - 520px),52vw);max-height:none}
+}
+@media (max-width:760px){
+.top-in{height:56px;padding:0 16px;gap:0}
+.brand{font-size:21px;gap:7px}
+.brand svg{width:23px;height:30px}
+.pill-line{margin-left:6px;height:36px;padding:0 12px;font-size:13px}
+.nav{gap:0;margin-left:auto}
+.nav-link{padding:0 10px;font-size:14px}
+.pill-fill{height:36px;padding:0 12px;font-size:13px;margin-left:2px}
+.wrap{padding:16px 12px 48px}
+.title-row h1{font-size:24px}
+.hist-title{font-size:24px}
+.hcard-main{padding:16px 4px 16px 16px;gap:12px}
+.h-title{font-size:16px}
+.h-budget{font-size:13px}
+.h-right{min-width:52px;padding-left:12px}
+.hstar{margin-right:6px}
+.mapbox{border-radius:18px}
+.mk-btn{height:32px;font-size:12.5px;padding:0 10px 0 4px;gap:5px}
+.mk-btn i{width:22px;height:22px;font-size:11.5px}
+.mk:not(.mk-on) .mk-name{display:none}
+.map-top{left:auto;right:10px;top:auto;bottom:8px}
+.map-chip{height:32px;font-size:12px}
+.mk:not(.mk-on) .mk-btn{padding:0 4px}
+.card-main{padding:16px 16px 14px}
+.c-name{font-size:17px}
+.score{margin-left:0;width:100%}
+.c-places{grid-template-columns:repeat(2,minmax(0,1fr))}
+.detail-in{padding:2px 14px 16px}
+.photo{height:160px}
+.foot{padding:24px 16px}
+}
+@media (max-width:480px){.mapbox{aspect-ratio:4 / 3;height:auto;max-height:none}}
+@media (prefers-reduced-motion:reduce){.map-inner,.mk,.run,.detail-wrap{transition:none}}
+
+/* 이력저장·관심동네 글자 버튼 */
+.page .star{width:auto;height:38px;padding:0 14px 0 10px;gap:5px;display:inline-flex;align-items:center;border:1px solid #E5E7EB;border-radius:999px;background:#fff;color:#4B5563;font-size:14px;font-weight:700;margin-left:6px}
+.page .star svg{width:20px;height:20px}
+.page .star:hover{background:#FFFBEB;border-color:#FDE68A}
+.page .star.star-on{background:#FEFCE8;border-color:#FDE68A;color:#854D0E}
+.star::after{display:none}
+.page .hstar{width:auto;height:38px;padding:0 14px 0 10px;gap:5px;display:inline-flex;align-items:center;border:1px solid #E5E7EB;border-radius:999px;background:#fff;color:#4B5563;font-size:13.5px;font-weight:700}
+.page .hstar svg{width:20px;height:20px}
+.page .hstar.hstar-on{background:#FEFCE8;border-color:#FDE68A;color:#854D0E}
+.page .heart{width:auto;height:34px;padding:0 12px 0 9px;gap:4px;display:inline-flex;align-items:center;border:1px solid #E5E7EB;border-radius:999px;background:#fff;color:#4B5563;font-size:13px;font-weight:700}
+.page .heart svg{width:18px;height:18px}
+.page .heart:hover{background:#FFF1F4;border-color:#FBCFE8;color:#BE185D}
+.page .heart.heart-on{background:#FFF1F4;border-color:#FBCFE8;color:#BE185D}
+.c-top{padding-right:112px}
+@media (max-width:760px){.c-top{padding-right:104px}.page .heart{top:12px;right:12px}}
+/* polish-1016 */
+.page .find-btn,.page .find-btn:hover{color:#fff}
+.page .send,.page .hsend{color:#fff}
+.page .ltr{display:block;line-height:1;text-box:trim-both cap alphabetic}
+.page .title-row h1{line-height:1.2;text-box:trim-both cap alphabetic}
+.page .hstar{width:52px;height:52px;padding:0;gap:0;border:0;border-radius:12px;background:transparent;color:#9CA3AF;display:grid;place-items:center}
+.page .hstar:hover{background:#FEFCE8;color:#EAB308}
+.page .hstar svg{width:28px;height:28px}
+.page .hstar.hstar-on{background:transparent;color:#EAB308}
+.page .like-cards .c-top{padding-right:48px}
+.page .like-cards .heart{width:44px;height:44px;padding:0;gap:0;border:0;border-radius:12px;background:transparent;color:#9CA3AF;display:grid;place-items:center}
+.page .like-cards .heart:hover{background:#FFF1F4;color:#F43F6B}
+.page .like-cards .heart svg{width:24px;height:24px}
+.page .like-cards .heart.heart-on{background:transparent;color:#F43F6B}
+.page .spin-pin{height:36px;margin:-36px 0 0 -15px}
+.page .spin-pin::before{inset:auto;left:0;top:0;width:30px;height:30px;transform:rotate(-45deg);transform-origin:50% 50%}
+.page .spin-pin i{display:grid;place-items:center;width:30px;height:30px;line-height:1}
+/* polish-1016b */
+/* 상세 화면은 동네 추천과 같은 모양(글자 버튼 유지) */
+/* polish-1016c */
+.page .score-m{display:none}
+.page .c-top.sc-low .score{display:none}
+.page .c-top{position:relative}
+.page .c-top.sc-mid .score{position:absolute;margin:0;width:auto;flex-direction:column;align-items:center;gap:2px;font-size:12px}
+.page .c-top.sc-mid .score b{line-height:1.1}
+.page .c-money{align-items:flex-end}
+.page .c-money.sc-low .score-m{display:inline-flex;margin-left:auto;margin-right:-6px;width:auto}
+.page .c-money.sc-low .score-m{flex-direction:column;align-items:center;gap:2px;font-size:12px}
+.page .c-money.sc-low .score-m b{line-height:1.1}
+@media (max-width:760px){.page .c-money.sc-low .score-m{margin-right:-4px}.page .c-top .score{width:auto;margin-left:auto}}
+/* mapzoom */
+.page .mk-name{display:none}
+.page .mk-btn{padding:0 4px;gap:0}
+.map-zoom{position:absolute;right:14px;top:14px;z-index:5;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.96);border:1px solid #DCE7E2;box-shadow:0 2px 10px rgba(11,31,26,.10)}
+.page .mz-btn{width:38px;height:38px;display:grid;place-items:center;border:0;background:transparent;color:#1F2937;cursor:pointer}
+.page .mz-btn+.mz-btn{border-top:1px solid #E5E7EB}
+.page .mz-btn:hover{background:#F0FDF4;color:#047857}
+.page .mz-btn:disabled{color:#C4CBC8;cursor:default;background:transparent}
+.mz-btn svg{width:18px;height:18px}
+.page button.map-all{cursor:pointer}
+.page button.map-all:hover{border-color:#A7D9C2;color:#047857}
+.mapbox{cursor:grab}
+.mapbox.map-drag{cursor:grabbing}
+.mapbox{touch-action:none;overscroll-behavior:contain}
+.map-drag .map-inner,.map-drag .mk,.map-drag .run,.map-live .map-inner,.map-live .mk,.map-live .run{transition:none!important}
+@media (max-width:760px){.map-zoom{right:10px;top:10px}.page .mz-btn{width:34px;height:34px}}
+/* polish-1016d */
+.page .card{container-type:inline-size;container-name:cand}
+.page .c-top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"rank name score" ". str score";column-gap:10px;row-gap:6px;align-items:center;padding-right:112px;padding-bottom:0}
+.page .like-cards .c-top{padding-right:56px}
+.page .c-top .rank{grid-area:rank}
+.page .c-top .c-name{grid-area:name;min-width:0}
+.page .c-top .c-strength{grid-area:str;justify-self:start}
+.page .c-top .score,.page .c-top.sc-low .score,.page .c-top.sc-mid .score{grid-area:score;display:inline-flex;position:static;margin:0;width:auto;align-self:center;justify-self:end}
+.page .score-m{display:none!important}
+@container cand (max-width:520px){
+.page .c-top .score,.page .c-top.sc-low .score,.page .c-top.sc-mid .score{flex-direction:column;align-items:center;gap:2px;font-size:12px}
+.page .c-top .score b{line-height:1.1}
+}
+/* polish-1016e */
+.page .c-top{grid-template-areas:"rank name score" ". str str"}
+.page .c-strength{white-space:nowrap}
+.page .c-top .score,.page .c-top.sc-low .score,.page .c-top.sc-mid .score{align-self:center}
+@container cand (max-width:520px){
+.page .c-top .score,.page .c-top.sc-low .score,.page .c-top.sc-mid .score{align-self:start;margin-top:-6px}
+.page .c-name{font-size:17px}
+}
+/* polish-1016f */
+.page .c-top .c-name{font-size:21px;line-height:1.25}
+.page .c-top{row-gap:1px}
+.page .c-top .c-strength{font-size:12.5px;padding:2px 9px;margin-left:-5px}
+@container cand (max-width:520px){.page .c-top .c-name{font-size:18px}}
+/* nofoot */
+.foot-in{justify-content:flex-end}
+/* gap96 */
+.page main.wrap{padding-bottom:96px}
+.page .likes-sample{margin-bottom:0}
+@media (max-width:760px){
+.page main.wrap{padding-bottom:64px}
+}
+
+/* ===== 채팅·조건 ===== */
+
+html{scroll-behavior:smooth}
+body{margin:0;background:#F4F8F6}
+a{color:#047857}a:hover{color:#065f46}
+*{box-sizing:border-box}
+.page{--g:#059669;--gd:#047857;--gl:#ECFDF5;--ink:#0B1F1A;--text:#1F2937;--muted:#4B5563;--line:#E5E7EB;font-family:"Pretendard","Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:#F4F8F6;-webkit-font-smoothing:antialiased;word-break:keep-all;min-width:320px;min-height:100vh}
+.page button,.page textarea,.page input,.page select{font:inherit;color:inherit}
+.page button{cursor:pointer}
+.page :focus-visible{outline:3px solid #059669;outline-offset:2px;border-radius:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 고정 상단 (시작 페이지와 동일) */
+.top{position:sticky;top:0;z-index:50;background:rgba(244,248,246,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.top-in{height:68px;padding:0 clamp(20px,2.6vw,40px);display:flex;align-items:center;gap:8px}
+.brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink);font-size:23px;font-weight:800;letter-spacing:-.06em;min-height:44px}
+.brand:hover{color:var(--ink)}
+.brand svg{width:26px;height:34px;flex-shrink:0}
+.nav{display:flex;align-items:center;gap:4px;margin-left:auto}
+.nav-link{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#374151;text-decoration:none;font-size:15px;font-weight:500;letter-spacing:-.03em;border-radius:10px;white-space:nowrap}
+.nav-link:hover{color:var(--gd);background:var(--gl)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600;letter-spacing:-.03em;white-space:nowrap;text-decoration:none}
+.pill-fill{border:1px solid var(--gd);background:var(--gd);color:#fff;margin-left:6px}
+.pill-fill:hover{background:#065f46;color:#fff}
+.page .pill-fill,.page .pill-fill:hover{color:#fff}
+.pill-line{border:1px solid var(--g);background:#fff;color:var(--gd);margin-left:8px}
+.pill-line:hover{background:var(--gl)}
+
+.cwrap{max-width:1680px;margin:0 auto;padding:40px clamp(20px,3vw,48px) 120px}
+
+/* 대화 */
+.chat{display:flex;flex-direction:column;height:clamp(460px,calc(100vh - 68px - 40px - 96px),720px);margin:0 auto;background:#fff;border:1px solid #DFE9E4;border-radius:28px;box-shadow:0 18px 50px rgba(15,45,35,.06);overflow:hidden}
+.chat{position:relative}
+.chat-tag{align-self:flex-end;flex-shrink:0;margin:14px 16px 0;height:24px;font-size:11.5px;padding:0 10px}
+.tag{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;background:#FFF7ED;border:1px solid #FCD9B6;color:#9A3412;font-size:12.5px;font-weight:600}
+.msgs{flex:1;min-height:0;overflow-y:auto;padding:12px 24px 8px;display:flex;flex-direction:column;gap:18px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg-bot .avatar{width:34px;height:44px;flex-shrink:0;margin-top:-2px}
+.bubble{max-width:min(78%,760px);padding:14px 18px;border-radius:4px 20px 20px 20px;background:#F3F6F5;font-size:15.5px;line-height:1.75;letter-spacing:-.03em;white-space:pre-line}
+.msg-user{justify-content:flex-end}
+.msg-user .bubble{border-radius:20px 4px 20px 20px;background:#DDF5EA;color:#0B1F1A}
+.msg-last .bubble{background:#064E3B;color:#fff}
+.msg-last .bubble b{color:#A7F3D0}
+.composer{margin:18px 24px 24px;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 18px;border:1.5px solid #CFE3DA;border-radius:18px;background:#fff}
+.composer:focus-within{border-color:#059669;box-shadow:0 0 0 1.5px #059669}
+.composer textarea{flex:1;min-width:0;height:28px;border:0;outline:none;resize:none;background:transparent;font-size:15px;line-height:1.85}
+.composer textarea:focus-visible{outline:none}
+.composer textarea::placeholder{color:#6B7280}
+.send{width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--gd);color:#fff}
+.send:disabled{opacity:.4;cursor:not-allowed}
+.send svg{width:22px;height:22px}
+
+.to-cond{display:flex;flex-direction:column;align-items:center;gap:6px;height:96px;justify-content:center;padding:0;color:var(--gd);font-size:14px;font-weight:700;text-decoration:none}
+.to-cond svg{width:24px;height:24px;animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(-3px);opacity:.6}50%{transform:translateY(5px);opacity:1}}
+@media (prefers-reduced-motion:reduce){.to-cond svg{animation:none}}
+
+/* 조건 영역 */
+.cond{scroll-margin-top:84px;background:#fff;border:1px solid #DFE9E4;border-radius:28px;padding:32px;box-shadow:0 18px 50px rgba(15,45,35,.06)}
+.cond-head h2{margin:0;font-size:26px;font-weight:800;letter-spacing:-.05em;color:var(--ink)}
+.cond-head p{margin:8px 0 0;font-size:15px;line-height:1.7;color:var(--muted)}
+.legend{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.src{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.src-raw{background:#ECFDF5;color:#047857}
+.src-def{background:#EFF6FF;color:#1D4ED8}
+.src-sug{background:#F5F3FF;color:#6D28D9}
+.src-me{background:#F3F4F6;color:#374151}
+
+.block-title{margin:28px 0 12px;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.budget{display:flex;flex-wrap:wrap;gap:12px}
+.money{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:12px 16px;border:1px solid #E3EAE7;border-radius:14px;background:#FAFCFB}
+.money label{font-size:15px;font-weight:700;color:#0B1F1A}
+.money input{width:96px;height:40px;padding:0 10px;border:1px solid #D5E0DB;border-radius:10px;background:#fff;font-size:16px;font-weight:700;text-align:right}
+.money span{font-size:15px;color:#374151}
+
+
+.rows-head,.row{display:grid;grid-template-columns:minmax(140px,176px) minmax(260px,420px) 128px 228px 196px minmax(0,1fr) 44px;gap:12px;align-items:start}
+.cell-del,.rows-head > span:last-child{grid-column:-2 / -1}
+.rows-head{padding:0 16px 8px;font-size:12.5px;font-weight:700;color:#6B7280}
+.row{padding:16px;border:1px solid #E3EAE7;border-radius:16px;background:#fff;margin-bottom:10px}
+.row-must{border-color:#A7D9C2;background:#FBFEFC}
+.cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cell-label{display:none;font-size:12px;font-weight:700;color:#6B7280}
+.name-input{width:100%;height:40px;padding:0 10px;border:1px solid transparent;border-radius:10px;background:transparent;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.name-input:hover{border-color:#E3EAE7}
+.name-input:focus{border-color:#059669;background:#fff;outline:none}
+.name-input::placeholder{color:#9CA3AF;font-weight:600}
+.sub{padding:0 10px;font-size:12.5px;color:#6B7280;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
+.addr{display:flex;align-items:center;gap:8px;min-height:40px;font-size:13px;color:#374151;line-height:1.5;min-width:0}
+.addr svg{width:14px;height:14px;color:#059669;flex-shrink:0}
+.addr span{flex:0 1 var(--addr-w,300px);min-width:0;overflow-wrap:anywhere}
+.cell-addr{padding-right:20px}
+.addr-change{flex-shrink:0;height:28px;padding:0 10px;border:1px solid #D5E0DB;border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;color:#374151}
+.addr-find{align-self:flex-start;margin-top:3px;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid #059669;border-radius:10px;background:#fff;color:#047857;font-size:13px;font-weight:700}
+.addr-find:hover{background:#ECFDF5}
+.addr-find svg{width:15px;height:15px}
+.nearby{padding:0 10px;font-size:13px;color:#4B5563}
+/* 주소 찾기 창 */
+.search-box{margin-top:16px;display:flex;align-items:center;gap:8px;height:48px;padding:0 14px;border:1.5px solid #059669;border-radius:12px}
+.search-box svg{width:18px;height:18px;color:#059669;flex-shrink:0}
+.search-box input{flex:1;min-width:0;border:0;outline:none;font-size:15px;background:transparent}
+.results{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
+.results button{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border:1px solid #E3EAE7;border-radius:12px;background:#fff;text-align:left}
+.results button:hover{border-color:#059669;background:#F7FBF9}
+.results b{font-size:15px;color:#0B1F1A}
+.results span{font-size:13px;color:#4B5563}
+.no-result{margin-top:14px;font-size:14px;color:#6B7280}
+.demo-note{margin-top:12px;font-size:12px;color:#9A3412}
+.sel{height:40px;width:100%;padding:0 8px;border:1px solid #D5E0DB;border-radius:10px;background:#fff;font-size:14px;font-weight:600}
+.sel-empty{color:#6B7280;font-weight:500}
+.seg{display:flex;border:1px solid #D5E0DB;border-radius:10px;overflow:hidden;height:40px}
+.seg button{flex:1;border:0;background:#fff;font-size:13.5px;font-weight:600;color:#4B5563}
+.seg button + button{border-left:1px solid #D5E0DB}
+.seg .on{background:#047857;color:#fff}
+.time{display:flex;align-items:center;gap:6px}
+.time .sel{width:112px;flex-shrink:0}
+.cell-imp .sel{width:120px}
+.time input,.freq input{width:64px;height:40px;padding:0 8px;border:1px solid #D5E0DB;border-radius:10px;background:#fff;font-size:15px;font-weight:700;text-align:right}
+.time input:disabled,.freq input:disabled{background:#F3F4F6;color:#9CA3AF;border-style:dashed}
+.time span,.freq span{font-size:14px;color:#374151}
+.freq{display:flex;align-items:center;gap:6px}
+.freq .sel{width:84px}
+.hint{font-size:11.5px;color:#6B7280;line-height:1.4}
+.warn{grid-column:1 / -1;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:#FFF7ED;color:#9A3412;font-size:13px;font-weight:600}
+.warn svg{width:16px;height:16px;flex-shrink:0}
+.del{width:44px;height:40px;display:grid;place-items:center;border:1px solid transparent;border-radius:10px;background:transparent;color:#6B7280}
+.del:hover{border-color:#FECACA;background:#FEF2F2;color:#B91C1C}
+.del svg{width:18px;height:18px}
+.add{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #A7D9C2;border-radius:16px;background:#F7FBF9;color:var(--gd);font-size:15px;font-weight:700}
+.add:hover{background:#ECFDF5}
+.add svg{width:18px;height:18px}
+.find{margin-top:32px;padding-top:28px;border-top:1px solid #EEF2F0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.find-btn{text-decoration:none;width:min(100%,420px);height:58px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:16px;background:#047857;color:#fff;font-size:17px;font-weight:800;letter-spacing:-.03em;box-shadow:0 12px 30px rgba(4,120,87,.28)}
+.find-btn:hover{color:#fff;background:#065f46}
+.find-btn svg{width:22px;height:22px}
+.find small{font-size:13px;color:#6B7280}
+
+/* 삭제 확인 창 */
+.dim{position:fixed;inset:0;z-index:90;background:rgba(11,31,26,.45);display:grid;place-items:center;padding:16px}
+.dialog{width:min(100%,400px);background:#fff;border-radius:22px;padding:28px 24px 22px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.dialog h3{margin:0;font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+.dialog p{margin:10px 0 0;font-size:15px;line-height:1.65;color:var(--muted)}
+.dialog-actions{margin-top:22px;display:flex;gap:10px}
+.dialog-actions button{flex:1;height:48px;border-radius:12px;font-size:15px;font-weight:700}
+.btn-cancel{border:1px solid #D5E0DB;background:#fff;color:#374151}
+.btn-new{flex:1;height:48px;border-radius:12px;font-size:15px;font-weight:700;display:grid;place-items:center;text-decoration:none;border:1px solid #047857;background:#047857;color:#fff}
+.btn-new:hover{color:#fff;background:#065f46}
+.btn-del{border:1px solid #B91C1C;background:#B91C1C;color:#fff}
+
+/* 양옆 배치: 왼쪽 대화(고정) · 오른쪽 조건 */
+.split{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,4fr);gap:24px;align-items:start}
+/* 채팅이 좁아지면 3:4 → 반반 */
+@media (max-width:1299px){.split{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.split .chat{position:sticky;top:84px;height:clamp(460px,calc(100vh - 68px - 40px - 32px),900px)}
+.split .to-cond{display:none}
+.split .cond{padding:28px 24px}
+.say-down{display:none}
+/* 조건 안내: 넓을 때만 ‘입력할수록’ 뒤에서 줄바꿈, 좁으면 자연스럽게 */
+@container (max-width:599px){.br-wide{display:none}}
+/* 예산: 양옆 배치에서는 보증금·월세를 한 줄로, 월세 입력칸은 더 짧게 */
+.money input#rent{width:72px}
+@media (min-width:960px){
+.split .budget{display:flex;flex-wrap:nowrap;gap:8px}
+.split .money{padding:10px 10px;gap:6px}
+.split .money input{width:92px}
+.split .money input#rent{width:68px}
+}
+/* 조건 칸이 좁을 때 예산 상자를 촘촘하게 (한 줄 유지) */
+@container (max-width:470px){
+.split .budget{gap:6px}
+.split .money{padding:8px 7px;gap:4px}
+.split .money span,.split .money label{font-size:14px}
+.split .money input{width:84px;padding:0 8px}
+.split .money input#rent{width:62px}
+}
+/* 화면 절반 정도(960~1060px)에서는 여백을 줄인다 */
+@media (max-width:1060px) and (min-width:960px){
+.cwrap.split{padding-left:14px;padding-right:14px}
+.split{gap:14px}
+.split .cond{padding:22px 16px}
+.split .chat .msgs{padding:12px 14px 4px;gap:14px}
+.split .chat .composer{margin:14px}
+.split .bubble{max-width:88%}
+}
+@media (max-width:959px){
+.split{display:block}
+.split .chat{position:relative;top:auto;height:clamp(460px,calc(100vh - 68px - 40px - 96px),720px)}
+.split .to-cond{display:flex}
+.split .cond{padding:32px}
+.say-side{display:none}.say-down{display:inline}
+}
+
+/* 하단 (시작 페이지와 동일) */
+/* 내용이 짧아도 하단은 화면 맨 아래에 */
+.page{display:flex;flex-direction:column;min-height:100vh}
+.page > .top,.page > main,.page > .foot{flex-shrink:0;width:100%}
+.foot{margin-top:auto}
+.foot{padding:28px clamp(20px,2.6vw,40px);background:rgb(244,248,246)}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;font-size:13px;color:#6B7280}
+.foot .brand{font-size:18px}
+.foot .brand svg{width:20px;height:26px}
+
+/* 조건 상자 너비 기준: 넓을 때 한 줄 → 좁으면 두 단 → 더 좁으면 세로 */
+.cond{container-type:inline-size}
+@container (max-width:1100px){
+.rows-head{display:none}
+.row{position:relative;grid-template-columns:128px 228px minmax(200px,1fr);gap:14px 14px;padding:16px 56px 16px 16px}
+.cell-name{grid-column:1 / 3}
+.cell-addr{grid-column:3 / 4}
+.cell-label{display:block}
+.cell-del{position:absolute;top:12px;right:10px;grid-column:auto}
+.cell-addr{padding-right:0}
+}
+/* 반반 너비: 장소명·주소 한 줄씩, 중요도·이동수단·빈도는 한 줄에 */
+@container (max-width:1100px) and (min-width:400px){
+.row{grid-template-columns:92px 178px minmax(0,1fr);gap:12px clamp(12px,calc((100cqi - 540px) * .09 + 12px),30px);padding:14px}
+.cell-name{grid-column:1 / 2}
+.cell-addr{grid-column:2 / -1}
+.name-input{padding:0 4px}
+.cell-imp .sel{width:92px}
+.time .sel{width:100px}
+.freq .sel{width:86px}
+.time input{width:52px}
+.freq input{width:48px}
+.cell-addr{padding-right:40px}
+.addr span{flex:0 1 var(--addr-w,300px)}
+}
+/* 방문 빈도 오른쪽 여백이 중요도 왼쪽 여백(14px)보다 좁아지면 아랫줄로 */
+@container (max-width:484px) and (min-width:400px){
+.cell-freq{grid-column:1 / -1}
+
+}
+/* 화면 절반 너비: 장소명 / 주소 / 중요도·이동수단 / 방문 빈도 */
+@container (max-width:399px) and (min-width:290px){
+.row{grid-template-columns:92px minmax(0,1fr);gap:12px 10px;padding:14px 12px}
+.cell-name{grid-column:1 / -1;padding-right:44px}
+.cell-addr,.cell-freq{grid-column:1 / -1}
+.cell-imp{grid-column:1 / 2}
+.cell-move{grid-column:2 / 3}
+.cell-imp .sel{width:92px}
+.time .sel{width:102px;padding:0 4px 0 8px}
+.time input{width:46px}
+.freq .sel{width:86px}
+.freq input{width:48px}
+.cell-addr{padding-right:0}
+}
+@container (max-width:289px){
+.row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 12px;padding:16px 14px}
+.cell-name{grid-column:1 / -1;padding-right:44px}
+.cell-addr,.cell-move,.cell-freq{grid-column:1 / -1}
+}
+@media (max-width:760px){
+.foot{padding:24px 16px}
+.top-in{height:56px;padding:0 16px;gap:0}
+.brand{font-size:21px;gap:7px}
+.brand svg{width:23px;height:30px}
+.pill-line{margin-left:6px;height:36px;padding:0 12px;font-size:13px}
+.nav{gap:0;margin-left:auto}
+.nav-link{padding:0 10px;font-size:14px}
+.pill-fill{height:36px;padding:0 12px;font-size:13px;margin-left:2px}
+.cwrap{padding:20px 12px 80px}
+.chat,.split .chat{height:clamp(420px,calc(100vh - 56px - 20px - 96px),720px)}
+.chat{border-radius:22px}
+.chat-tag{position:static;align-self:flex-end;margin:12px 12px 0}
+.msgs{padding:12px 14px 4px;gap:14px}
+.bubble{max-width:86%;font-size:15px;padding:12px 15px}
+.composer{margin:14px}
+.cond,.split .cond{padding:22px 14px;border-radius:22px}
+.cond-head h2{font-size:22px}
+}
+/* polish-1016 */
+.page .find-btn,.page .find-btn:hover{color:#fff}
+.page .send,.page .hsend{color:#fff}
+.page .ltr{display:block;line-height:1;text-box:trim-both cap alphabetic}
+.page .title-row h1{line-height:1.2;text-box:trim-both cap alphabetic}
+.page .hstar{width:52px;height:52px;padding:0;gap:0;border:0;border-radius:12px;background:transparent;color:#9CA3AF;display:grid;place-items:center}
+.page .hstar:hover{background:#FEFCE8;color:#EAB308}
+.page .hstar svg{width:28px;height:28px}
+.page .hstar.hstar-on{background:transparent;color:#EAB308}
+.page .like-cards .c-top{padding-right:48px}
+.page .like-cards .heart{width:44px;height:44px;padding:0;gap:0;border:0;border-radius:12px;background:transparent;color:#9CA3AF;display:grid;place-items:center}
+.page .like-cards .heart:hover{background:#FFF1F4;color:#F43F6B}
+.page .like-cards .heart svg{width:24px;height:24px}
+.page .like-cards .heart.heart-on{background:transparent;color:#F43F6B}
+.page .spin-pin{height:36px;margin:-36px 0 0 -15px}
+.page .spin-pin::before{inset:auto;left:0;top:0;width:30px;height:30px;transform:rotate(-45deg);transform-origin:50% 50%}
+.page .spin-pin i{display:grid;place-items:center;width:30px;height:30px;line-height:1}
+/* polish-1016b */
+/* 상세 화면은 동네 추천과 같은 모양(글자 버튼 유지) */
+/* nofoot */
+.foot-in{justify-content:flex-end}
+/* gap96 */
+.page main.cwrap{padding-bottom:96px}
+@media (max-width:760px){
+.page main.cwrap{padding-bottom:64px}
+}
+/* addrwarn */
+.addr-need{display:inline-flex;align-items:center;gap:5px}
+.addr-need svg{width:16px;height:16px;flex-shrink:0}
+.addr-need-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:3px}
+.addr-need-row .addr-find{margin-top:0}
+.addr-need{font-size:13px;font-weight:700;color:#DC2626}
+.find-warn{width:min(100%,520px);display:flex;align-items:flex-start;gap:8px;padding:12px 14px;border-radius:12px;background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;font-size:13.5px;font-weight:600;line-height:1.55}
+.find-warn svg{width:17px;height:17px;flex-shrink:0;margin-top:1px}
+.find-warn b{font-weight:800}
+.find-warn{justify-content:center;align-items:center;text-align:center}
+
+/* ===== 시작 화면 ===== */
+.page-home,.page-home .foot{background:#fff}
+.page-home .top{background:rgba(255,255,255,.94)}
+.home-main{min-height:calc(100vh - 68px - 90px);display:flex;flex-direction:column;justify-content:center}
+.hero{position:relative;padding:clamp(40px,9vh,120px) 32px clamp(56px,12vh,160px)}
+.hero-in{position:relative;z-index:1;max-width:1200px;margin:0 auto}
+.intro{text-align:center;margin-bottom:44px}
+.intro h1{margin:0;font-size:clamp(38px,4.4vw,60px);line-height:1.2;letter-spacing:-.06em;font-weight:800;color:var(--ink)}
+.intro h1 span{color:var(--g)}
+.intro p{margin:20px auto 0;max-width:640px;font-size:19px;line-height:1.7;color:var(--muted);letter-spacing:-.04em}
+.ask{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:20px 20px 20px 24px;border:1.5px solid var(--g);border-radius:20px;background:#fff;box-shadow:0 16px 40px rgba(5,150,105,.10);transition:box-shadow .2s}
+.ask:focus-within{box-shadow:0 0 0 1.5px #059669,0 16px 40px rgba(5,150,105,.14)}
+.ask textarea:focus,.ask textarea:focus-visible{outline:none}
+.ask-icon{width:28px;height:28px;color:var(--g);flex-shrink:0}
+.ask textarea{flex:1;min-width:0;height:58px;border:0;outline:none;resize:none;background:transparent;font-size:17px;line-height:1.7;letter-spacing:-.035em;color:var(--ink)}
+.ask textarea::placeholder{color:#6B7280;opacity:1}
+.hsend{width:52px;height:52px;flex-shrink:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--gd);color:#fff;transition:background .2s,transform .2s,opacity .2s}
+.hsend svg{width:26px;height:26px}
+.hsend:hover:not(:disabled){background:#065f46;transform:translateX(2px)}
+.hsend:disabled{opacity:.4;cursor:not-allowed}
+.examples{max-width:880px;margin:26px auto 0}
+.examples h2{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.03em}
+.examples h2 svg{width:20px;height:20px;color:var(--g)}
+.hx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.hx{display:flex;align-items:center;gap:10px;min-height:76px;padding:14px 16px 14px 18px;border:1px solid #D7EFE5;border-radius:40px;background:#F2FAF6;text-align:left;color:var(--text);transition:border-color .2s,background .2s}
+.hx:hover{border-color:var(--g);background:var(--gl)}
+.hx .q{width:18px;height:18px;color:var(--g);align-self:flex-start;margin-top:3px;flex-shrink:0}
+.hx span{flex:1;font-size:13.5px;line-height:1.75;letter-spacing:-.04em}
+.hx .chev{width:18px;height:18px;color:#6B7280;flex-shrink:0}
+@media (max-width:760px){
+.hero{padding:40px 16px 56px}
+.intro h1{font-size:clamp(32px,9vw,40px)}
+.intro p{font-size:15.5px;margin-top:16px}
+.d-br{display:none}
+.ask{padding:16px 14px 16px 16px;gap:10px;border-radius:18px;align-items:flex-end}
+.ask-icon{width:24px;height:24px;align-self:center}
+.ask textarea{height:84px;font-size:16px}
+.hsend{width:46px;height:46px}
+.hx-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+.hx{border-radius:18px;min-height:0}
+.ex-br{display:none}
+}
+/* ===== 공통 보완 ===== */
+.brand-btn{border:0;background:transparent;padding:0;cursor:pointer;font-family:inherit}
+.page .top .brand-btn{font-size:23px;font-weight:800;letter-spacing:-.06em;color:var(--ink)}
+.page .foot .brand-btn{font-size:18px;font-weight:800;letter-spacing:-.06em;color:var(--ink)}
+@media (max-width:760px){.page .top .brand-btn{font-size:21px}}
+.nav-btn{border:0;background:transparent;cursor:pointer;font:inherit}
+/* 두리번 입력 중 */
+.typing{display:inline-flex;gap:5px;align-items:center;padding:16px 18px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#7FA796;animation:dot 1s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.no-cand{margin:0;padding:28px;border-radius:16px;background:#fff;border:1px dashed #CFE3DA;text-align:center;color:#6B7280;font-size:14.5px;line-height:1.7}
+/* 장소를 찾기 전: 대화만 넓게 */
+.solo .chat{height:clamp(460px,calc(100vh - 68px - 40px - 40px),760px)}
+.split .cond{animation:condIn .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes condIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.split .cond{animation:none}.typing i{animation:none}}
+
+/* ===== 탐색 중 ===== */
+.search-main{min-height:calc(100vh - 68px - 90px);display:flex;align-items:center;justify-content:center;padding:32px clamp(16px,3vw,48px)}
+.search-card{width:min(100%,960px);background:#fff;border:1px solid #DFE9E4;border-radius:28px;box-shadow:0 18px 50px rgba(15,45,35,.08);padding:32px;animation:sIn .35s ease-out both}
+@keyframes sIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.search-head{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.search-head h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.05em;color:var(--ink)}
+.search-head p{margin:6px 0 0;font-size:14.5px;color:var(--muted)}
+.look-pin{width:52px;height:68px;flex-shrink:0;transform-origin:50% 100%;animation:pinSway 2.4s ease-in-out infinite}
+.lp-pupils{animation:lookAround 2.4s ease-in-out infinite}
+.lp-eyes{transform-box:fill-box;transform-origin:center;animation:blink2 3.6s linear infinite}
+@keyframes lookAround{0%,10%{transform:translateX(0)}22%,40%{transform:translateX(-4.5px)}55%,75%{transform:translateX(4.5px)}88%,100%{transform:translateX(0)}}
+@keyframes pinSway{0%,10%{transform:rotate(0)}22%,40%{transform:rotate(-6deg)}55%,75%{transform:rotate(6deg)}88%,100%{transform:rotate(0)}}
+@keyframes blink2{0%,46%{transform:scaleY(1)}48%{transform:scaleY(.1)}50%,100%{transform:scaleY(1)}}
+.search-body{display:grid;grid-template-columns:auto minmax(0,1fr);gap:28px;align-items:center}
+.search-map{position:relative;width:520px;height:340px;border-radius:20px;overflow:hidden;background:#EEF0EC;border:1px solid #DCE7E2}
+.search-map-in{position:absolute;left:0;top:0;width:2846px;height:1648px;transform-origin:0 0}
+.search-map-f{position:absolute;inset:0;overflow:hidden;filter:saturate(.75)}
+.search-map-in .sz{position:absolute;display:block;max-width:none;user-select:none;-webkit-user-drag:none}
+.search-map-in .sz1{left:-7218px;top:-4140px;width:20800px;height:13600px;opacity:.9}
+.search-map-in .sz2{left:-1234px;top:-1632px;width:7280px;height:3440px;opacity:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,transparent,#000 8%,#000 92%,transparent);mask-composite:intersect}
+.search-map-in .sz3{left:0;top:0;width:2846px;height:1648px;opacity:0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent),linear-gradient(180deg,transparent,#000 10%,#000 90%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent),linear-gradient(180deg,transparent,#000 10%,#000 90%,transparent);mask-composite:intersect}
+.search-scan{position:absolute;inset:0;background:linear-gradient(90deg,transparent 0,rgba(16,185,129,.16) 45%,rgba(16,185,129,.28) 50%,rgba(16,185,129,.16) 55%,transparent 100%);background-size:60% 100%;background-repeat:no-repeat;animation:scan 1.8s linear infinite}
+@keyframes scan{from{background-position:-60% 0}to{background-position:160% 0}}
+.spin-pin{position:absolute;width:30px;height:38px;margin:-38px 0 0 -15px;animation:pinDrop .5s cubic-bezier(.3,1.4,.5,1) both}
+.spin-pin::before{content:"";position:absolute;inset:0;background:#047857;border-radius:50% 50% 50% 0;transform:rotate(-45deg) scale(.82);transform-origin:50% 60%;box-shadow:0 4px 10px rgba(4,120,87,.35)}
+.spin-pin i{position:relative;display:block;text-align:center;line-height:30px;font-style:normal;font-size:13px;font-weight:800;color:#fff}
+@keyframes pinDrop{from{opacity:0;transform:translateY(-36px)}to{opacity:1;transform:none}}
+.search-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.sstep{display:flex;gap:12px;align-items:flex-start;transition:opacity .3s}
+.sstep-wait{opacity:.4}
+.sstep-ic{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;border:2px solid #CFE3DA;background:#fff}
+.sstep-done .sstep-ic{background:#047857;border-color:#047857;color:#fff;animation:pop .3s ease-out}
+.sstep-ic svg{width:15px;height:15px}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.spinner{width:16px;height:16px;border-radius:50%;border:2.5px solid #A7D9C2;border-top-color:#047857;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sstep-tx{display:flex;flex-direction:column;gap:3px;padding-top:3px}
+.sstep-tx b{font-size:15.5px;color:var(--ink);letter-spacing:-.03em}
+.sstep-tx small{font-size:13.5px;color:var(--muted);line-height:1.5}
+.search-note{margin:22px 0 0;font-size:12.5px;color:#9A3412;text-align:center}
+@media (max-width:960px){.search-body{grid-template-columns:minmax(0,1fr)}.search-map{margin:0 auto}}
+@media (max-width:760px){.search-card{padding:22px 16px;border-radius:22px}.search-head h1{font-size:20px}.look-pin{width:40px;height:52px}}
+@media (prefers-reduced-motion:reduce){.look-pin,.lp-pupils,.lp-eyes,.search-scan,.spinner{animation:none}}
+/* solofit */
+.page main.wrap.solo{padding-bottom:40px}
+.page .solo .chat{height:max(460px,calc(100vh - 68px - 40px - 24px))}
+@media (max-width:760px){.page main.wrap.solo{padding-bottom:32px}.page .solo .chat{height:max(420px,calc(100vh - 56px - 20px - 14px))}}
+/* polish-1025 */
+.page .c-top{padding-right:72px}
+</style>
+</helmet>
+
+<div class="{{ pageCls }}">
+
+<header class="top">
+<div class="top-in">
+<button type="button" class="brand brand-btn" onClick="{{ goHome }}" aria-label="두리번 처음 화면">
+<svg viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="36" cy="47" r="6.5" fill="#0B2A22"></circle><circle cx="64" cy="47" r="6.5" fill="#0B2A22"></circle></svg>
+<span>두리번</span>
+</button>
+<sc-if value="{{ notHome }}" hint-placeholder-val="{{ false }}">
+<nav class="nav" aria-label="주요 메뉴">
+<button type="button" class="nav-link nav-btn" onClick="{{ goHome }}">홈</button>
+<button class="pill pill-fill" type="button" onClick="{{ askNew }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;margin-right:6px"><path d="M12 5v14M5 12h14"></path></svg>새 대화</button>
+</nav>
+</sc-if>
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}"><span style="margin-left:auto"></span></sc-if>
+<sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ true }}"><button class="pill pill-line" type="button" onClick="{{ openLogin }}">로그인</button></sc-if>
+<sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+<div class="menu-wrap">
+<button class="menu-btn" type="button" onClick="{{ toggleMenu }}" aria-label="메뉴" aria-expanded="{{ menuOpen }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div class="menu" role="menu">
+<div class="menu-user"><span class="menu-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.6"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></span>dooribeon님</div>
+<button class="{{ menuHistCls }}" role="menuitem" type="button" onClick="{{ goList }}">탐색 이력</button>
+<button class="{{ menuLikeCls }}" role="menuitem" type="button" onClick="{{ goLikes }}">관심 동네</button>
+<button class="menu-item menu-out" role="menuitem" type="button" onClick="{{ logout }}">로그아웃</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</header>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<main class="home-main">
+<section class="hero" id="top" aria-labelledby="hero-title">
+<div class="hero-in">
+<div class="intro">
+<h1 id="hero-title">어디에서<br><span>살지 고민</span>이신가요?</h1>
+<p>회사, 학교, 본가, 연인, 친구 등 여러 생활거점과 예산을 고려해<br class="d-br"> 나에게 딱 맞는 동네를 찾아드려요.</p>
+</div>
+
+<form class="ask" onSubmit="{{ homeSubmit }}">
+<svg class="ask-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"></path></svg>
+<label class="sr" for="condition">생활거점과 예산, 원하는 동네 조건</label>
+<textarea id="condition" value="{{ homeDraft }}" onChange="{{ onHome }}" onKeyDown="{{ onHomeKey }}" placeholder="{{ homePh }}"></textarea>
+<button class="hsend" type="button" onClick="{{ homeSubmit }}" disabled="{{ homeEmpty }}" aria-label="입력한 조건으로 시작하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+</form>
+
+<section class="examples" aria-labelledby="ex-title">
+<h2 id="ex-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"></path><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"></path></svg>이런 예시로 시작해보세요!</h2>
+<div class="hx-grid">
+<button class="hx" type="button" onClick="{{ hpick1 }}"><svg class="q" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 17v-4.5C4 9 5.6 6.7 9 5.5l.7 1.6C7.8 8 7 9.4 7 11h3v6H4zm10 0v-4.5c0-3.5 1.6-5.8 5-7l.7 1.6C17.8 8 17 9.4 17 11h3v6h-6z"></path></svg><span>여의도 회사, 수원 본가,<br class="ex-br"> 월세 70만 원 이하로 살고 싶어요.</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="hx" type="button" onClick="{{ hpick2 }}"><svg class="q" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 17v-4.5C4 9 5.6 6.7 9 5.5l.7 1.6C7.8 8 7 9.4 7 11h3v6H4zm10 0v-4.5c0-3.5 1.6-5.8 5-7l.7 1.6C17.8 8 17 9.4 17 11h3v6h-6z"></path></svg><span>강남 회사 주 5일 출근,<br class="ex-br"> 연인 집은 홍대, 월세 80만 원 이하예요.</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button class="hx" type="button" onClick="{{ hpick3 }}"><svg class="q" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 17v-4.5C4 9 5.6 6.7 9 5.5l.7 1.6C7.8 8 7 9.4 7 11h3v6H4zm10 0v-4.5c0-3.5 1.6-5.8 5-7l.7 1.6C17.8 8 17 9.4 17 11h3v6h-6z"></path></svg><span>서울대 통학 예정이고,<br class="ex-br"> 본가는 대전이에요. 월세 60만 원 이하예요.</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+</section>
+</div>
+</section>
+
+
+</main>
+</sc-if>
+
+<sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+<main class="{{ chatCls }}">
+
+<section class="chat" aria-label="두리번과 대화">
+<span class="tag chat-tag">준비된 AI 정리 예시 · 토스 출근은 가상 시연 설정</span>
+<div class="msgs" id="msgs">
+<sc-for list="{{ msgs }}" as="m" hint-placeholder-count="0">
+<div class="{{ m.cls }}"><sc-if value="{{ m.bot }}" hint-placeholder-val="{{ true }}"><svg class="avatar" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="36" cy="47" r="6.5" fill="#0B1F1A"></circle><circle cx="64" cy="47" r="6.5" fill="#0B1F1A"></circle></svg></sc-if><div class="bubble">{{ m.text }}</div></div>
+</sc-for>
+<sc-if value="{{ typing }}" hint-placeholder-val="{{ false }}"><div class="msg msg-bot"><svg class="avatar" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="36" cy="47" r="6.5" fill="#0B1F1A"></circle><circle cx="64" cy="47" r="6.5" fill="#0B1F1A"></circle></svg><div class="bubble typing" aria-label="두리번이 입력 중"><i></i><i></i><i></i></div></div></sc-if>
+</div>
+<form class="composer" onSubmit="{{ chatSend }}">
+<label class="sr" for="more">더 알려줄 내용</label>
+<textarea id="more" value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onChatKey }}" placeholder="더 알려줄 내용이 있으면 입력해 주세요"></textarea>
+<button class="send" type="button" onClick="{{ chatSend }}" disabled="{{ draftEmpty }}" aria-label="보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+</form>
+</section>
+
+<sc-if value="{{ showCond }}" hint-placeholder-val="{{ false }}">
+<a class="to-cond" href="#conditions"><span>아래에서 정리된 조건을 확인해 주세요</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></a>
+
+<section class="cond" id="conditions" aria-labelledby="cond-title">
+<div class="cond-head">
+<h2 id="cond-title">조건 확인 및 수정</h2>
+<p>주소만 꼭 정해 주세요. 장소명을 포함한 나머지는 선택이에요.<br>중요도·이동수단·편도시간·방문 빈도를 입력할수록 더 세밀하게 동네를 찾아볼 수 있어요.</p>
+</div>
+
+<h3 class="block-title">예산</h3>
+<div class="budget">
+<span class="money"><label for="deposit">보증금</label><input id="deposit" inputmode="numeric" value="{{ deposit }}" onChange="{{ onDeposit }}"><span>만 원 이하</span></span>
+<span class="money"><label for="rent">월세</label><input id="rent" inputmode="numeric" value="{{ rent }}" onChange="{{ onRent }}"><span>만 원 이하</span></span>
+</div>
+
+<h3 class="block-title">장소별 조건</h3>
+<div class="rows-head" aria-hidden="true"><span>장소명</span><span>주소</span><span>중요도</span><span>이동수단 · 편도시간</span><span>방문 빈도</span><span></span></div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+<div class="{{ r.rowCls }}">
+<div class="cell cell-name">
+<label class="cell-label" for="{{ r.nameId }}">장소명</label>
+<input class="name-input" id="{{ r.nameId }}" value="{{ r.name }}" onChange="{{ r.setName }}" placeholder="장소명 입력">
+</div>
+<div class="cell cell-addr">
+<span class="cell-label">주소</span>
+<sc-if value="{{ r.hasAddr }}" hint-placeholder-val="{{ true }}"><div class="addr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg><span>{{ r.addr }}</span><button type="button" class="addr-change" onClick="{{ r.openSearch }}">변경</button></div></sc-if>
+<sc-if value="{{ r.needAddr }}" hint-placeholder-val="{{ false }}"><div class="addr-need-row"><span class="addr-need"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5h.01"></path></svg>주소를 정해 주세요.</span><button type="button" class="addr-find" onClick="{{ r.openSearch }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg>주소 찾기</button></div></sc-if>
+<sc-if value="{{ r.isNearby }}" hint-placeholder-val="{{ false }}"><span class="nearby">후보 동네 주변에서 찾아요</span></sc-if>
+</div>
+<div class="cell cell-imp">
+<span class="cell-label">중요도</span>
+<select class="{{ r.impCls }}" value="{{ r.imp }}" onChange="{{ r.setImp }}" aria-label="중요도">
+<option value="">미설정</option>
+<option value="필수">필수</option>
+<option value="높음">높음</option>
+<option value="중간">중간</option>
+<option value="낮음">낮음</option>
+</select>
+</div>
+<div class="cell cell-move">
+<span class="cell-label">이동수단 · 편도시간</span>
+<div class="time">
+<select class="{{ r.modeCls }}" value="{{ r.mode }}" onChange="{{ r.setMode }}" aria-label="이동수단">
+<option value="">미설정</option>
+<option value="도보">도보</option>
+<option value="대중교통">대중교통</option>
+</select>
+<input inputmode="numeric" aria-label="편도시간(분)" disabled="{{ r.timeOff }}" value="{{ r.time }}" onChange="{{ r.setTime }}" placeholder="-"><span>분</span>
+</div>
+<sc-if value="{{ r.timeOff }}" hint-placeholder-val="{{ false }}"><span class="hint">이동수단을 먼저 골라 주세요</span></sc-if>
+</div>
+<div class="cell cell-freq">
+<span class="cell-label">방문 빈도</span>
+<div class="freq">
+<select class="{{ r.perCls }}" value="{{ r.per }}" onChange="{{ r.setPer }}" aria-label="빈도 기간">
+<option value="">미설정</option>
+<option value="주">주</option>
+<option value="월">월</option>
+</select>
+<input inputmode="numeric" aria-label="방문 횟수" disabled="{{ r.cntOff }}" value="{{ r.cnt }}" onChange="{{ r.setCnt }}" placeholder="-"><span>회</span>
+</div>
+</div>
+<div class="cell cell-del">
+<button type="button" class="del" onClick="{{ r.askDelete }}" aria-label="{{ r.delLabel }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg></button>
+</div>
+<sc-if value="{{ r.mustWarn }}" hint-placeholder-val="{{ false }}"><div class="warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3z"></path><path d="M12 10v5M12 18h.01"></path></svg>필수로 적용하려면 이동수단과 편도시간을 정해 주세요. 정하기 전까지 이 조건은 보류돼요.</div></sc-if>
+</div>
+</sc-for>
+<button type="button" class="add" onClick="{{ addRow }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>장소 추가</button>
+
+<div class="find">
+<sc-if value="{{ addrMissing }}" hint-placeholder-val="{{ false }}"><div class="find-warn" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>정확한 주소를 정해야 동네를 찾을 수 있어요.<br>주소가 비어 있는 장소: <b>{{ missingNames }}</b></span></div></sc-if>
+<button type="button" class="find-btn" onClick="{{ findNow }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>이 조건으로 동네 찾기</button>
+<small>버튼을 눌러야 동네 추천으로 넘어가요.</small>
+</div>
+</section>
+</sc-if>
+</main>
+</sc-if>
+
+<sc-if value="{{ isSearch }}" hint-placeholder-val="{{ false }}">
+<main class="search-main" aria-live="polite">
+<div class="search-card">
+<div class="search-head">
+<svg class="look-pin" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><g class="lp-eyes"><ellipse cx="34" cy="44" rx="11" ry="13" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="11" ry="13" fill="#fff"></ellipse><g class="lp-pupils"><circle cx="35" cy="46" r="5.5" fill="#0B2A22"></circle><circle cx="63" cy="46" r="5.5" fill="#0B2A22"></circle><circle cx="37" cy="43.5" r="1.7" fill="#fff"></circle><circle cx="65" cy="43.5" r="1.7" fill="#fff"></circle></g></g></svg>
+<div><h1>조건에 맞는 동네를 찾고 있어요</h1><p>두리번이 후보 동네를 두리번두리번 살펴보는 중이에요.</p></div>
+</div>
+<div class="search-body">
+<div class="search-map" style="{{ searchMapStyle }}">
+<div class="search-map-f"><div class="search-map-in" style="transform: {{ searchMapTransform }}"><img class="sz sz1" src="/_blob/b8456264c966a08cade0578364a901af" alt="" draggable="false"><img class="sz sz2" src="/_blob/c3442e24a4ff9c8f9333ace8eedece7f" alt="" draggable="false"><img class="sz sz3" src="/_blob/29f3fdc8279c3002773d7b86ef09a55d" alt="" draggable="false"></div></div>
+<div class="search-scan" aria-hidden="true"></div>
+<sc-for list="{{ searchPins }}" as="sp" hint-placeholder-count="0">
+<span class="spin-pin" style="left: {{ sp.left }}px; top: {{ sp.top }}px; animation-delay: {{ sp.delay }}"><i><span class="ltr">{{ sp.id }}</span></i></span>
+</sc-for>
+</div>
+<ol class="search-steps">
+<sc-for list="{{ searchSteps }}" as="s" hint-placeholder-count="4">
+<li class="{{ s.cls }}"><span class="sstep-ic"><sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if><sc-if value="{{ s.now }}" hint-placeholder-val="{{ true }}"><i class="spinner"></i></sc-if></span><span class="sstep-tx"><b>{{ s.title }}</b><small>{{ s.sub }}</small></span></li>
+</sc-for>
+</ol>
+</div>
+<p class="search-note">금액·이동시간은 데모용 샘플 데이터로 찾고 있어요.</p>
+</div>
+</main>
+</sc-if>
+
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+<main class="wrap hist">
+<h1 class="hist-title">탐색 이력</h1>
+<div class="hist-list">
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="2">
+<article class="hcard">
+<button type="button" class="hcard-main" onClick="{{ it.open }}" aria-label="{{ it.label }}">
+<span class="h-left"><strong class="h-title">{{ it.title }}</strong><span class="h-budget">{{ it.budget }}</span></span>
+<span class="h-right"><small>후보 동네</small><b>{{ it.count }}곳</b></span>
+</button>
+<button type="button" class="{{ it.starCls }}" aria-pressed="{{ it.fav }}" aria-label="{{ it.starLabel }}" onClick="{{ it.toggleFav }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path></svg></button>
+</article>
+</sc-for>
+<sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}"><p class="hist-empty">{{ listEmptyText }}</p></sc-if>
+</div>
+</main>
+</sc-if>
+
+<sc-if value="{{ isLikes }}" hint-placeholder-val="{{ false }}">
+<main class="wrap hist">
+<h1 class="hist-title">관심 동네</h1>
+<p class="likes-note">추천 결과에서 하트로 표시한 동네예요. 누르면 그때의 추천 결과에서 그 동네를 펼쳐 보여줘요.</p>
+<div class="cards like-cards">
+<sc-for list="{{ likeCards }}" as="c" hint-placeholder-count="2">
+<article class="card">
+<button type="button" class="card-main" onClick="{{ c.open }}" aria-label="{{ c.openLabel }}">
+<div class="c-top"><span class="rank"><span class="ltr">{{ c.id }}</span></span><span class="c-name">{{ c.name }}</span><span class="c-strength">{{ c.strength }}</span><span class="score">예시 점수 <b>{{ c.score }}<small>점</small></b></span></div>
+<div class="c-money"><div><small>보증금</small><b>{{ c.deposit }}</b></div><div><small>월세</small><b>{{ c.rent }}</b></div></div>
+<div class="c-places">
+<sc-for list="{{ c.places }}" as="p" hint-placeholder-count="4">
+<div class="{{ p.cls }}"><small>{{ p.name }}</small><b>{{ p.time }}분</b><em>{{ p.over }}</em></div>
+</sc-for>
+</div>
+</button>
+<button type="button" class="{{ c.heartCls }}" onClick="{{ c.toggleHeart }}" aria-label="{{ c.heartLabel }}" aria-pressed="{{ c.liked }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5C9.6 18.9 3 14.6 3 9.4 3 6.6 5.1 4.5 7.7 4.5c1.8 0 3.3 1 4.3 2.5 1-1.5 2.5-2.5 4.3-2.5 2.6 0 4.7 2.1 4.7 4.9 0 5.2-6.6 9.5-9 11.1z"></path></svg></button>
+</article>
+</sc-for>
+</div>
+<sc-if value="{{ likesEmpty }}" hint-placeholder-val="{{ false }}"><p class="hist-empty">관심 동네가 아직 없어요. 동네 추천 카드의 하트를 눌러 추가해 보세요.</p></sc-if>
+<p class="likes-sample">금액·이동시간은 데모용 샘플 · 점수는 데모용 예시 점수</p>
+</main>
+</sc-if>
+
+<sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+<main class="wrap">
+
+<div class="head">
+<div>
+<sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}"><button type="button" class="back" onClick="{{ goBack }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>{{ backText }}</button></sc-if>
+<div class="title-row">
+<h1>동네 추천</h1>
+<button type="button" class="{{ starCls }}" aria-label="{{ starTip }}" aria-pressed="{{ saved }}" onClick="{{ toggleSave }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path></svg><span>저장</span></button>
+
+</div>
+<div class="summary">
+<sc-for list="{{ chips }}" as="ch" hint-placeholder-count="3"><span class="chip"><sc-if value="{{ ch.hasB }}" hint-placeholder-val="{{ true }}"><b>{{ ch.b }}</b></sc-if>{{ ch.t }}</span></sc-for>
+</div>
+</div>
+<button type="button" class="edit" onClick="{{ editCond }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>조건 수정하기</button>
+</div>
+
+<div class="layout">
+
+<div class="map-col" id="map-col" style="order: {{ mapOrder }}">
+<div class="{{ mapBoxCls }}" id="mapbox" aria-label="후보 동네 지도"><div class="map-zoom"><button type="button" class="mz-btn" onClick="{{ zoomIn }}" disabled="{{ zoomInOff }}" aria-label="지도 확대"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><button type="button" class="mz-btn" onClick="{{ zoomOut }}" disabled="{{ zoomOutOff }}" aria-label="지도 축소"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button></div>
+<div class="map-inner" style="transform: {{ mapTransform }}">
+<img src="/_blob/29f3fdc8279c3002773d7b86ef09a55d" alt="서울 관악구·동작구·금천구 일대 지도" draggable="false">
+</div>
+<div class="map-tint"></div>
+<sc-if value="{{ hasOpen }}" hint-placeholder-val="{{ false }}">
+<div class="run" style="left: {{ runLeft }}px; top: {{ runTop }}px"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="14" cy="4.5" r="1.8"></circle><path d="M10 20l2-5-3-2 2-5 3 2 3 1M9 8l-3 2M13 15l3 5"></path></svg></i>{{ runName }}</div>
+</sc-if>
+<sc-for list="{{ markers }}" as="m" hint-placeholder-count="3">
+<div class="{{ m.cls }}" style="left: {{ m.left }}px; top: {{ m.top }}px">
+<button type="button" class="mk-btn" onClick="{{ m.pick }}" aria-label="{{ m.label }}"><i><span class="ltr">{{ m.rank }}</span></i><span class="mk-name">{{ m.name }}</span></button>
+<span class="mk-tail" aria-hidden="true"></span>
+</div>
+</sc-for>
+<div class="map-top">
+<sc-if value="{{ hasOpen }}" hint-placeholder-val="{{ false }}"><button type="button" class="map-chip map-back" onClick="{{ closeAll }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>후보 전체 보기</button></sc-if>
+<sc-if value="{{ noOpen }}" hint-placeholder-val="{{ true }}"><button type="button" class="map-chip map-all" onClick="{{ resetMap }}" aria-label="후보 전체 보기">{{ candText }}</button></sc-if>
+</div>
+<span class="attr">지도 © Kakao</span>
+</div>
+</div>
+
+<div class="list-head">
+<strong id="list-title">{{ listTitle }}</strong>
+<span class="sample">금액·이동시간은 데모용 샘플 · 점수는 데모용 예시 점수</span>
+</div>
+<sc-if value="{{ noCand }}" hint-placeholder-val="{{ false }}"><p class="no-cand">이 조건을 모두 만족하는 준비된 후보가 없어요.<br>조건 수정하기에서 예산이나 필수 시간을 조정해 보세요.</p></sc-if>
+<div class="cards" role="list" aria-labelledby="list-title">
+<sc-for list="{{ cards }}" as="c" hint-placeholder-count="3">
+<article class="{{ c.cls }}" id="{{ c.domId }}" style="order: {{ c.order }}">
+<button type="button" class="card-main" onClick="{{ c.toggle }}" aria-expanded="{{ c.open }}">
+<div class="c-top"><span class="rank"><span class="ltr">{{ c.id }}</span></span><span class="c-name">{{ c.name }}</span><span class="c-strength">{{ c.strength }}</span><span class="score">예시 점수 <b>{{ c.score }}<small>점</small></b></span></div>
+<div class="c-money"><div><small>보증금</small><b>{{ c.deposit }}</b></div><div><small>월세</small><b>{{ c.rent }}</b></div></div>
+<div class="c-places">
+<sc-for list="{{ c.places }}" as="p" hint-placeholder-count="4">
+<div class="{{ p.cls }}"><small>{{ p.name }}</small><b>{{ p.time }}분</b><em>{{ p.over }}</em></div>
+</sc-for>
+</div>
+</button>
+<button type="button" class="{{ c.heartCls }}" onClick="{{ c.toggleHeart }}" aria-label="{{ c.heartLabel }}" aria-pressed="{{ c.liked }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5C9.6 18.9 3 14.6 3 9.4 3 6.6 5.1 4.5 7.7 4.5c1.8 0 3.3 1 4.3 2.5 1-1.5 2.5-2.5 4.3-2.5 2.6 0 4.7 2.1 4.7 4.9 0 5.2-6.6 9.5-9 11.1z"></path></svg><span>관심</span></button>
+<div class="{{ c.detailCls }}">
+<div class="detail">
+<div class="detail-in">
+<div class="photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="11" r="2"></circle><path d="M21 17l-5-5-8 7"></path></svg><strong>{{ c.name }} 사진 자리</strong><small>사진 사용 여부와 자료는 제작 시 검토</small></div>
+<div class="sec">
+<h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path></svg>주거비 정보</h4>
+<div class="money-box"><div><small>보증금</small><b>{{ c.deposit }}</b><span class="lim">{{ c.depLim }}</span></div><div><small>월세</small><b>{{ c.rent }}</b><span class="lim">{{ c.rentLim }}</span></div></div>
+<p class="note">가상 계약 사례 1건의 보증금·월세 조합이에요. 관리비는 포함하지 않았어요.</p>
+</div>
+<div class="sec">
+<h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg>주요 거점까지 이동시간 · 편도</h4>
+<div class="trips">
+<sc-for list="{{ c.places }}" as="p" hint-placeholder-count="4">
+<div class="{{ p.tripCls }}">
+<span class="trip-ic">
+<sc-if value="{{ p.isWalk }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4.5" r="1.8"></circle><path d="M9 21l2-6 3 3v3M8 12l2-4h4l2 4M11 15l1-4"></path></svg></sc-if>
+<sc-if value="{{ p.isTransit }}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3.5" width="14" height="14" rx="3"></rect><path d="M5 11h14M9 21l-2-3.5M15 21l2-3.5"></path><circle cx="9" cy="14.5" r=".8"></circle><circle cx="15" cy="14.5" r=".8"></circle></svg></sc-if>
+</span>
+<span><span class="trip-name">{{ p.name }}</span><span class="trip-sub">{{ p.sub }}</span></span>
+<span class="trip-right"><b>{{ p.time }}분</b><small>{{ p.verdict }}</small></span>
+</div>
+</sc-for>
+</div>
+</div>
+<div class="sec pros">
+<h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 11v9H4v-9zM7 11l4-7c1.5 0 2.5 1 2.2 2.6L12.7 10H18a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7"></path></svg>이런 점이 좋아요</h4>
+<ul class="pc">
+<sc-for list="{{ c.pros }}" as="t" hint-placeholder-count="2"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg><span>{{ t.text }}</span></li></sc-for>
+</ul>
+</div>
+<div class="sec cons">
+<h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3z"></path><path d="M12 10v5M12 18h.01"></path></svg>이런 점은 고려해 주세요</h4>
+<ul class="pc">
+<sc-for list="{{ c.cons }}" as="t" hint-placeholder-count="2"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5M12 8h.01"></path></svg><span>{{ t.text }}</span></li></sc-for>
+</ul>
+</div>
+<button type="button" class="fold" onClick="{{ c.toggle }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>접기</button>
+</div>
+</div>
+</div>
+</article>
+</sc-for>
+</div>
+
+</div>
+</main>
+</sc-if>
+
+<footer class="foot">
+<div class="foot-in">
+<span>© 2026 Dooribeon</span>
+</div>
+</footer>
+
+<sc-if value="{{ loginOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim" onClick="{{ closeLoginBg }}">
+<form class="login" role="dialog" aria-modal="true" aria-labelledby="login-title" onSubmit="{{ submitLogin }}" onClick="{{ stop }}">
+<button type="button" class="login-x" aria-label="로그인 창 닫기" onClick="{{ closeLoginBg }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+<div class="login-head"><svg class="login-pin" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="36" cy="47" r="6.5" fill="#0B2A22"></circle><circle cx="64" cy="47" r="6.5" fill="#0B2A22"></circle></svg><h3 id="login-title">두리번 로그인</h3></div>
+<label class="sr" for="login-id">아이디</label>
+<input id="login-id" class="login-input" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" lang="en" placeholder="아이디를 입력해 주세요" value="{{ uid }}" onChange="{{ onUid }}" onKeyDown="{{ loginKey }}">
+<label class="sr" for="login-pw">비밀번호</label>
+<input id="login-pw" class="login-input" type="password" autocomplete="current-password" placeholder="비밀번호를 입력해 주세요" value="{{ upw }}" onChange="{{ onUpw }}" onKeyDown="{{ loginKey }}">
+<sc-if value="{{ loginErr }}" hint-placeholder-val="{{ false }}"><p class="login-err">아이디 또는 비밀번호가 맞지 않아요. 데모 계정: dooribeon / dooribeon1004</p></sc-if>
+<button class="login-btn" type="button" onClick="{{ submitLogin }}">로그인</button>
+<button class="join-btn" type="button">회원가입</button>
+<div class="sns-line"><span>SNS 계정으로 간편하게 시작하기</span></div>
+<div class="sns">
+<button type="button" class="sns-item"><img class="sns-ic" src="/_blob/01eaafcadf605a5507a1b3ae6177d61f" alt="" width="64" height="64"><span class="sns-label">구글 로그인</span></button>
+<button type="button" class="sns-item"><img class="sns-ic" src="/_blob/65611710afd34cc43179c0c5e109d416" alt="" width="64" height="64"><span class="sns-label">네이버 로그인</span></button>
+<button type="button" class="sns-item"><img class="sns-ic" src="/_blob/954f35cacf8e1fda7e4750f060c816c7" alt="" width="64" height="64"><span class="sns-label">카카오 로그인</span></button>
+</div>
+<div class="find-links"><a href="#">아이디 찾기</a><span aria-hidden="true"></span><a href="#">비밀번호 찾기</a></div>
+</form>
+</div>
+</sc-if>
+
+<sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="search-title">
+<h3 id="search-title">주소 찾기</h3>
+<div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg><label class="sr" for="addr-q">장소 이름이나 주소</label><input id="addr-q" value="{{ query }}" onChange="{{ onQuery }}" placeholder="장소 이름이나 주소를 입력해 주세요"></div>
+<sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+<ul class="results">
+<sc-for list="{{ results }}" as="it" hint-placeholder-count="2"><li><button type="button" onClick="{{ it.pick }}"><b>{{ it.name }}</b><span>{{ it.addr }}</span></button></li></sc-for>
+</ul>
+</sc-if>
+<sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><p class="no-result">검색 결과가 없어요.</p></sc-if>
+<p class="demo-note">데모용 검색 결과예요. 실제 주소 검색은 아직 연결하지 않았어요.</p>
+<div class="dialog-actions"><button type="button" class="btn-cancel" onClick="{{ closeSearch }}">닫기</button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="del-title">
+<h3 id="del-title">{{ confirmTitle }}</h3>
+<p>이 장소와 연결된 설정이 이번 추천 조건에서 빠져.</p>
+<div class="dialog-actions">
+<button type="button" class="btn-cancel" onClick="{{ cancelDelete }}">취소</button>
+<button type="button" class="btn-del" onClick="{{ doDelete }}">삭제</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ newOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="new-title">
+<h3 id="new-title">현재 대화를 종료하고 새로 시작할까?</h3>
+<p>지금까지 나눈 대화와 정리한 조건은 사라져. 저장한 탐색 이력은 그대로 남아.</p>
+<div class="dialog-actions">
+<button type="button" class="btn-cancel" onClick="{{ cancelNew }}">취소</button>
+<button type="button" class="btn-new" onClick="{{ confirmNew }}">종료하고 새로 시작</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+// 두리번 시연용 한 페이지. 실제 AI·저장·인증 없이 준비된 시나리오와 샘플값으로 동작한다.
+var ADDR_MSG = '동네를 찾으려면 주요 거점의 정확한 주소가 필요해. 채팅에 장소 이름이나 주소를 알려줘도 되고, 오른쪽 조건에서 주소를 검색해 선택해도 돼.';
+var CHURCH_Q = '지금 다니는 교회가 어디야? 이름이나 주소를 알려줘.';
+var FRIEND_Q = '친구들과 주로 만나는 장소는 어디야? 장소 이름이나 주소, 기준으로 삼을 역을 알려줘.';
+var FINAL_MSG = '알려준 내용을 오른쪽 조건에 정리했어. 바꾸고 싶은 게 있으면 여기에 말로 알려 줘도 되고, 조건 칸에서 직접 고쳐도 돼.\n\n중요도·이동수단·편도시간·방문 빈도는 꼭 채우지 않아도 되지만, 설정할수록 네 생활에 더 잘 맞는 세밀한 추천을 받을 수 있어.\n\n모든 확인이 끝나면 ‘이 조건으로 동네 찾기’를 눌러 줘.';
+var RANK = { '필수': 0, '높음': 1, '중간': 2, '': 3, '낮음': 4 };
+var PLACES = [
+  { name: '토스 아크플레이스', addr: '서울 강남구 테헤란로 142' },
+  { name: '창훈대교회', addr: '경기 수원시 장안구 연무동' },
+  { name: '수원시청역', addr: '경기 수원시 권선구 효원로 지하270' },
+  { name: '근처 공원', addr: '후보 동네마다 가까운 공원' }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      view: 'home', from: '', vw: 1440,
+      homeDraft: '',
+      msgs: [], stage: 0, typing: false, streaming: false, draft: '',
+      deposit: '', rent: '', rows: [], nextId: 1, confirmId: null, searchId: null, query: '',
+      sets: {}, curKey: null, detailKey: null, saves: [], favs: {},
+      openId: null, instantId: null, liked: {}, likeSnap: [], tab: 'all', favSnap: null,
+      newOpen: false, mw: 800, mh: 640,
+      loggedIn: false, loginOpen: false, pendingSave: null, menuOpen: false, uid: '', upw: '', loginErr: false
+    };
+    this.measure = this.measure.bind(this);
+    this.onResize = this.onResize.bind(this);
+    this.lastMsgCount = '';
+  }
+  fitInit() {
+    // 카드마다 예시 점수가 이름 줄에 다 들어가는지 재서, 안 들어가면 보증금·월세 줄 오른쪽으로 옮긴다
+    var fit = function () {}; // 10/16d: 강점 문구를 이름 아래로 옮겨 점수 위치를 CSS로만 정함
+    this.__fit = fit;
+    window.addEventListener('resize', fit);
+    setTimeout(fit, 0); setTimeout(fit, 400);
+    try { if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fit); } } catch (e) { /* 글꼴 로딩 감지 미지원 */ }
+  }
+  componentDidMount() {
+    this.fitInit();
+    this.dragInit();
+    var self = this;
+    window.addEventListener('resize', this.onResize);
+    this.onResize();
+    try { this.ro = new ResizeObserver(function () { self.measure(); }); } catch (e) { /* 미지원 시 창 크기 변화로만 측정 */ }
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+    if (this.ro) { this.ro.disconnect(); }
+  }
+  componentDidUpdate() {
+    if (this.__fit) { requestAnimationFrame(this.__fit); }
+    var el = document.getElementById('mapbox');
+    if (el && el !== this.observedMap) {
+      this.observedMap = el;
+      try { if (this.ro) { this.ro.observe(el); } } catch (e) { /* 첫 측정값 사용 */ }
+      this.measure();
+    }
+    this.fitAddr();
+    var lastM = this.state.msgs[this.state.msgs.length - 1];
+    var n = this.state.msgs.length + ':' + (this.state.typing ? 1 : 0) + ':' + (lastM ? lastM.text.length : 0);
+    if (n !== this.lastMsgCount) {
+      this.lastMsgCount = n;
+      setTimeout(function () { var m = document.getElementById('msgs'); if (m) { m.scrollTop = m.scrollHeight; } }, 30);
+    }
+  }
+  onResize() {
+    var w = window.innerWidth;
+    if (w !== this.state.vw) { this.setState({ vw: w }); }
+    this.measure();
+  }
+  // ---------- 지도 확대·축소·이동 (사용자 조작)
+  userView(b) {
+    var st = this.state, mw = st.mw, mh = st.mh;
+    var kmin = Math.max(mw / 2846, mh / 1648), kmax = 1.2;
+    var k = Math.min(kmax, Math.max(kmin, b.k * (st.uk || 1))), f = k / b.k;
+    var tx = mw / 2 - (mw / 2 - b.tx) * f + (st.ux || 0), ty = mh / 2 - (mh / 2 - b.ty) * f + (st.uy || 0);
+    tx = Math.min(0, Math.max(mw - 2846 * k, tx));
+    ty = Math.min(0, Math.max(mh - 1648 * k, ty));
+    return { k: k, tx: tx, ty: ty, base: b, kmin: kmin, kmax: kmax };
+  }
+  panOf(v) {
+    var st = this.state, f = v.k / v.base.k;
+    return { ux: v.tx - (st.mw / 2 - (st.mw / 2 - v.base.tx) * f), uy: v.ty - (st.mh / 2 - (st.mh / 2 - v.base.ty) * f) };
+  }
+  zoomBy(m) {
+    var v = this.__v;
+    if (!v) { return; }
+    var nk = Math.min(v.kmax, Math.max(v.kmin, v.k * m)), f = nk / v.k, p = this.panOf(v);
+    // 지금 보이는 지도 가운데를 유지하며 확대·축소
+    this.setState({ uk: nk / v.base.k, ux: p.ux * f, uy: p.uy * f });
+  }
+  zoomAt(m, px, py) {
+    var v = this.__v;
+    if (!v) { return; }
+    var st = this.state, nk = Math.min(v.kmax, Math.max(v.kmin, v.k * m)), r = nk / v.k;
+    if (Math.abs(r - 1) < 0.0005) { return; }
+    // 커서(px, py) 아래 지점이 그대로 남도록 이동량 계산
+    var tx = px - (px - v.tx) * r, ty = py - (py - v.ty) * r, f = nk / v.base.k;
+    this.__v = { k: nk, tx: tx, ty: ty, base: v.base, kmin: v.kmin, kmax: v.kmax };
+    this.setState({ uk: f, ux: tx - (st.mw / 2 - (st.mw / 2 - v.base.tx) * f), uy: ty - (st.mh / 2 - (st.mh / 2 - v.base.ty) * f) });
+  }
+  dragInit() {
+    var self = this, d = null;
+    if (this.__dragOn) { return; }
+    this.__dragOn = true;
+    var live = function () { document.body.classList.add('map-live'); clearTimeout(self.__liveT); self.__liveT = setTimeout(function () { document.body.classList.remove('map-live'); }, 180); };
+    // 지도 위 휠: 페이지는 그대로, 커서 위치를 중심으로 확대·축소
+    document.addEventListener('wheel', function (e) {
+      var box = e.target && e.target.closest ? e.target.closest('#mapbox') : null;
+      if (!box) { return; }
+      e.preventDefault();
+      var dy = e.deltaY * (e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? 400 : 1));
+      if (!dy) { return; }
+      var r = box.getBoundingClientRect();
+      live();
+      self.zoomAt(Math.exp(-Math.max(-300, Math.min(300, dy)) * 0.0022), e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+    // 두 손가락 벌리기·오므리기
+    var pts = {}, pinch = null;
+    document.addEventListener('pointerdown', function (e) {
+      var box = e.target && e.target.closest ? e.target.closest('#mapbox') : null;
+      if (!box || e.pointerType !== 'touch') { return; }
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var ids = Object.keys(pts);
+      if (ids.length === 2) { var p1 = pts[ids[0]], p2 = pts[ids[1]]; pinch = { d: Math.hypot(p1.x - p2.x, p1.y - p2.y), box: box }; d = null; }
+    });
+    document.addEventListener('pointermove', function (e) {
+      if (!pts[e.pointerId]) { return; }
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var ids = Object.keys(pts);
+      if (!pinch || ids.length < 2) { return; }
+      var p1 = pts[ids[0]], p2 = pts[ids[1]], nd = Math.hypot(p1.x - p2.x, p1.y - p2.y), r = pinch.box.getBoundingClientRect();
+      if (pinch.d > 0 && Math.abs(nd - pinch.d) > 1) { live(); self.zoomAt(nd / pinch.d, (p1.x + p2.x) / 2 - r.left, (p1.y + p2.y) / 2 - r.top); pinch.d = nd; }
+    });
+    var lift = function (e) { delete pts[e.pointerId]; if (Object.keys(pts).length < 2) { pinch = null; } };
+    document.addEventListener('pointerup', lift);
+    document.addEventListener('pointercancel', lift);
+    document.addEventListener('pointerdown', function (e) {
+      var box = e.target && e.target.closest ? e.target.closest('#mapbox') : null;
+      if (!box || e.target.closest('button') || (e.button !== undefined && e.button !== 0)) { return; }
+      if (pinch) { return; }
+      var v = self.__v, p = v ? self.panOf(v) : { ux: 0, uy: 0 };
+      d = { x: e.clientX, y: e.clientY, ux: p.ux, uy: p.uy, box: box, moved: false };
+    });
+    document.addEventListener('pointermove', function (e) {
+      if (!d || pinch) { return; }
+      var dx = e.clientX - d.x, dy = e.clientY - d.y;
+      if (!d.moved && Math.abs(dx) + Math.abs(dy) < 4) { return; }
+      if (!d.moved) { d.moved = true; d.box.classList.add('map-drag'); }
+      if (e.cancelable) { e.preventDefault(); }
+      self.setState({ ux: d.ux + dx, uy: d.uy + dy });
+    }, { passive: false });
+    var up = function () {
+      if (!d) { return; }
+      var was = d.moved, box = d.box;
+      d = null;
+      if (was) {
+        var v = self.__v;
+        if (v) { var p = self.panOf(v); self.setState({ ux: p.ux, uy: p.uy }); }
+        setTimeout(function () { box.classList.remove('map-drag'); }, 30);
+      }
+    };
+    document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', up);
+  }
+  measure() {
+    var el = document.getElementById('mapbox');
+    if (!el) { return; }
+    var w = el.clientWidth, h = el.clientHeight;
+    if (w && h && (w !== this.state.mw || h !== this.state.mh)) { this.setState({ mw: w, mh: h }); }
+  }
+  // 주소 칸 폭 = 가장 긴 주소 길이 → ‘변경’이 주소 바로 옆에 줄 맞춰 붙음
+  fitAddr() {
+    var c = document.getElementById('conditions'); if (!c) { return; }
+    var spans = c.querySelectorAll('.addr > span'), w = 0;
+    for (var i = 0; i < spans.length; i++) {
+      var sp = spans[i], prev = sp.style.cssText;
+      sp.style.cssText = 'flex:none;white-space:nowrap';
+      w = Math.max(w, Math.ceil(sp.getBoundingClientRect().width));
+      sp.style.cssText = prev;
+    }
+    var v = (w ? w + 4 : 300) + 'px';
+    if (c.style.getPropertyValue('--addr-w') !== v) { c.style.setProperty('--addr-w', v); }
+  }
+  digits(v, n) { return String(v || '').replace(/[^0-9]/g, '').slice(0, n || 4); }
+  man(n) { return Number(n).toLocaleString('ko-KR') + '만 원'; }
+  // ---------- 데모용 샘플 (DEMO_SPEC 4절): 금액·이동시간은 시연값, 좌표는 첨부 지도 이미지 기준 px
+  allData() {
+    if (!this._all) {
+      this._all = [      { id: 'A', name: '낙성대역 주변', strength: '출근이 가장 짧아요', score: 82, deposit: '1,000만 원', rent: '50만 원',
+        x: 2103, y: 797, run: { name: '낙성대공원 산책로', x: 2006, y: 942 },
+        times: [30, 70, 18, 80], runSub: '낙성대공원 산책로',
+        pros: ['토스까지 대중교통 30분으로 후보 중 가장 짧아요.', '창훈대교회까지 70분으로 정한 기준(70분 이내) 안이에요.'],
+        cons: ['러닝(낙성대공원 산책로)까지 도보 18분으로, 기준 15분보다 3분 더 걸려요.', '보증금·월세가 예산 상한에 딱 맞아요.'] },
+      { id: 'D', name: '신림역 주변', strength: '출근도 러닝도 무난해요', score: 78, deposit: '1,000만 원', rent: '49만 원',
+        x: 1345, y: 628, run: { name: '도림천 산책로', x: 1236, y: 520 },
+        times: [35, 75, 12, 75], runSub: '도림천(별빛내린천) 산책로',
+        pros: ['토스까지 대중교통 35분으로 출근이 두 번째로 짧아요.', '러닝(도림천 산책로)까지 도보 12분이에요.'],
+        cons: ['창훈대교회까지 75분으로, 기준 70분보다 5분 더 걸려요.', '보증금이 예산 상한(1,000만 원)이에요.'] },
+      { id: 'C', name: '신대방역 주변', strength: '주거비가 가장 낮아요', score: 74, deposit: '500만 원', rent: '42만 원',
+        x: 972, y: 487, run: { name: '보라매공원 중앙트랙', x: 1121, y: 324 },
+        times: [40, 80, 7, 90], runSub: '보라매공원 중앙트랙',
+        pros: ['보증금 500만 원·월세 42만 원으로 후보 중 가장 낮아요.', '러닝(보라매공원 중앙트랙)까지 도보 7분이에요.'],
+        cons: ['창훈대교회까지 80분으로, 기준 70분보다 10분 더 걸려요.', '친구(수원시청역)까지 90분으로 후보 중 가장 멀어요.'] },
+      { id: 'E', name: '구로디지털단지역 주변', strength: '주거비와 출근의 절충안이에요', score: 68, deposit: '800만 원', rent: '45만 원',
+        x: 700, y: 640, run: { name: '도림천 산책로', x: 640, y: 505 },
+        times: [45, 85, 10, 80], runSub: '도림천 산책로',
+        pros: ['보증금 800만 원·월세 45만 원으로 주거비 부담이 낮은 편이에요.', '러닝(도림천 산책로)까지 도보 10분이에요.'],
+        cons: ['창훈대교회까지 85분으로, 기준 70분보다 15분 더 걸려요.', '토스까지 대중교통 45분으로 출근이 긴 편이에요.'] },
+      { id: 'B', name: '금천구청역 주변', strength: '수원 가는 길이 가장 짧아요', score: 61, deposit: '1,000만 원', rent: '48만 원',
+        x: 534, y: 1359, run: { name: '안양천 한내길', x: 427, y: 1266 },
+        times: [50, 60, 12, 65], runSub: '안양천 한내길',
+        pros: ['창훈대교회 60분, 친구(수원시청역) 65분으로 수원 방면이 가장 가까워요.', '러닝(안양천 한내길)까지 도보 12분이에요.'],
+        cons: ['토스까지 대중교통 50분으로 후보 중 가장 길어요.', '보증금이 예산 상한(1,000만 원)이에요.'] }].map(function (c) { return Object.assign(c, { depN: parseInt(c.deposit.replace(/[^0-9]/g, ''), 10), rentN: parseInt(c.rent.replace(/[^0-9]/g, ''), 10) }); });
+    }
+    return this._all;
+  }
+  // 장소 행이 샘플의 어느 이동시간에 해당하는지 (0 출근 · 1 교회 · 2 러닝 · 3 친구)
+  kindOf(r) {
+    var s = (r.name || '') + ' ' + (r.addr || '');
+    if (/토스|아크플레이스|회사|직장/.test(s)) { return 0; }
+    if (/교회/.test(s)) { return 1; }
+    if (/러닝|공원|산책/.test(s)) { return 2; }
+    if (/친구|수원시청/.test(s)) { return 3; }
+    return -1;
+  }
+  sortRows(rows) {
+    return rows.map(function (r, i) { return { r: r, i: i }; })
+      .sort(function (a, b) { return (RANK[a.r.imp || ''] - RANK[b.r.imp || '']) || (a.i - b.i); })
+      .map(function (x) { return x.r; });
+  }
+  rowName(r) { return r.name || (r.addr ? r.addr.split(' · ')[0] : '이 장소'); }
+  // 예산·필수 시간 통과 후보를 가장 우선순위 높은 장소까지 이동시간 짧은 순으로 (중요도 모두 미설정이면 평균)
+  results(cond) {
+    var self = this, all = this.allData();
+    var dep = Number(cond.deposit) || 0, rent = Number(cond.rent) || 0;
+    var rows = this.sortRows(cond.rows.filter(function (r) { return r.name || r.addr; }));
+    var list = all.filter(function (c) {
+      if (dep && c.depN > dep) { return false; }
+      if (rent && c.rentN > rent) { return false; }
+      return rows.every(function (r) {
+        var k = self.kindOf(r);
+        return !(r.imp === '필수' && r.mode && r.time && k >= 0) || c.times[k] <= Number(r.time);
+      });
+    });
+    var top = rows.filter(function (r) { return r.imp && self.kindOf(r) >= 0; })[0];
+    var known = rows.filter(function (r) { return self.kindOf(r) >= 0; });
+    function key(c) {
+      if (top) { return c.times[self.kindOf(top)]; }
+      if (!known.length) { return 0; }
+      return known.reduce(function (s, r) { return s + c.times[self.kindOf(r)]; }, 0) / known.length;
+    }
+    list = list.map(function (c, i) { return { c: c, i: i }; }).sort(function (a, b) { return (key(a.c) - key(b.c)) || (a.i - b.i); }).map(function (x) { return x.c; });
+    var label = top ? (self.kindOf(top) === 0 ? '출근시간 짧은 순' : self.rowName(top) + ' 이동시간 짧은 순') : '평균 이동시간 짧은 순';
+    return { list: list, rows: rows, label: label };
+  }
+  placesFor(c, rows) {
+    var self = this;
+    return rows.map(function (r) {
+      var k = self.kindOf(r), t = k >= 0 ? c.times[k] : null;
+      var limit = r.mode && r.time ? Number(r.time) : null;
+      var over = limit !== null && t !== null && t > limit ? t - limit : 0;
+      var mode = r.mode || (k === 2 ? '도보' : '대중교통');
+      var sub = (k === 2 ? c.runSub + ' · ' : ((k === 1 || k === 3) && r.addr ? r.addr.split(' · ')[0] + ' · ' : '')) + mode + (r.mode ? '' : ' 기본값') + ' · 중요도 ' + (r.imp || '미설정') + (r.per && r.cnt ? ' · ' + r.per + ' ' + r.cnt + '회' : '');
+      return {
+        name: self.rowName(r), time: t === null ? '–' : t, sub: sub,
+        verdict: t === null ? '이동시간 미확인' : (limit === null ? '기준 미설정 · 참고' : (over ? '기준보다 ' + over + '분 더' : '기준 ' + limit + '분 이내')),
+        over: over ? '+' + over + '분' : '',
+        cls: over ? 'pl pl-over' : 'pl',
+        tripCls: 'trip' + (over ? ' trip-over' : '') + (limit === null ? ' trip-ref' : ''),
+        isWalk: mode === '도보', isTransit: mode !== '도보'
+      };
+    });
+  }
+  condKey(cond) {
+    var s = JSON.stringify(cond), h = 0;
+    for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
+    return 'k' + (h >>> 0).toString(36);
+  }
+  budgetText(cond) {
+    return '보증금 ' + (cond.deposit ? this.man(cond.deposit) + ' 이하' : '미설정') + ' · 월세 ' + (cond.rent ? this.man(cond.rent) + ' 이하' : '미설정');
+  }
+  histTitle(cond) {
+    var self = this, rows = this.sortRows(cond.rows.filter(function (r) { return r.name || r.addr; }));
+    var parts = rows.slice(0, 3).map(function (r) { return self.rowName(r) + (r.mode && r.time ? ' ' + r.time + '분' : ''); });
+    return parts.join(' · ') + (rows.length > 3 ? ' 외 ' + (rows.length - 3) + '개 조건' : '');
+  }
+  // ---------- 지도
+  view(list, open, W, Hh) {
+    var mw = W || this.state.mw, mh = Hh || this.state.mh, box, k;
+    if (open) {
+      var cx = open.x, cy = open.y - 24;
+      box = { x0: cx - 420, x1: cx + 420, y0: cy - 300, y1: cy + 300 };
+      k = Math.min(mw / (box.x1 - box.x0), mh / (box.y1 - box.y0), 0.85);
+    } else {
+      var pts = list.length ? list : this.allData();
+      var xs = pts.map(function (c) { return c.x; }), ys = pts.map(function (c) { return c.y; });
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+      var small = W ? false : window.innerWidth <= 760;
+      var padX = small ? 44 : 170, padTop = small ? 56 : 96, padBottom = small ? 36 : 64;
+      k = Math.min((mw - padX * 2) / Math.max(x1 - x0, 400), (mh - padTop - padBottom) / Math.max(y1 - y0, 300));
+      var cxs = (x0 + x1) / 2, cys = (y0 + y1) / 2 - (padTop - padBottom) / 2 / k;
+      box = { x0: cxs - 1, x1: cxs + 1, y0: cys - 1, y1: cys + 1 };
+    }
+    k = Math.max(k, mw / 2846, mh / 1648);
+    var tx = mw / 2 - (box.x0 + box.x1) / 2 * k, ty = mh / 2 - (box.y0 + box.y1) / 2 * k;
+    tx = Math.min(0, Math.max(mw - 2846 * k, tx));
+    ty = Math.min(0, Math.max(mh - 1648 * k, ty));
+    return { k: k, tx: tx, ty: ty };
+  }
+  scrollToMap() {
+    if (window.innerWidth > 960) { return; }
+    var el = document.getElementById('map-col');
+    if (!el) { return; }
+    var wrap = document.querySelector('.wrap');
+    if (wrap) { wrap.style.paddingBottom = '100vh'; setTimeout(function () { wrap.style.paddingBottom = ''; }, 900); }
+    var top = document.querySelector('.top');
+    var gap = (top ? top.getBoundingClientRect().height : 64) + 12;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - gap, behavior: 'smooth' });
+  }
+  go(patch) { this.clearSearch(); this.setState(Object.assign({ menuOpen: false, openId: null, instantId: null, uk: 1, ux: 0, uy: 0 }, patch)); window.scrollTo(0, 0); }
+  // ---------- 채팅 (준비된 응답)
+  scenarioRows() {
+    return [
+      { id: 1, name: '토스', q: '토스', addr: '토스 아크플레이스 · 서울 강남구 테헤란로 142', imp: '필수', mode: '대중교통', time: '60', per: '', cnt: '' },
+      { id: 2, name: '교회', q: '교회', addr: '', imp: '', mode: '', time: '', per: '', cnt: '' },
+      { id: 3, name: '러닝', q: '근처 공원', addr: '근처 공원 · 후보 동네마다 가까운 공원', imp: '', mode: '', time: '', per: '주', cnt: '4' },
+      { id: 4, name: '친구', q: '수원', addr: '', imp: '', mode: '', time: '', per: '', cnt: '' }
+    ];
+  }
+  clean(w) { return (w || '').replace(/(이에요|예요|이야|에요|이고|이랑|에서|으로|로|야|고|랑|에|은|는|이|가|을|를)$/, ''); }
+  parse(t) {
+    var self = this, found = [], stop = ['지금', '다니는', '다니던', '우리', '내', '제', '그', '자주', '매일', '가는', '있는', '계속', '새', '그리고'];
+    function add(name, loc, extra) {
+      if (found.some(function (f) { return f.name === name; })) { return; }
+      found.push(Object.assign({ name: name, loc: loc || '' }, extra || {}));
+    }
+    [['연인 집', '연인'], ['연인', '연인'], ['회사', '회사'], ['직장', '회사'], ['본가', '본가'], ['학교', '학교'], ['교회', '교회'], ['친구', '친구'], ['헬스장', '헬스장'], ['러닝', '러닝']].forEach(function (k) {
+      if (t.indexOf(k[0]) < 0) { return; }
+      var before = t.match(new RegExp('([가-힣A-Za-z0-9]+)\\s*' + k[0]));
+      var after = t.match(new RegExp(k[0] + '(?:[은는이가]\\s*|\\s+)([가-힣A-Za-z0-9]+)'));
+      var loc = before && stop.indexOf(before[1]) < 0 ? before[1] : (after ? self.clean(after[1]) : '');
+      if (stop.indexOf(loc) >= 0 || /^(집|주|월|일)$/.test(loc)) { loc = ''; }
+      var extra = { pos: t.indexOf(k[0]) };
+      if (k[1] === '회사') { var f = t.match(/주\s*(\d)\s*일/); if (f) { extra.per = '주'; extra.cnt = f[1]; } }
+      add(k[1], loc, extra);
+    });
+    var school = t.match(/([가-힣A-Za-z]+)\s*통학/);
+    if (school) { add('학교', school[1], { pos: school.index }); }
+    found.sort(function (a, b) { return a.pos - b.pos; });
+    var rent = t.match(/월세\s*([\d,]+)\s*만/), dep = t.match(/보증금\s*([\d,]+)\s*만/);
+    return { places: found, rent: rent ? rent[1].replace(/,/g, '') : '', deposit: dep ? dep[1].replace(/,/g, '') : '' };
+  }
+  // 채팅 문장에서 바꿀 조건 값 읽기
+  parseEdit(t) {
+    var e = {}, m;
+    m = t.match(/(필수|높음|중간|낮음)/); if (m) { e.imp = m[1]; }
+    if (/도보|걸어서/.test(t)) { e.mode = '도보'; } else if (/대중교통|지하철|버스/.test(t)) { e.mode = '대중교통'; }
+    m = t.match(/(\d+)\s*분/); if (m) { e.time = m[1]; }
+    m = t.match(/(주|월)\s*(\d+)\s*(?:회|번)/) || t.match(/(일주일|한 ?달)에\s*(\d+)\s*(?:회|번)/);
+    if (m) { e.per = /^주|일주일/.test(m[1]) ? '주' : '월'; e.cnt = m[2]; }
+    return Object.keys(e).length ? e : null;
+  }
+  // 문장이 가리키는 장소 행 찾기 (장소명·주소·장소 종류로)
+  findRow(t) {
+    var self = this, alias = [['출근', '회사', '토스', '직장'], ['교회'], ['러닝', '공원', '산책'], ['친구', '수원시청']];
+    return this.state.rows.filter(function (r) {
+      var keys = [r.name, r.addr ? r.addr.split(' · ')[0] : ''].filter(function (k) { return k; });
+      var k = self.kindOf(r); if (k >= 0) { keys = keys.concat(alias[k]); }
+      return keys.some(function (key) { return t.indexOf(key) >= 0; });
+    })[0] || null;
+  }
+  rowLabel(r) {
+    var place = r.addr ? r.addr.split(' · ')[0] : '';
+    return r.name && place && place !== r.name ? r.name + '(' + place + ')' : (r.name || place || '이 장소');
+  }
+  plan(text) {
+    var self = this, st = this.state;
+    function setRow(rows, test, patch) { return rows.map(function (r) { return test(r) ? Object.assign({}, r, patch) : r; }); }
+    if (st.stage === 0 && /토스|아크플레이스/.test(text)) {
+      var p0 = this.parse(text);
+      return { replies: ['알려준 내용을 확인했어. 토스 출근과 예산, 교회·러닝·친구 조건을 오른쪽에 정리해 뒀어.\n\n' + ADDR_MSG, CHURCH_Q], patch: { rows: this.scenarioRows(), nextId: 5, stage: 1, deposit: p0.deposit || '1000', rent: p0.rent || '50' } };
+    }
+    if (st.stage === 1) {
+      return { replies: ['창훈대교회로 확인했어. 주소(경기 수원시 장안구 연무동)를 오른쪽 조건에 넣어 뒀어.\n\n' + FRIEND_Q], patch: { stage: 2, rows: setRow(st.rows, function (r) { return self.kindOf(r) === 1; }, { q: '창훈대교회', addr: '창훈대교회 · 경기 수원시 장안구 연무동' }) } };
+    }
+    if (st.stage === 2) {
+      return { replies: ['수원시청역을 친구들과 만나는 기준 장소로 반영했어.\n\n' + FINAL_MSG], patch: { stage: 3, rows: setRow(st.rows, function (r) { return self.kindOf(r) === 3; }, { q: '수원시청역', addr: '수원시청역 · 경기 수원시 권선구 효원로 지하270' }) } };
+    }
+    // 장소명은 사용자가 직접 고치거나 채팅으로 바꿔 달라고 할 때만 변경
+    var rn = text.match(/([가-힣A-Za-z0-9]+)\s*(?:장소명|이름)\s*을?\s*[‘'"]?([가-힣A-Za-z0-9 ]+?)[’'"]?\s*(?:으로|로)\s*(?:바꿔|변경|수정|해)/);
+    if (rn) {
+      var target = st.rows.filter(function (r) { return r.name && (r.name.indexOf(rn[1]) >= 0 || rn[1].indexOf(r.name) >= 0); })[0];
+      if (target) {
+        return { replies: ['장소명을 ‘' + target.name + '’에서 ‘' + rn[2].trim() + '’로 바꿨어.'], patch: { rows: setRow(st.rows, function (r) { return r.id === target.id; }, { name: rn[2].trim() }) } };
+      }
+    }
+    // 채팅으로 조건 수정: 장소를 찾아 중요도·이동수단·편도시간·방문 빈도를 바꾼다 (장소명은 그대로)
+    var edit = this.parseEdit(text);
+    if (edit) {
+      var tgt = this.findRow(text);
+      if (tgt) {
+        var p2 = Object.assign({}, edit);
+        if (p2.time && !p2.mode && !tgt.mode) { p2.mode = '대중교통'; }
+        var after = Object.assign({}, tgt, p2);
+        var label = this.rowLabel(tgt), parts = [];
+        if (p2.imp) { parts.push('중요도 ' + p2.imp); }
+        if (after.mode && (p2.mode || p2.time)) { parts.push(after.mode + (after.time ? ' 편도 ' + after.time + '분 이내' : '')); }
+        if (p2.per) { parts.push(p2.per + ' ' + p2.cnt + '회'); }
+        return { replies: [label + ' 조건을 ' + parts.join(' · ') + '로 바꿨어. 오른쪽 조건에서 확인해 줘.'], patch: { stage: 3, rows: setRow(st.rows, function (r) { return r.id === tgt.id; }, p2) } };
+      }
+    }
+    var p = this.parse(text), rows = st.rows.slice(), id = st.nextId, added = [];
+    p.places.forEach(function (f) {
+      if (rows.some(function (r) { return r.name === f.name; })) { return; }
+      rows.push({ id: id++, name: f.name, q: f.loc || f.name, addr: f.loc, imp: f.name === '회사' ? '필수' : '', mode: '', time: '', per: f.per || '', cnt: f.cnt || '' });
+      added.push(f.name);
+    });
+    var patch = { rows: rows, nextId: id, stage: Math.max(st.stage, rows.length ? 3 : 0) };
+    if (p.deposit) { patch.deposit = p.deposit; }
+    if (p.rent) { patch.rent = p.rent; }
+    if (added.length) {
+      var last = added[added.length - 1], code = last.charCodeAt(last.length - 1) - 0xAC00;
+      return { replies: [added.join(', ') + (code >= 0 && code % 28 ? '을' : '를') + ' 찾아서 조건 칸에 정리했어. 바꾸고 싶은 게 있으면 여기에 말로 알려 줘도 되고, 조건 칸에서 직접 고쳐도 돼. 자주 가는 곳이 더 있으면 이어서 알려 줘.'], patch: patch };
+    }
+    if (p.deposit || p.rent) { return { replies: ['예산을 조건 칸에 반영했어. 다 확인했으면 ‘이 조건으로 동네 찾기’를 눌러 줘.'], patch: patch }; }
+    if (rows.length) { return { replies: ['바꾸고 싶은 장소나 시간을 말해 줘도 되고, 오른쪽 조건 칸에서 직접 고쳐도 돼.'], patch: patch }; }
+    return { replies: ['아직 자주 가는 장소를 찾지 못했어. 회사·학교·본가처럼 자주 가는 곳을 알려 줄래?'], patch: patch };
+  }
+  // 생각(입력 중 표시) → 실제 LLM처럼 글자가 조금씩 흘러나오는 답장
+  say(text) {
+    var self = this, plan = this.plan(text);
+    var think = text.length > 60 ? 5000 : 2000;
+    this.setState({ typing: true, streaming: true });
+    function stream(i) {
+      if (i >= plan.replies.length) { self.setState({ streaming: false }); return; }
+      var full = plan.replies[i], pos = 0;
+      var patch = { typing: false, msgs: self.state.msgs.concat([{ bot: true, text: '' }]) };
+      if (i === 0) { Object.assign(patch, plan.patch); }
+      self.setState(patch);
+      var timer = setInterval(function () {
+        pos = Math.min(full.length, pos + 2 + Math.floor(Math.random() * 3));
+        var ms = self.state.msgs.slice();
+        ms[ms.length - 1] = { bot: true, text: full.slice(0, pos) };
+        self.setState({ msgs: ms });
+        if (pos >= full.length) {
+          clearInterval(timer);
+          if (i + 1 < plan.replies.length) {
+            setTimeout(function () { self.setState({ typing: true }); }, 200);
+            setTimeout(function () { stream(i + 1); }, 900);
+          } else { self.setState({ streaming: false }); }
+        }
+      }, 38);
+    }
+    setTimeout(function () { stream(0); }, think);
+  }
+  // 한글 입력 중(조합 중)인 마지막 글자까지 포함해 읽고, 보낸 뒤 입력창에 글자가 남지 않게 비움
+  takeInput(id, key) {
+    var self = this, el = document.getElementById(id);
+    var text = ((el ? el.value : '') || this.state[key] || '').trim();
+    if (el) { el.blur(); }
+    var clear = {}; clear[key] = '';
+    setTimeout(function () { if (el) { el.value = ''; } self.setState(clear); if (el && id === 'more') { el.focus(); } }, 0);
+    setTimeout(function () { if (el) { el.value = ''; } self.setState(clear); }, 60);
+    return text;
+  }
+  startChat() {
+    var text = this.takeInput('condition', 'homeDraft');
+    if (!text) { return; }
+    this.go({ view: 'chat', homeDraft: '', msgs: [{ bot: false, text: text }], stage: 0, rows: [], deposit: '', rent: '', nextId: 1, draft: '' });
+    this.say(text);
+  }
+  sendChat() {
+    if (this.state.typing || this.state.streaming) { return; }
+    var text = this.takeInput('more', 'draft');
+    if (!text) { return; }
+    this.setState({ draft: '', msgs: this.state.msgs.concat([{ bot: false, text: text }]) });
+    this.say(text);
+  }
+  updateRow(id, patch) {
+    this.setState({ rows: this.state.rows.map(function (r) { return r.id === id ? Object.assign({}, r, patch) : r; }) });
+  }
+  // ---------- 추천 실행·저장
+  clearSearch() { (this.searchTimers || []).forEach(function (t) { clearTimeout(t); }); this.searchTimers = []; }
+  // 탐색 중 화면: 단계를 하나씩 체크하고 후보 핀을 떨어뜨린 뒤 추천 화면으로 (첫 탐색 3.5초, 이후 2.5초)
+  findNow() {
+    var self = this, st = this.state;
+    // 주소가 비어 있는 장소가 있으면 탐색하지 않음 (경고는 조건 영역에 표시)
+    if (st.rows.some(function (r) { return !r.addr; })) { this.setState({ findTried: true }); return; }
+    var cond = { deposit: st.deposit, rent: st.rent, rows: st.rows.map(function (r) { return { name: r.name, addr: r.addr, imp: r.imp, mode: r.mode, time: r.time, per: r.per, cnt: r.cnt }; }) };
+    var key = this.condKey(cond), sets = Object.assign({}, st.sets); sets[key] = cond;
+    var T = 10000;
+    this.go({ view: 'search', from: '', sets: sets, curKey: key, searchStep: 0, searchPinsOn: false, searchCount: (st.searchCount || 0) + 1 });
+    [0.14, 0.36, 0.58, 0.9].forEach(function (f, i) {
+      self.searchTimers.push(setTimeout(function () { self.setState({ searchStep: i + 1 }); }, T * f));
+    });
+    // 후보 핀은 ‘후보 정리’ 단계 막바지에 떨어지게
+    this.searchTimers.push(setTimeout(function () { self.setState({ searchPinsOn: true }); }, T * 0.78));
+    this.searchTimers.push(setTimeout(function () { self.go({ view: 'rec' }); }, T));
+    this.searchAnim(T);
+  }
+  // 탐색 중 지도: 서울~수원이 다 보이는 넓은 지도에서 후보 지역으로 점점 확대
+  searchAnim(T) {
+    var self = this, t0 = null;
+    if (this.__raf) { cancelAnimationFrame(this.__raf); }
+    var ease = function (u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; };
+    var cl = function (x) { return Math.max(0, Math.min(1, x)); };
+    var step = function (now) {
+      if (self.state.view !== 'search') { return; }
+      var el = document.querySelector('.search-map-in'), g = self.__sg;
+      if (!el || !g) { self.__raf = requestAnimationFrame(step); return; }
+      if (t0 === null) { t0 = now; }
+      var t = now - t0, a = T * 0.08, b = T * 0.74;
+      var u = ease(cl((t - a) / (b - a)));
+      var k = Math.exp(Math.log(g.k0) + (Math.log(g.k1) - Math.log(g.k0)) * u);
+      var w = (1 / g.k0 - 1 / k) / (1 / g.k0 - 1 / g.k1);
+      var cx = g.c0x + (g.c1x - g.c0x) * w, cy = g.c0y + (g.c1y - g.c0y) * w;
+      el.style.transform = 'translate(' + (g.W / 2 - cx * k).toFixed(2) + 'px, ' + (g.H / 2 - cy * k).toFixed(2) + 'px) scale(' + k.toFixed(5) + ')';
+      var z2 = el.querySelector('.sz2'), z3 = el.querySelector('.sz3');
+      if (z2) { z2.style.opacity = cl((k / g.k1 - 0.26) / 0.18).toFixed(3); }
+      if (z3) { z3.style.opacity = (cl((k / g.k1 - 0.58) / 0.32) * 0.9).toFixed(3); }
+      if (t < b + 80) { self.__raf = requestAnimationFrame(step); }
+    };
+    this.__raf = requestAnimationFrame(step);
+  }
+  isSaved(key) { return this.state.saves.some(function (s) { return s.key === key; }); }
+  doSave(key, on) {
+    var saves = this.state.saves.filter(function (s) { return s.key !== key; });
+    if (on) { saves = [{ key: key, at: Date.now() }].concat(saves); }
+    return saves;
+  }
+  // 이력 목록에 들어올 때의 목록을 고정: 이력저장을 해제해도 별 색만 빠지고 카드는 남음
+  enterList() { this.go({ view: 'list', from: 'list', histSnap: this.state.saves.map(function (x) { return x.key; }) }); }
+  enterLikes() { var liked = this.state.liked; this.go({ view: 'likes', from: 'likes', likeSnap: Object.keys(liked).filter(function (k) { return liked[k]; }) }); }
+  favKeys() { var f = this.state.favs; return Object.keys(f).filter(function (k) { return f[k]; }); }
+  renderVals() {
+    var self = this, st = this.state;
+
+    // 한글 자판 상태로 친 영문(예: ㅇㅐㅐ...)을 영문 키로 되돌림
+    function engKeys(t) {
+      var K = { 'ㄱ':'r','ㄲ':'R','ㄴ':'s','ㄷ':'e','ㄸ':'E','ㄹ':'f','ㅁ':'a','ㅂ':'q','ㅃ':'Q','ㅅ':'t','ㅆ':'T','ㅇ':'d','ㅈ':'w','ㅉ':'W','ㅊ':'c','ㅋ':'z','ㅌ':'x','ㅍ':'v','ㅎ':'g','ㅏ':'k','ㅐ':'o','ㅑ':'i','ㅒ':'O','ㅓ':'j','ㅔ':'p','ㅕ':'u','ㅖ':'P','ㅗ':'h','ㅘ':'hk','ㅙ':'ho','ㅚ':'hl','ㅛ':'y','ㅜ':'n','ㅝ':'nj','ㅞ':'np','ㅟ':'nl','ㅠ':'b','ㅡ':'m','ㅢ':'ml','ㅣ':'l','ㄳ':'rt','ㄵ':'sw','ㄶ':'sg','ㄺ':'fr','ㄻ':'fa','ㄼ':'fq','ㄽ':'ft','ㄾ':'fx','ㄿ':'fv','ㅀ':'fg','ㅄ':'qt' };
+      var CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG = ' ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+      return String(t || '').split('').map(function (ch) {
+        var c = ch.charCodeAt(0) - 0xAC00;
+        if (c >= 0 && c < 11172) {
+          var s = (K[CHO[Math.floor(c / 588)]] || '') + (K[JUNG[Math.floor((c % 588) / 28)]] || ''), j = c % 28;
+          return s + (j ? (K[JONG[j]] || '') : '');
+        }
+        return K[ch] || ch;
+      }).join('');
+    }
+    function loginOk() {
+      var idEl = document.getElementById('login-id'), pwEl = document.getElementById('login-pw');
+      var id = engKeys((idEl ? idEl.value : '') || st.uid).replace(/\s/g, '').toLowerCase();
+      var pw = engKeys((pwEl ? pwEl.value : '') || st.upw).replace(/\s/g, '');
+      return id === 'dooribeon' && (pw === 'dooribeon1004' || pw.toLowerCase() === 'dooribeon1004');
+    }
+    var stacked = st.vw <= 959;
+    function where(t) { return stacked ? t.replace(/오른쪽/g, '아래') : t; }
+    // ----- 채팅·조건 행
+    var rows = this.sortRows(st.rows).map(function (r) {
+      var id = r.id;
+      return {
+        nameId: 'place-' + id, name: r.name, addr: r.addr, hasAddr: !!r.addr, needAddr: !r.addr, isNearby: false,
+        openSearch: function () { self.setState({ searchId: id, query: r.q || r.name }); },
+        rowCls: r.imp === '필수' ? 'row row-must' : 'row',
+        imp: r.imp, impCls: r.imp ? 'sel' : 'sel sel-empty',
+        mode: r.mode, modeCls: r.mode ? 'sel' : 'sel sel-empty',
+        time: r.time, timeOff: !r.mode,
+        per: r.per, perCls: r.per ? 'sel' : 'sel sel-empty', cnt: r.cnt, cntOff: !r.per,
+        mustWarn: r.imp === '필수' && !(r.mode && r.time),
+        delLabel: (r.name || '이 장소') + ' 조건 삭제',
+        setName: function (e) { self.updateRow(id, { name: e.target.value }); },
+        setImp: function (e) { self.updateRow(id, { imp: e.target.value }); },
+        setMode: function (e) { self.updateRow(id, { mode: e.target.value, time: e.target.value ? r.time : '' }); },
+        setTime: function (e) { self.updateRow(id, { time: self.digits(e.target.value) }); },
+        setPer: function (e) { self.updateRow(id, { per: e.target.value, cnt: e.target.value ? r.cnt : '' }); },
+        setCnt: function (e) { self.updateRow(id, { cnt: self.digits(e.target.value).slice(0, 2) }); },
+        askDelete: function () { self.setState({ confirmId: id }); }
+      };
+    });
+    var q = (st.query || '').replace(/\s/g, '');
+    var results = !q ? [] : PLACES.filter(function (p) {
+      var k = (p.name + p.addr).replace(/\s/g, '');
+      return k.indexOf(q) >= 0 || (q.length >= 2 && k.indexOf(q.slice(0, 2)) >= 0);
+    }).map(function (p) {
+      return { name: p.name, addr: p.addr, pick: function () { self.updateRow(st.searchId, { addr: p.name + ' · ' + p.addr, q: p.name }); self.setState({ searchId: null }); } };
+    });
+    var target = st.rows.filter(function (r) { return r.id === st.confirmId; })[0];
+    var msgs = st.msgs.map(function (m, i) {
+      var last = m.bot && i === st.msgs.length - 1 && st.stage >= 3 && !st.typing && !st.streaming;
+      return { bot: m.bot, text: m.bot ? where(m.text) : m.text, cls: m.bot ? (last ? 'msg msg-bot msg-last' : 'msg msg-bot') : 'msg msg-user' };
+    });
+    // ----- 동네 추천 (현재 탐색 또는 저장 당시 결과)
+    var setKey = st.view === 'rec' ? st.curKey : st.detailKey;
+    var cond = st.sets[setKey] || { deposit: '', rent: '', rows: [] };
+    var R = this.results(cond), list = R.list;
+    var open = list.filter(function (c) { return c.id === st.openId; })[0] || null;
+    var v = this.userView(this.view(list, open));
+    this.__v = v;
+    function scrollToEl(el) {
+      var top = document.querySelector('.top');
+      var gap = (top ? top.getBoundingClientRect().height : 64) + 12;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - gap, behavior: 'smooth' });
+    }
+    function toggle(id) {
+      return function () {
+        var next = st.openId === id ? null : id;
+        // 펼칠 때 화면 높이가 줄어 스크롤이 튀지 않도록, 접히기 전에 먼저 아래 여백을 확보
+        var padEl = document.querySelector('.wrap');
+        if (next && padEl) { padEl.style.paddingBottom = '100vh'; clearTimeout(window.__padT); window.__padT = setTimeout(function () { padEl.style.paddingBottom = ''; }, 1400); }
+        self.setState({ openId: next, instantId: st.openId && st.openId !== id ? st.openId : null, uk: 1, ux: 0, uy: 0 });
+        if (next) {
+          setTimeout(function () {
+            var stk = window.innerWidth <= 960;
+            var el = document.getElementById(stk ? 'map-col' : 'card-' + id);
+            if (!el) { return; }
+            if (stk) {
+              var wrap = document.querySelector('.wrap');
+              if (wrap) { wrap.style.paddingBottom = '100vh'; setTimeout(function () { wrap.style.paddingBottom = ''; }, 900); }
+              scrollToEl(el);
+            } else {
+              // 양옆 배치: 펼친 카드의 위쪽을 고정된 지도의 위쪽 높이에 맞춤
+              var alignTop = function () {
+                var card = document.getElementById(el.id), mc = document.getElementById('map-col');
+                if (!card) { return; }
+                var stickTop = mc ? (parseFloat(getComputedStyle(mc).top) || 88) : 88;
+                var y = Math.max(0, card.getBoundingClientRect().top + window.scrollY - stickTop);
+                if (Math.abs(y - window.scrollY) > 2) { window.scrollTo({ top: y, behavior: 'smooth' }); }
+              };
+              // 마지막 카드도 한 번에 올라가도록, 펼쳐지는 동안 아래 여백을 잠시 확보
+              requestAnimationFrame(alignTop);
+              setTimeout(alignTop, 450);
+            }
+          }, 40);
+        }
+      };
+    }
+    var depLim = cond.deposit ? '예산 ' + this.man(cond.deposit) + ' 이하' : '예산 미설정';
+    var rentLim = cond.rent ? '예산 ' + this.man(cond.rent) + ' 이하' : '예산 미설정';
+    var cards = list.map(function (c, i) {
+      var isOpen = st.openId === c.id, likeKey = setKey + ':' + c.id, liked = !!st.liked[likeKey];
+      return {
+        order: (i + 1) * 2 + 1, id: c.id, domId: 'card-' + c.id, name: c.name, strength: c.strength, score: c.score,
+        deposit: c.deposit, rent: c.rent, depLim: depLim, rentLim: rentLim,
+        places: self.placesFor(c, R.rows), open: isOpen,
+        pros: c.pros.map(function (t) { return { text: t }; }), cons: c.cons.map(function (t) { return { text: t }; }),
+        cls: isOpen ? 'card card-open' : 'card',
+        detailCls: isOpen ? 'detail-wrap detail-open' : (st.instantId === c.id ? 'detail-wrap detail-instant' : 'detail-wrap'),
+        toggle: toggle(c.id), liked: liked,
+        heartCls: liked ? 'heart heart-on' : 'heart',
+        heartLabel: liked ? c.name + ' 관심 해제' : c.name + ' 관심 동네로 표시',
+        toggleHeart: function (e) { if (e && e.stopPropagation) { e.stopPropagation(); } var l = Object.assign({}, st.liked); l[likeKey] = !l[likeKey]; self.setState({ liked: l }); }
+      };
+    });
+    var markers = list.map(function (c) {
+      return {
+        rank: c.id, name: c.name, label: c.id + ' ' + c.name + ' 카드 펼치기',
+        cls: st.openId === c.id ? 'mk mk-on' : 'mk',
+        left: Math.round(v.tx + c.x * v.k), top: Math.round(v.ty + c.y * v.k), pick: toggle(c.id)
+      };
+    });
+    var chips = [{ hasB: true, b: '예산', t: this.budgetText(cond) }];
+    R.rows.filter(function (r) { return r.imp === '필수' && r.mode && r.time; }).forEach(function (r) { chips.push({ hasB: true, b: '필수', t: self.rowName(r) + ' ' + r.mode + ' ' + r.time + '분 이내' }); });
+    var others = R.rows.filter(function (r) { return !(r.imp === '필수' && r.mode && r.time); }).map(function (r) { return self.rowName(r); });
+    if (others.length) { chips.push({ hasB: false, b: '', t: others.join(' · ') + ' 비교' }); }
+    var saved = this.isSaved(setKey);
+    // ----- 이력
+    var hist = (st.histSnap || []).map(function (k) { return { key: k, cond: st.sets[k] }; }).filter(function (h) { return h.cond; });
+    var items = hist.map(function (h) {
+      var fav = self.isSaved(h.key), n = self.results(h.cond).list.length;
+      return {
+        title: self.histTitle(h.cond), budget: self.budgetText(h.cond), count: n, fav: fav,
+        label: self.histTitle(h.cond) + ' 탐색, 후보 동네 ' + n + '곳 보기',
+        starCls: fav ? 'hstar hstar-on' : 'hstar', starLabel: fav ? '이력 저장 취소' : '이력 저장하기',
+        toggleFav: function () { self.setState({ saves: self.doSave(h.key, !fav) }); },
+        open: function () { self.go({ view: 'detail', uk: 1, ux: 0, uy: 0, from: 'list', detailKey: h.key }); }
+      };
+    });
+    // ----- 관심 동네
+    var likeCards = (st.likeSnap || []).map(function (lk) {
+      var parts = lk.split(':'), key = parts[0], id = parts[1], cd = st.sets[key];
+      var c = self.allData().filter(function (x) { return x.id === id; })[0];
+      if (!c || !cd) { return null; }
+      var liked = !!st.liked[lk], rr = self.results(cd).rows;
+      return {
+        id: c.id, name: c.name, strength: c.strength, score: c.score, deposit: c.deposit, rent: c.rent,
+        places: self.placesFor(c, rr), liked: liked,
+        openLabel: c.name + ' 추천 결과에서 보기',
+        heartCls: liked ? 'heart heart-on' : 'heart',
+        heartLabel: liked ? c.name + ' 관심 해제' : c.name + ' 관심 동네로 표시',
+        toggleHeart: function () { var l = Object.assign({}, st.liked); l[lk] = !l[lk]; self.setState({ liked: l }); },
+        open: function () {
+          self.go({ view: 'detail', uk: 1, ux: 0, uy: 0, from: 'likes', detailKey: key });
+          setTimeout(function () { self.setState({ openId: id }); setTimeout(function () { self.scrollToMap(); }, 40); }, 120);
+        }
+      };
+    }).filter(function (x) { return x; });
+    // ----- 탐색 중 화면
+    var sCond = st.sets[st.curKey] || { deposit: '', rent: '', rows: [] };
+    var SR = st.view === 'search' ? this.results(sCond) : { list: [], rows: [], label: '' };
+    var must = SR.rows.filter(function (r) { return r.imp === '필수' && r.mode && r.time; });
+    var rest = SR.rows.filter(function (r) { return must.indexOf(r) < 0; }).map(function (r) { return self.rowName(r); });
+    var stepTexts = [
+      ['예산 확인', this.budgetText(sCond)],
+      ['필수 조건 확인', must.length ? must.map(function (r) { return self.rowName(r) + '까지 ' + r.mode + ' ' + r.time + '분 이내'; }).join(' · ') : '필수 시간 조건 없음 · 모든 후보 비교'],
+      ['생활거점 이동시간 비교', rest.length ? rest.join(' · ') + '까지 이동시간 비교' : '입력한 장소까지 이동시간 비교'],
+      ['후보 정리', SR.label + ' · 후보 ' + SR.list.length + '곳']
+    ];
+    var sStep = st.searchStep || 0;
+    var searchSteps = stepTexts.map(function (t, i) {
+      var state = i < sStep ? 'done' : (i === sStep ? 'now' : 'wait');
+      return { title: t[0], sub: t[1], cls: 'sstep sstep-' + state, done: state === 'done', now: state === 'now', wait: state === 'wait' };
+    });
+    var SW = Math.max(260, Math.min(520, st.vw - (st.vw <= 760 ? 66 : 130))), SH = Math.round(SW * 340 / 520), sv = this.view(SR.list, null, SW, SH);
+    // 넓은 지도(서울~수원) 시작점 → 후보 지역(sv)까지 확대 경로
+    var k0 = 0.03 * SW / 520, c0x = 2700, c0y = 2600;
+    this.__sg = { k0: k0, k1: sv.k, c0x: c0x, c0y: c0y, c1x: (SW / 2 - sv.tx) / sv.k, c1y: (SH / 2 - sv.ty) / sv.k, W: SW, H: SH };
+    // 핀은 추천 정렬과 관계없이 A→B→C→D→E 순서로 꽂힘
+    var searchPins = st.searchPinsOn ? SR.list.slice().sort(function (x, y) { return x.id < y.id ? -1 : 1; }).map(function (c, i) {
+      return { id: c.id, left: Math.round(sv.tx + c.x * sv.k), top: Math.round(sv.ty + c.y * sv.k), delay: (i * 0.18).toFixed(2) + 's' };
+    }) : [];
+    var isHome = st.view === 'home';
+    return {
+      pageCls: isHome ? 'page page-home' : 'page' + (st.from === 'list' ? ' in-hist' : st.from === 'likes' ? ' in-likes' : ''),
+      isHome: isHome, notHome: !isHome, isChat: st.view === 'chat', isList: st.view === 'list', isLikes: st.view === 'likes',
+      isRec: st.view === 'rec' || st.view === 'detail', isSearch: st.view === 'search',
+      searchSteps: searchSteps, searchPins: searchPins, searchMapStyle: 'width: ' + SW + 'px; height: ' + SH + 'px',
+      searchMapTransform: 'translate(' + (SW / 2 - c0x * k0).toFixed(1) + 'px, ' + (SH / 2 - c0y * k0).toFixed(1) + 'px) scale(' + k0.toFixed(5) + ')',
+      goHome: function () { self.go({ view: 'home' }); },
+      // ----- 시작
+      homeDraft: st.homeDraft, homeEmpty: !st.homeDraft.trim(),
+      homePh: '어디에 자주 가시나요? 예산은 어느 정도예요?\n자연어로 자유롭게 입력해주세요.',
+      onHome: function (e) { self.setState({ homeDraft: e.target.value }); },
+      onHomeKey: function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); setTimeout(function () { self.startChat(); }, e.isComposing || e.keyCode === 229 ? 40 : 0); } },
+      homeSubmit: function (e) { if (e && e.preventDefault) { e.preventDefault(); } self.startChat(); },
+      hpick1: function () { self.setState({ homeDraft: '여의도 회사, 수원 본가, 월세 70만 원 이하로 살고 싶어요.' }); },
+      hpick2: function () { self.setState({ homeDraft: '강남 회사 주 5일 출근, 연인 집은 홍대, 월세 80만 원 이하예요.' }); },
+      hpick3: function () { self.setState({ homeDraft: '서울대 통학 예정이고, 본가는 대전이에요. 월세 60만 원 이하예요.' }); },
+      // ----- 채팅·조건
+      chatCls: st.rows.length ? 'cwrap split' : 'cwrap solo',
+      showCond: st.rows.length > 0,
+      msgs: msgs, typing: st.typing,
+      draft: st.draft, draftEmpty: !st.draft.trim() || st.typing || !!st.streaming,
+      onDraft: function (e) { self.setState({ draft: e.target.value }); },
+      onChatKey: function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); setTimeout(function () { self.sendChat(); }, e.isComposing || e.keyCode === 229 ? 40 : 0); } },
+      chatSend: function (e) { if (e && e.preventDefault) { e.preventDefault(); } self.sendChat(); },
+      rows: rows,
+      deposit: st.deposit, rent: st.rent,
+      onDeposit: function (e) { self.setState({ deposit: self.digits(e.target.value, 6) }); },
+      onRent: function (e) { self.setState({ rent: self.digits(e.target.value) }); },
+      addrMissing: !!st.findTried && st.rows.some(function (r) { return !r.addr; }),
+      missingNames: st.rows.filter(function (r) { return !r.addr; }).map(function (r) { return r.name || '이름 없는 장소'; }).join(', '),
+      addRow: function () {
+        var n = st.nextId;
+        self.setState({ nextId: n + 1, rows: st.rows.concat([{ id: n, name: '', q: '', addr: '', imp: '', mode: '', time: '', per: '', cnt: '' }]) });
+        setTimeout(function () { var el = document.getElementById('place-' + n); if (el) { el.focus(); } }, 30);
+      },
+      searchOpen: st.searchId !== null, query: st.query,
+      onQuery: function (e) { self.setState({ query: e.target.value }); },
+      results: results, hasResults: results.length > 0, noResults: !!q && results.length === 0,
+      closeSearch: function () { self.setState({ searchId: null }); },
+      confirmOpen: !!target,
+      confirmTitle: target ? ((target.name ? target.name : '이 장소') + ' 조건을 삭제할까?') : '',
+      cancelDelete: function () { self.setState({ confirmId: null }); },
+      doDelete: function () { self.setState({ rows: st.rows.filter(function (r) { return r.id !== st.confirmId; }), confirmId: null }); },
+      findNow: function () { self.findNow(); },
+      // ----- 동네 추천
+      cards: cards, markers: markers, chips: chips,
+      listTitle: '후보 ' + list.length + '곳 · ' + R.label, noCand: list.length === 0,
+      candText: '후보 동네 ' + list.length + '곳',
+      mapOrder: open ? (list.indexOf(open) + 1) * 2 : 0,
+      mapTransform: 'translate(' + v.tx.toFixed(1) + 'px, ' + v.ty.toFixed(1) + 'px) scale(' + v.k.toFixed(4) + ')',
+      hasOpen: !!open, noOpen: !open,
+      runName: open ? open.run.name : '',
+      runLeft: open ? Math.round(v.tx + open.run.x * v.k) : 0,
+      runTop: open ? Math.round(v.ty + open.run.y * v.k) : 0,
+      closeAll: function () { self.setState({ openId: null, uk: 1, ux: 0, uy: 0 }); },
+      mapBoxCls: (st.uk || 1) > 1.01 ? 'mapbox map-zoomed' : 'mapbox',
+      zoomIn: function () { self.zoomBy(1.5); },
+      zoomOut: function () { self.zoomBy(1 / 1.5); },
+      zoomInOff: v.k >= v.kmax - 0.001,
+      zoomOutOff: v.k <= v.kmin + 0.001,
+      resetMap: function () { self.setState({ openId: null, uk: 1, ux: 0, uy: 0 }); },
+      showBack: st.view === 'detail',
+      backText: st.from === 'likes' ? '관심 동네' : '이력 목록',
+      goBack: function () { if (st.from === 'likes') { self.enterLikes(); } else { self.enterList(); } },
+      editCond: function () {
+        var cd = st.sets[setKey];
+        var patch = { view: 'chat' };
+        if (st.view === 'detail' && cd) {
+          patch.deposit = cd.deposit; patch.rent = cd.rent;
+          patch.rows = cd.rows.map(function (r, i) { return Object.assign({ id: i + 1, q: r.name }, r); });
+          patch.nextId = cd.rows.length + 1;
+        }
+        self.go(patch);
+      },
+      saved: saved, starCls: saved ? 'star star-on' : 'star', starTip: saved ? '저장됨' : '이력 저장하기',
+      toggleSave: function () {
+        if (!st.loggedIn) { self.setState({ loginOpen: true, pendingSave: setKey, loginErr: false }); return; }
+        self.setState({ saves: self.doSave(setKey, !saved) });
+      },
+      showFavBtn: st.view === 'detail' && st.from === 'list',
+      detailFav: !!st.favs[setKey], favChar: st.favs[setKey] ? '★' : '☆',
+      favBtnCls: st.favs[setKey] ? 'fav-btn fav-on' : 'fav-btn',
+      toggleDetailFav: function () { var f = Object.assign({}, st.favs); f[setKey] = !f[setKey]; self.setState({ favs: f }); },
+      // ----- 이력·관심
+      items: items, listEmpty: items.length === 0,
+      listEmptyText: '저장한 탐색이 아직 없어요. 동네 추천 제목 옆 ‘저장’을 눌러 보세요.',
+      tabAll: st.tab === 'all', tabFav: st.tab === 'fav',
+      tabAllCls: st.tab === 'all' ? 'tab tab-on' : 'tab', tabFavCls: st.tab === 'fav' ? 'tab tab-on' : 'tab',
+      showAll: function () { self.setState({ tab: 'all' }); },
+      showFav: function () { self.setState({ tab: 'fav', favSnap: self.favKeys() }); },
+      goList: function () { self.enterList(); },
+      goLikes: function () { self.enterLikes(); },
+      likeCards: likeCards, likesEmpty: likeCards.length === 0,
+      menuHistCls: (st.view === 'list' || (st.view === 'detail' && st.from === 'list')) ? 'menu-item menu-current' : 'menu-item',
+      menuLikeCls: (st.view === 'likes' || (st.view === 'detail' && st.from === 'likes')) ? 'menu-item menu-current' : 'menu-item',
+      // ----- 로그인·메뉴
+      loggedIn: st.loggedIn, loggedOut: !st.loggedIn, menuOpen: st.menuOpen,
+      toggleMenu: function () { self.setState({ menuOpen: !st.menuOpen }); },
+      // 탐색 이력·관심 동네(및 그 상세)에서 로그아웃하면 처음 화면으로
+      logout: function () {
+        if (st.view === 'list' || st.view === 'likes' || st.view === 'detail') { self.go({ view: 'home', loggedIn: false }); }
+        else { self.setState({ loggedIn: false, menuOpen: false }); }
+      },
+      openLogin: function () { self.setState({ loginOpen: true, pendingSave: null, loginErr: false }); },
+      loginOpen: st.loginOpen, uid: st.uid, upw: st.upw, loginErr: st.loginErr,
+      loginDisabled: false,
+      onUid: function (e) { self.setState({ uid: e.target.value, loginErr: false }); },
+      onUpw: function (e) { self.setState({ upw: e.target.value, loginErr: false }); },
+      stop: function (e) { if (e && e.stopPropagation) { e.stopPropagation(); } },
+      closeLoginBg: function () { self.setState({ loginOpen: false, pendingSave: null }); },
+      // 데모 계정: dooribeon / dooribeon1004. 저장 별표로 연 경우 로그인 후 자동 저장
+      loginKey: function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); var b = document.querySelector('.login-btn'); if (b) { b.click(); } } },
+      submitLogin: function (e) {
+        if (e && e.preventDefault) { e.preventDefault(); }
+        if (loginOk()) {
+          var patch = { loggedIn: true, loginOpen: false, pendingSave: null, upw: '' };
+          if (st.pendingSave) { patch.saves = self.doSave(st.pendingSave, true); }
+          self.setState(patch);
+        } else { self.setState({ loginErr: true }); }
+      },
+      // ----- 새 대화
+      newOpen: st.newOpen,
+      askNew: function () { self.setState({ newOpen: true, menuOpen: false }); },
+      cancelNew: function () { self.setState({ newOpen: false }); },
+      confirmNew: function () { self.go({ view: 'home', newOpen: false, msgs: [], stage: 0, rows: [], deposit: '', rent: '', draft: '', homeDraft: '', typing: false, streaming: false }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

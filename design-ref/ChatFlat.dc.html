@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>두리번 채팅·조건 — 테두리 없음</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+html{scroll-behavior:smooth}
+body{margin:0;background:#F4F8F6}
+a{color:#047857}a:hover{color:#065f46}
+*{box-sizing:border-box}
+.page{--g:#059669;--gd:#047857;--gl:#ECFDF5;--ink:#0B1F1A;--text:#1F2937;--muted:#4B5563;--line:#E5E7EB;font-family:"Pretendard","Noto Sans KR",-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);background:#F4F8F6;-webkit-font-smoothing:antialiased;word-break:keep-all;min-width:320px;min-height:100vh}
+.page button,.page textarea,.page input,.page select{font:inherit;color:inherit}
+.page button{cursor:pointer}
+.page :focus-visible{outline:3px solid #059669;outline-offset:2px;border-radius:10px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 고정 상단 (시작 페이지와 동일) */
+.top{position:sticky;top:0;z-index:50;background:rgba(244,248,246,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.top-in{height:68px;padding:0 clamp(20px,2.6vw,40px);display:flex;align-items:center;gap:8px}
+.brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink);font-size:23px;font-weight:800;letter-spacing:-.06em;min-height:44px}
+.brand:hover{color:var(--ink)}
+.brand svg{width:26px;height:34px;flex-shrink:0}
+.nav{display:flex;align-items:center;gap:4px;margin-left:auto}
+.nav-link{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#374151;text-decoration:none;font-size:15px;font-weight:500;letter-spacing:-.03em;border-radius:10px;white-space:nowrap}
+.nav-link:hover{color:var(--gd);background:var(--gl)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600;letter-spacing:-.03em;white-space:nowrap;text-decoration:none}
+.pill-fill{border:1px solid var(--gd);background:var(--gd);color:#fff;margin-left:6px}
+.pill-fill:hover{background:#065f46;color:#fff}
+.page .pill-fill,.page .pill-fill:hover{color:#fff}
+.pill-line{border:1px solid var(--g);background:#fff;color:var(--gd);margin-left:8px}
+.pill-line:hover{background:var(--gl)}
+
+.wrap{max-width:1680px;margin:0 auto;padding:40px clamp(20px,3vw,48px) 120px}
+
+/* 대화 */
+.chat{display:flex;flex-direction:column;height:clamp(460px,calc(100vh - 68px - 40px - 96px),720px);margin:0 auto;background:#fff;border:1px solid #DFE9E4;border-radius:28px;box-shadow:0 18px 50px rgba(15,45,35,.06);overflow:hidden}
+.chat{position:relative}
+.chat-tag{align-self:flex-end;flex-shrink:0;margin:14px 16px 0;height:24px;font-size:11.5px;padding:0 10px}
+.tag{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;background:#FFF7ED;border:1px solid #FCD9B6;color:#9A3412;font-size:12.5px;font-weight:600}
+.msgs{flex:1;min-height:0;overflow-y:auto;padding:12px 24px 8px;display:flex;flex-direction:column;gap:18px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg-bot .avatar{width:34px;height:44px;flex-shrink:0;margin-top:-2px}
+.bubble{max-width:min(78%,760px);padding:14px 18px;border-radius:4px 20px 20px 20px;background:#F3F6F5;font-size:15.5px;line-height:1.75;letter-spacing:-.03em;white-space:pre-line}
+.msg-user{justify-content:flex-end}
+.msg-user .bubble{border-radius:20px 4px 20px 20px;background:#DDF5EA;color:#0B1F1A}
+.msg-last .bubble{background:#064E3B;color:#fff}
+.msg-last .bubble b{color:#A7F3D0}
+.composer{margin:18px 24px 24px;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 18px;border:1.5px solid #CFE3DA;border-radius:18px;background:#fff}
+.composer:focus-within{border-color:#059669;box-shadow:0 0 0 1.5px #059669}
+.composer textarea{flex:1;min-width:0;height:28px;border:0;outline:none;resize:none;background:transparent;font-size:15px;line-height:1.85}
+.composer textarea:focus-visible{outline:none}
+.composer textarea::placeholder{color:#6B7280}
+.send{width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--gd);color:#fff}
+.send:disabled{opacity:.4;cursor:not-allowed}
+.send svg{width:22px;height:22px}
+
+.to-cond{display:flex;flex-direction:column;align-items:center;gap:6px;height:96px;justify-content:center;padding:0;color:var(--gd);font-size:14px;font-weight:700;text-decoration:none}
+.to-cond svg{width:24px;height:24px;animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(-3px);opacity:.6}50%{transform:translateY(5px);opacity:1}}
+@media (prefers-reduced-motion:reduce){.to-cond svg{animation:none}}
+
+/* 조건 영역 */
+.cond{scroll-margin-top:84px;background:#fff;border:1px solid #DFE9E4;border-radius:28px;padding:32px;box-shadow:0 18px 50px rgba(15,45,35,.06)}
+.cond-head h2{margin:0;font-size:26px;font-weight:800;letter-spacing:-.05em;color:var(--ink)}
+.cond-head p{margin:8px 0 0;font-size:15px;line-height:1.7;color:var(--muted)}
+.legend{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.src{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.src-raw{background:#ECFDF5;color:#047857}
+.src-def{background:#EFF6FF;color:#1D4ED8}
+.src-sug{background:#F5F3FF;color:#6D28D9}
+.src-me{background:#F3F4F6;color:#374151}
+
+.block-title{margin:28px 0 12px;font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.budget{display:flex;flex-wrap:wrap;gap:12px}
+.money{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:12px 16px;border:1px solid #E3EAE7;border-radius:14px;background:#FAFCFB}
+.money label{font-size:15px;font-weight:700;color:#0B1F1A}
+.money input{width:96px;height:40px;padding:0 10px;border:1px solid #D5E0DB;border-radius:10px;background:#fff;font-size:16px;font-weight:700;text-align:right}
+.money span{font-size:15px;color:#374151}
+
+
+.rows-head,.row{display:grid;grid-template-columns:minmax(140px,176px) minmax(260px,420px) 128px 228px 196px minmax(0,1fr) 44px;gap:12px;align-items:start}
+.cell-del,.rows-head > span:last-child{grid-column:-2 / -1}
+.rows-head{padding:0 16px 8px;font-size:12.5px;font-weight:700;color:#6B7280}
+.row{padding:16px;border:1px solid #E3EAE7;border-radius:16px;background:#fff;margin-bottom:10px}
+.row-must{border-color:#A7D9C2;background:#FBFEFC}
+.cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cell-label{display:none;font-size:12px;font-weight:700;color:#6B7280}
+.name-input{width:100%;height:40px;padding:0 10px;border:1px solid transparent;border-radius:10px;background:transparent;font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.name-input:hover{border-color:#E3EAE7}
+.name-input:focus{border-color:#059669;background:#fff;outline:none}
+.name-input::placeholder{color:#9CA3AF;font-weight:600}
+.sub{padding:0 10px;font-size:12.5px;color:#6B7280;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
+.addr{display:flex;align-items:center;gap:8px;min-height:40px;font-size:13px;color:#374151;line-height:1.5;min-width:0}
+.addr svg{width:14px;height:14px;color:#059669;flex-shrink:0}
+.addr span{flex:0 1 var(--addr-w,300px);min-width:0;overflow-wrap:anywhere}
+.cell-addr{padding-right:20px}
+.addr-change{flex-shrink:0;height:28px;padding:0 10px;border:1px solid #D5E0DB;border-radius:8px;background:#fff;font-size:12.5px;font-weight:600;color:#374151}
+.addr-find{align-self:flex-start;margin-top:3px;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid #059669;border-radius:10px;background:#fff;color:#047857;font-size:13px;font-weight:700}
+.addr-find:hover{background:#ECFDF5}
+.addr-find svg{width:15px;height:15px}
+.nearby{padding:0 10px;font-size:13px;color:#4B5563}
+/* 주소 찾기 창 */
+.search-box{margin-top:16px;display:flex;align-items:center;gap:8px;height:48px;padding:0 14px;border:1.5px solid #059669;border-radius:12px}
+.search-box svg{width:18px;height:18px;color:#059669;flex-shrink:0}
+.search-box input{flex:1;min-width:0;border:0;outline:none;font-size:15px;background:transparent}
+.results{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
+.results button{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border:1px solid #E3EAE7;border-radius:12px;background:#fff;text-align:left}
+.results button:hover{border-color:#059669;background:#F7FBF9}
+.results b{font-size:15px;color:#0B1F1A}
+.results span{font-size:13px;color:#4B5563}
+.no-result{margin-top:14px;font-size:14px;color:#6B7280}
+.demo-note{margin-top:12px;font-size:12px;color:#9A3412}
+.sel{height:40px;width:100%;padding:0 8px;border:1px solid #D5E0DB;border-radius:10px;background:#fff;font-size:14px;font-weight:600}
+.sel-empty{color:#6B7280;font-weight:500}
+.seg{display:flex;border:1px solid #D5E0DB;border-radius:10px;overflow:hidden;height:40px}
+.seg button{flex:1;border:0;background:#fff;font-size:13.5px;font-weight:600;color:#4B5563}
+.seg button + button{border-left:1px solid #D5E0DB}
+.seg .on{background:#047857;color:#fff}
+.time{display:flex;align-items:center;gap:6px}
+.time .sel{width:112px;flex-shrink:0}
+.cell-imp .sel{width:120px}
+.time input,.freq input{width:64px;height:40px;padding:0 8px;border:1px solid #D5E0DB;border-radius:10px;background:#fff;font-size:15px;font-weight:700;text-align:right}
+.time input:disabled,.freq input:disabled{background:#F3F4F6;color:#9CA3AF;border-style:dashed}
+.time span,.freq span{font-size:14px;color:#374151}
+.freq{display:flex;align-items:center;gap:6px}
+.freq .sel{width:84px}
+.hint{font-size:11.5px;color:#6B7280;line-height:1.4}
+.warn{grid-column:1 / -1;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:#FFF7ED;color:#9A3412;font-size:13px;font-weight:600}
+.warn svg{width:16px;height:16px;flex-shrink:0}
+.del{width:44px;height:40px;display:grid;place-items:center;border:1px solid transparent;border-radius:10px;background:transparent;color:#6B7280}
+.del:hover{border-color:#FECACA;background:#FEF2F2;color:#B91C1C}
+.del svg{width:18px;height:18px}
+.add{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #A7D9C2;border-radius:16px;background:#F7FBF9;color:var(--gd);font-size:15px;font-weight:700}
+.add:hover{background:#ECFDF5}
+.add svg{width:18px;height:18px}
+.find{margin-top:32px;padding-top:28px;border-top:1px solid #EEF2F0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.find-btn{text-decoration:none;width:min(100%,420px);height:58px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:16px;background:#047857;color:#fff;font-size:17px;font-weight:800;letter-spacing:-.03em;box-shadow:0 12px 30px rgba(4,120,87,.28)}
+.find-btn:hover{color:#fff;background:#065f46}
+.find-btn svg{width:22px;height:22px}
+.find small{font-size:13px;color:#6B7280}
+
+/* 삭제 확인 창 */
+.dim{position:fixed;inset:0;z-index:90;background:rgba(11,31,26,.45);display:grid;place-items:center;padding:16px}
+.dialog{width:min(100%,400px);background:#fff;border-radius:22px;padding:28px 24px 22px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.dialog h3{margin:0;font-size:19px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+.dialog p{margin:10px 0 0;font-size:15px;line-height:1.65;color:var(--muted)}
+.dialog-actions{margin-top:22px;display:flex;gap:10px}
+.dialog-actions button{flex:1;height:48px;border-radius:12px;font-size:15px;font-weight:700}
+.btn-cancel{border:1px solid #D5E0DB;background:#fff;color:#374151}
+.btn-new{flex:1;height:48px;border-radius:12px;font-size:15px;font-weight:700;display:grid;place-items:center;text-decoration:none;border:1px solid #047857;background:#047857;color:#fff}
+.btn-new:hover{color:#fff;background:#065f46}
+.btn-del{border:1px solid #B91C1C;background:#B91C1C;color:#fff}
+
+/* 양옆 배치: 왼쪽 대화(고정) · 오른쪽 조건 */
+.split{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,4fr);gap:24px;align-items:start}
+/* 채팅이 좁아지면 3:4 → 반반 */
+@media (max-width:1299px){.split{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.split .chat{position:sticky;top:84px;height:clamp(460px,calc(100vh - 68px - 40px - 32px),900px)}
+.split .to-cond{display:none}
+.split .cond{padding:28px 24px}
+.say-down{display:none}
+/* 조건 안내: 넓을 때만 ‘입력할수록’ 뒤에서 줄바꿈, 좁으면 자연스럽게 */
+@container (max-width:599px){.br-wide{display:none}}
+/* 예산: 양옆 배치에서는 보증금·월세를 한 줄로, 월세 입력칸은 더 짧게 */
+.money input#rent{width:72px}
+@media (min-width:960px){
+.split .budget{display:flex;flex-wrap:nowrap;gap:8px}
+.split .money{padding:10px 10px;gap:6px}
+.split .money input{width:92px}
+.split .money input#rent{width:68px}
+}
+/* 조건 칸이 좁을 때 예산 상자를 촘촘하게 (한 줄 유지) */
+@container (max-width:470px){
+.split .budget{gap:6px}
+.split .money{padding:8px 7px;gap:4px}
+.split .money span,.split .money label{font-size:14px}
+.split .money input{width:84px;padding:0 8px}
+.split .money input#rent{width:62px}
+}
+/* 화면 절반 정도(960~1060px)에서는 여백을 줄인다 */
+@media (max-width:1060px) and (min-width:960px){
+.wrap.split{padding-left:14px;padding-right:14px}
+.split{gap:14px}
+.split .cond{padding:22px 16px}
+.split .chat .msgs{padding:12px 14px 4px;gap:14px}
+.split .chat .composer{margin:14px}
+.split .bubble{max-width:88%}
+}
+@media (max-width:959px){
+.split{display:block}
+.split .chat{position:relative;top:auto;height:clamp(460px,calc(100vh - 68px - 40px - 96px),720px)}
+.split .to-cond{display:flex}
+.split .cond{padding:32px}
+.say-side{display:none}.say-down{display:inline}
+}
+
+/* 하단 (시작 페이지와 동일) */
+/* 내용이 짧아도 하단은 화면 맨 아래에 */
+.page{display:flex;flex-direction:column;min-height:100vh}
+.page > .top,.page > main,.page > .foot{flex-shrink:0;width:100%}
+.foot{margin-top:auto}
+.foot{padding:28px clamp(20px,2.6vw,40px);background:rgb(244,248,246)}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;font-size:13px;color:#6B7280}
+.foot .brand{font-size:18px}
+.foot .brand svg{width:20px;height:26px}
+
+/* 조건 상자 너비 기준: 넓을 때 한 줄 → 좁으면 두 단 → 더 좁으면 세로 */
+.cond{container-type:inline-size}
+@container (max-width:1100px){
+.rows-head{display:none}
+.row{position:relative;grid-template-columns:128px 228px minmax(200px,1fr);gap:14px 14px;padding:16px 56px 16px 16px}
+.cell-name{grid-column:1 / 3}
+.cell-addr{grid-column:3 / 4}
+.cell-label{display:block}
+.cell-del{position:absolute;top:12px;right:10px;grid-column:auto}
+.cell-addr{padding-right:0}
+}
+/* 반반 너비: 장소명·주소 한 줄씩, 중요도·이동수단·빈도는 한 줄에 */
+@container (max-width:1100px) and (min-width:400px){
+.row{grid-template-columns:92px 178px minmax(0,1fr);gap:12px clamp(12px,calc((100cqi - 540px) * .09 + 12px),30px);padding:14px}
+.cell-name{grid-column:1 / 2}
+.cell-addr{grid-column:2 / -1}
+.name-input{padding:0 4px}
+.cell-imp .sel{width:92px}
+.time .sel{width:100px}
+.freq .sel{width:86px}
+.time input{width:52px}
+.freq input{width:48px}
+.cell-addr{padding-right:40px}
+.addr span{flex:0 1 var(--addr-w,300px)}
+}
+/* 방문 빈도 오른쪽 여백이 중요도 왼쪽 여백(14px)보다 좁아지면 아랫줄로 */
+@container (max-width:484px) and (min-width:400px){
+.cell-freq{grid-column:1 / -1}
+
+}
+/* 화면 절반 너비: 장소명 / 주소 / 중요도·이동수단 / 방문 빈도 */
+@container (max-width:399px) and (min-width:290px){
+.row{grid-template-columns:92px minmax(0,1fr);gap:12px 10px;padding:14px 12px}
+.cell-name{grid-column:1 / -1;padding-right:44px}
+.cell-addr,.cell-freq{grid-column:1 / -1}
+.cell-imp{grid-column:1 / 2}
+.cell-move{grid-column:2 / 3}
+.cell-imp .sel{width:92px}
+.time .sel{width:102px;padding:0 4px 0 8px}
+.time input{width:46px}
+.freq .sel{width:86px}
+.freq input{width:48px}
+.cell-addr{padding-right:0}
+}
+@container (max-width:289px){
+.row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 12px;padding:16px 14px}
+.cell-name{grid-column:1 / -1;padding-right:44px}
+.cell-addr,.cell-move,.cell-freq{grid-column:1 / -1}
+}
+@media (max-width:760px){
+.foot{padding:24px 16px}
+.top-in{height:56px;padding:0 16px;gap:0}
+.brand{font-size:21px;gap:7px}
+.brand svg{width:23px;height:30px}
+.pill-line{margin-left:6px;height:36px;padding:0 12px;font-size:13px}
+.nav{gap:0;margin-left:auto}
+.nav-link{padding:0 10px;font-size:14px}
+.pill-fill{height:36px;padding:0 12px;font-size:13px;margin-left:2px}
+.wrap{padding:20px 12px 80px}
+.chat,.split .chat{height:clamp(420px,calc(100vh - 56px - 20px - 96px),720px)}
+.chat{border-radius:22px}
+.chat-tag{position:static;align-self:flex-end;margin:12px 12px 0}
+.msgs{padding:12px 14px 4px;gap:14px}
+.bubble{max-width:86%;font-size:15px;padding:12px 15px}
+.composer{margin:14px}
+.cond,.split .cond{padding:22px 14px;border-radius:22px}
+.cond-head h2{font-size:22px}
+}
+/* polish-1016 */
+.page .find-btn,.page .find-btn:hover{color:#fff}
+.page .send,.page .hsend{color:#fff}
+.page .ltr{display:block;line-height:1;text-box:trim-both cap alphabetic}
+.page .title-row h1{line-height:1.2;text-box:trim-both cap alphabetic}
+.page .hstar{width:52px;height:52px;padding:0;gap:0;border:0;border-radius:12px;background:transparent;color:#9CA3AF;display:grid;place-items:center}
+.page .hstar:hover{background:#FEFCE8;color:#EAB308}
+.page .hstar svg{width:28px;height:28px}
+.page .hstar.hstar-on{background:transparent;color:#EAB308}
+.page .like-cards .c-top{padding-right:48px}
+.page .like-cards .heart{width:44px;height:44px;padding:0;gap:0;border:0;border-radius:12px;background:transparent;color:#9CA3AF;display:grid;place-items:center}
+.page .like-cards .heart:hover{background:#FFF1F4;color:#F43F6B}
+.page .like-cards .heart svg{width:24px;height:24px}
+.page .like-cards .heart.heart-on{background:transparent;color:#F43F6B}
+.page .spin-pin{height:36px;margin:-36px 0 0 -15px}
+.page .spin-pin::before{inset:auto;left:0;top:0;width:30px;height:30px;transform:rotate(-45deg);transform-origin:50% 50%}
+.page .spin-pin i{display:grid;place-items:center;width:30px;height:30px;line-height:1}
+/* polish-1016b */
+/* 상세 화면은 동네 추천과 같은 모양(글자 버튼 유지) */
+/* nofoot */
+.foot-in{justify-content:flex-end}
+/* gap96 */
+.page main.wrap{padding-bottom:96px}
+@media (max-width:760px){
+.page main.wrap{padding-bottom:64px}
+}
+/* addrwarn */
+.addr-need{display:inline-flex;align-items:center;gap:5px}
+.addr-need svg{width:16px;height:16px;flex-shrink:0}
+.addr-need-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:3px}
+.addr-need-row .addr-find{margin-top:0}
+.addr-need{font-size:13px;font-weight:700;color:#DC2626}
+.find-warn{width:min(100%,520px);display:flex;align-items:flex-start;gap:8px;padding:12px 14px;border-radius:12px;background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;font-size:13.5px;font-weight:600;line-height:1.55}
+.find-warn svg{width:17px;height:17px;flex-shrink:0;margin-top:1px}
+.find-warn b{font-weight:800}
+.find-warn{justify-content:center;align-items:center;text-align:center}
+/* flat */
+.page main.wrap.solo{padding-bottom:40px}
+.page .solo .composer{margin-bottom:0}
+.page .chat{background:transparent;border:0;box-shadow:none;border-radius:0;overflow:visible}
+.page .solo .chat{height:calc(100vh - 68px - 40px - 24px);max-height:none;min-height:420px}
+.page .msgs{padding:12px 4px 8px;-webkit-mask-image:linear-gradient(180deg,transparent,#000 28px);mask-image:linear-gradient(180deg,transparent,#000 28px)}
+.page .solo .chat{max-width:880px;margin:0 auto}
+.page .msg-bot .bubble{background:transparent;padding:5px 0 0;border-radius:0;max-width:100%;color:var(--text)}
+.page .msg-last .bubble{background:transparent;color:var(--text);padding:5px 0 0;border-radius:0}
+.page .msg-bot .bubble{max-width:calc(100% - clamp(0px, (100% - 360px) * 0.6, 240px))}
+.page .msg-last .bubble b{color:#047857}
+.page .composer{background:#fff;border:1px solid #D6E4DD;border-radius:26px;box-shadow:0 8px 26px rgba(15,45,35,.08);margin:12px 0 24px;padding:8px 8px 8px 20px;align-items:flex-end;gap:10px}
+.page .composer:focus-within{border-color:#059669;box-shadow:0 0 0 1px #059669,0 8px 26px rgba(15,45,35,.08)}
+.page .composer textarea{height:auto;min-height:24px;max-height:216px;padding:6px 0;line-height:24px;font-size:15.5px;field-sizing:content;overflow-y:auto;align-self:center}
+.page .composer .send{width:38px;height:38px}
+.page .composer .send svg{width:19px;height:19px}
+@media (max-width:760px){
+.page main.wrap.solo{padding-bottom:32px}
+.page .solo .chat{height:calc(100vh - 56px - 20px - 14px);min-height:380px}
+.page .solo .composer{margin-bottom:0}
+.page .composer{margin:10px 0 14px;padding:6px 6px 6px 16px}
+.page .msgs{padding:10px 2px 4px}
+}
+</style>
+</helmet>
+
+<div class="page">
+
+<header class="top">
+<div class="top-in">
+<a class="brand" href="Main.dc.html" aria-label="두리번 홈">
+<svg viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="36" cy="47" r="6.5" fill="#0B2A22"></circle><circle cx="64" cy="47" r="6.5" fill="#0B2A22"></circle></svg>
+<span>두리번</span>
+</a>
+<nav class="nav" aria-label="주요 메뉴">
+<a class="nav-link" href="Main.dc.html">홈</a>
+<button class="pill pill-fill" type="button" onClick="{{ askNew }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;margin-right:6px"><path d="M12 5v14M5 12h14"></path></svg>새 대화</button>
+</nav>
+<button class="pill pill-line" type="button">로그인</button>
+</div>
+</header>
+
+<main class="wrap split">
+
+<section class="chat" aria-label="두리번과 대화">
+<span class="tag chat-tag">준비된 AI 정리 예시 · 토스 출근은 가상 시연 설정</span>
+<div class="msgs" id="msgs">
+<div class="msg msg-user"><div class="bubble">회사는 역삼동 아크플레이스에 있는 토스고, 서울로 이사하려고 해. 보증금 1,000만 원 이하, 월세 50만 원 이하로 찾고 있어. 출근은 대중교통으로 60분 안쪽이면 좋겠어.
+지금 다니는 교회를 계속 다니고 싶어.
+러닝을 일주일에 네 번 이상 해서 집 근처에 러닝할 곳이 있으면 좋겠어.
+수원에서 친구들도 자주 만날 것 같아.</div></div>
+<div class="msg msg-bot"><svg class="avatar" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="37" cy="46" r="6.5" fill="#0B2A22"></circle><circle cx="65" cy="46" r="6.5" fill="#0B2A22"></circle></svg><div class="bubble">지금 다니는 교회가 어디야? 이름이나 주소를 알려줘.</div></div>
+<div class="msg msg-user"><div class="bubble">수원 연무동 창훈대교회야.</div></div>
+<div class="msg msg-bot"><svg class="avatar" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="37" cy="46" r="6.5" fill="#0B2A22"></circle><circle cx="65" cy="46" r="6.5" fill="#0B2A22"></circle></svg><div class="bubble">수원 어디에서 친구들과 주로 만나? 동네나 가까운 역을 알려줘.</div></div>
+<div class="msg msg-user"><div class="bubble">수원 인계동, 수원시청역 근처에서 만나.</div></div>
+<div class="msg msg-bot msg-last"><svg class="avatar" viewBox="0 0 96 124" aria-hidden="true"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="#059669"></path><ellipse cx="34" cy="44" rx="12" ry="14" fill="#fff"></ellipse><ellipse cx="62" cy="44" rx="12" ry="14" fill="#fff"></ellipse><circle cx="36" cy="50" r="6.5" fill="#0B2A22"></circle><circle cx="64" cy="50" r="6.5" fill="#0B2A22"></circle></svg><div class="bubble">알려준 내용을 <span class="say-side">오른쪽</span><span class="say-down">아래</span> 조건에 정리했어. 바꾸고 싶은 게 있으면 여기에 말로 알려 줘도 되고, 조건 칸에서 직접 고쳐도 돼.
+
+중요도·이동수단·편도시간·방문 빈도는 꼭 채우지 않아도 되지만, 설정할수록 네 생활에 더 잘 맞는 세밀한 추천을 받을 수 있어.
+
+모든 확인이 끝나면 <b>‘이 조건으로 동네 찾기’</b>를 눌러 줘.</div></div>
+</div>
+<form class="composer" onSubmit="{{ noop }}">
+<label class="sr" for="more">더 알려줄 내용</label>
+<textarea rows="1" id="more" value="{{ draft }}" onChange="{{ onDraft }}" placeholder="더 알려줄 내용이 있으면 입력해 주세요"></textarea>
+<button class="send" type="submit" disabled="{{ draftEmpty }}" aria-label="보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+</form>
+</section>
+
+<a class="to-cond" href="#conditions"><span>아래에서 정리된 조건을 확인해 주세요</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg></a>
+
+<section class="cond" id="conditions" aria-labelledby="cond-title">
+<div class="cond-head">
+<h2 id="cond-title">조건 확인 및 수정</h2>
+<p>주소만 꼭 정해 주세요. 장소명을 포함한 나머지는 선택이에요.<br>중요도·이동수단·편도시간·방문 빈도를 입력할수록 더 세밀하게 동네를 찾아볼 수 있어요.</p>
+</div>
+
+<h3 class="block-title">예산</h3>
+<div class="budget">
+<span class="money"><label for="deposit">보증금</label><input id="deposit" inputmode="numeric" value="{{ deposit }}" onChange="{{ onDeposit }}"><span>만 원 이하</span></span>
+<span class="money"><label for="rent">월세</label><input id="rent" inputmode="numeric" value="{{ rent }}" onChange="{{ onRent }}"><span>만 원 이하</span></span>
+</div>
+
+<h3 class="block-title">장소별 조건</h3>
+<div class="rows-head" aria-hidden="true"><span>장소명</span><span>주소</span><span>중요도</span><span>이동수단 · 편도시간</span><span>방문 빈도</span><span></span></div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+<div class="{{ r.rowCls }}">
+<div class="cell cell-name">
+<label class="cell-label" for="{{ r.nameId }}">장소명</label>
+<input class="name-input" id="{{ r.nameId }}" value="{{ r.name }}" onChange="{{ r.setName }}" placeholder="장소명 입력">
+</div>
+<div class="cell cell-addr">
+<span class="cell-label">주소</span>
+<sc-if value="{{ r.hasAddr }}" hint-placeholder-val="{{ true }}"><div class="addr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg><span>{{ r.addr }}</span><button type="button" class="addr-change" onClick="{{ r.openSearch }}">변경</button></div></sc-if>
+<sc-if value="{{ r.needAddr }}" hint-placeholder-val="{{ false }}"><div class="addr-need-row"><span class="addr-need"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5.5M12 16.5h.01"></path></svg>주소를 정해 주세요.</span><button type="button" class="addr-find" onClick="{{ r.openSearch }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg>주소 찾기</button></div></sc-if>
+<sc-if value="{{ r.isNearby }}" hint-placeholder-val="{{ false }}"><span class="nearby">후보 동네 주변에서 찾아요</span></sc-if>
+</div>
+<div class="cell cell-imp">
+<span class="cell-label">중요도</span>
+<select class="{{ r.impCls }}" value="{{ r.imp }}" onChange="{{ r.setImp }}" aria-label="중요도">
+<option value="">미설정</option>
+<option value="필수">필수</option>
+<option value="높음">높음</option>
+<option value="중간">중간</option>
+<option value="낮음">낮음</option>
+</select>
+</div>
+<div class="cell cell-move">
+<span class="cell-label">이동수단 · 편도시간</span>
+<div class="time">
+<select class="{{ r.modeCls }}" value="{{ r.mode }}" onChange="{{ r.setMode }}" aria-label="이동수단">
+<option value="">미설정</option>
+<option value="도보">도보</option>
+<option value="대중교통">대중교통</option>
+</select>
+<input inputmode="numeric" aria-label="편도시간(분)" disabled="{{ r.timeOff }}" value="{{ r.time }}" onChange="{{ r.setTime }}" placeholder="-"><span>분</span>
+</div>
+<sc-if value="{{ r.timeOff }}" hint-placeholder-val="{{ false }}"><span class="hint">이동수단을 먼저 골라 주세요</span></sc-if>
+</div>
+<div class="cell cell-freq">
+<span class="cell-label">방문 빈도</span>
+<div class="freq">
+<select class="{{ r.perCls }}" value="{{ r.per }}" onChange="{{ r.setPer }}" aria-label="빈도 기간">
+<option value="">미설정</option>
+<option value="주">주</option>
+<option value="월">월</option>
+</select>
+<input inputmode="numeric" aria-label="방문 횟수" disabled="{{ r.cntOff }}" value="{{ r.cnt }}" onChange="{{ r.setCnt }}" placeholder="-"><span>회</span>
+</div>
+</div>
+<div class="cell cell-del">
+<button type="button" class="del" onClick="{{ r.askDelete }}" aria-label="{{ r.delLabel }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"></path></svg></button>
+</div>
+<sc-if value="{{ r.mustWarn }}" hint-placeholder-val="{{ false }}"><div class="warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3z"></path><path d="M12 10v5M12 18h.01"></path></svg>필수로 적용하려면 이동수단과 편도시간을 정해 주세요. 정하기 전까지 이 조건은 보류돼요.</div></sc-if>
+</div>
+</sc-for>
+<button type="button" class="add" onClick="{{ addRow }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>장소 추가</button>
+
+<div class="find">
+<sc-if value="{{ addrMissing }}" hint-placeholder-val="{{ false }}"><div class="find-warn" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3z"></path><path d="M12 10v5M12 18h.01"></path></svg><span>정확한 주소를 정해야 동네를 찾을 수 있어요.<br>주소가 비어 있는 장소: <b>{{ missingNames }}</b></span></div></sc-if>
+<a class="find-btn" href="Recommend.dc.html" onClick="{{ findGuard }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>이 조건으로 동네 찾기</a>
+<small>버튼을 눌러야 동네 추천으로 넘어가요.</small>
+</div>
+</section>
+</main>
+
+<footer class="foot">
+<div class="foot-in">
+<span>© 2026 Dooribeon</span>
+</div>
+</footer>
+
+<sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="search-title">
+<h3 id="search-title">주소 찾기</h3>
+<div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4-4"></path></svg><label class="sr" for="addr-q">장소 이름이나 주소</label><input id="addr-q" value="{{ query }}" onChange="{{ onQuery }}" placeholder="장소 이름이나 주소를 입력해 주세요"></div>
+<sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+<ul class="results">
+<sc-for list="{{ results }}" as="it" hint-placeholder-count="2"><li><button type="button" onClick="{{ it.pick }}"><b>{{ it.name }}</b><span>{{ it.addr }}</span></button></li></sc-for>
+</ul>
+</sc-if>
+<sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><p class="no-result">검색 결과가 없어요.</p></sc-if>
+<p class="demo-note">데모용 검색 결과예요. 실제 주소 검색은 아직 연결하지 않았어요.</p>
+<div class="dialog-actions"><button type="button" class="btn-cancel" onClick="{{ closeSearch }}">닫기</button></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ newOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="new-title">
+<h3 id="new-title">현재 대화를 종료하고 새로 시작할까?</h3>
+<p>지금까지 나눈 대화와 정리한 조건은 사라져.</p>
+<div class="dialog-actions">
+<button type="button" class="btn-cancel" onClick="{{ cancelNew }}">취소</button>
+<a class="btn-new" href="ChatEmpty.dc.html">종료하고 새로 시작</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+<div class="dim">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="del-title">
+<h3 id="del-title">{{ confirmTitle }}</h3>
+<p>이 장소와 연결된 설정이 이번 추천 조건에서 빠져.</p>
+<div class="dialog-actions">
+<button type="button" class="btn-cancel" onClick="{{ cancelDelete }}">취소</button>
+<button type="button" class="btn-del" onClick="{{ doDelete }}">삭제</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // 준비된 AI 정리 예시: 원문에서 정리한 값 / 서비스 기본값 / 서비스 제안 / 미설정
+    this.state = {
+      draft: '',
+      deposit: '1000', depositSrc: 'raw',
+      rent: '50', rentSrc: 'raw',
+      nextId: 5,
+      confirmId: null,
+      searchId: null, query: '',
+      rows: [
+        { id: 1, name: '토스', q: '토스', addr: '토스 아크플레이스 · 서울 강남구 테헤란로 142', imp: '필수', impSrc: 'def', mode: '대중교통', modeSrc: 'raw', time: '60', timeSrc: 'raw', per: '', cnt: '', freqSrc: '' },
+        { id: 2, name: '교회', q: '창훈대교회', addr: '창훈대교회 · 경기 수원시 장안구 연무동', imp: '', impSrc: '', mode: '대중교통', modeSrc: 'sug', time: '', timeSrc: '', per: '', cnt: '', freqSrc: '' },
+        { id: 3, name: '러닝', q: '근처 공원', addr: '근처 공원 · 후보 동네마다 가까운 공원', imp: '', impSrc: '', mode: '도보', modeSrc: 'sug', time: '', timeSrc: '', per: '주', cnt: '4', freqSrc: '' },
+        { id: 4, name: '친구', q: '수원시청역', addr: '수원시청역 · 경기 수원시 권선구 효원로 지하270', imp: '', impSrc: '', mode: '대중교통', modeSrc: 'sug', time: '', timeSrc: '', per: '', cnt: '', freqSrc: '' }
+      ]
+    };
+  }
+  // 주소 칸 폭 = 가장 긴 주소 길이 → ‘변경’이 주소 바로 옆에 줄 맞춰 붙음
+  fitAddr() {
+    var c = document.getElementById('conditions'); if (!c) { return; }
+    var spans = c.querySelectorAll('.addr > span'), w = 0;
+    for (var i = 0; i < spans.length; i++) {
+      var sp = spans[i], prev = sp.style.cssText;
+      sp.style.cssText = 'flex:none;white-space:nowrap';
+      w = Math.max(w, Math.ceil(sp.getBoundingClientRect().width));
+      sp.style.cssText = prev;
+    }
+    var v = (w ? w + 4 : 300) + 'px';
+    if (c.style.getPropertyValue('--addr-w') !== v) { c.style.setProperty('--addr-w', v); }
+  }
+  componentDidUpdate() { this.fitAddr(); }
+  componentDidMount() {
+    // 입력창: 한 줄에서 시작해 줄이 늘면 같이 커짐 (field-sizing 미지원 브라우저 보완)
+    if (!(window.CSS && CSS.supports && CSS.supports('field-sizing', 'content'))) {
+      var grow = function () { document.querySelectorAll('.composer textarea').forEach(function (t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 216) + 'px'; }); };
+      document.addEventListener('input', grow); document.addEventListener('keyup', grow); setTimeout(grow, 0);
+    }
+    var self = this; setTimeout(function () { self.fitAddr(); }, 0);
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(function () { self.fitAddr(); }); }
+    // 최신 메시지(정리 안내)가 보이도록 대화를 맨 아래로
+    setTimeout(function () { var m = document.getElementById('msgs'); if (m) { m.scrollTop = m.scrollHeight; } }, 60);
+  }
+  srcLabel(s) { return ({ raw: '대화에서 정리', def: '서비스 기본값 · 변경 가능', sug: '서비스 제안', me: '직접 설정' })[s] || ''; }
+  srcCls(s) { return ({ raw: 'src-raw', def: 'src-def', sug: 'src-sug', me: 'src-me' })[s] || ''; }
+  digits(v, n) { return String(v || '').replace(/[^0-9]/g, '').slice(0, n || 4); }
+  update(id, patch) {
+    this.setState({ rows: this.state.rows.map(function (r) { return r.id === id ? Object.assign({}, r, patch) : r; }) });
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    // 표시 순서: 필수 → 높음 → 중간 → 미설정 → 낮음 (같은 중요도는 입력 순서)
+    var rank = { '필수': 0, '높음': 1, '중간': 2, '': 3, '낮음': 4 };
+    var sorted = st.rows.map(function (r, i) { return { r: r, i: i }; })
+      .sort(function (a, b) { return (rank[a.r.imp] - rank[b.r.imp]) || (a.i - b.i); })
+      .map(function (x) { return x.r; });
+    var rows = sorted.map(function (r) {
+      var id = r.id;
+      return {
+        nameId: 'place-' + id,
+        name: r.name, addr: r.addr, hasAddr: !!r.addr, needAddr: !r.addr, isNearby: false,
+        openSearch: function () { self.setState({ searchId: id, query: r.q || r.name }); },
+        rowCls: r.imp === '필수' ? 'row row-must' : 'row',
+        imp: r.imp, impCls: r.imp ? 'sel' : 'sel sel-empty',
+        impShowSrc: !!(r.imp && r.impSrc), impSrc: self.srcLabel(r.impSrc), impSrcCls: self.srcCls(r.impSrc),
+        mode: r.mode, modeCls: r.mode ? 'sel' : 'sel sel-empty',
+        modeShowSrc: !!(r.mode && r.modeSrc), modeSrc: self.srcLabel(r.modeSrc), modeSrcCls: self.srcCls(r.modeSrc),
+        time: r.time, timeOff: !r.mode,
+        timeShowSrc: !!(r.mode && r.time && r.timeSrc), timeSrc: self.srcLabel(r.timeSrc), timeSrcCls: self.srcCls(r.timeSrc),
+        per: r.per, perCls: r.per ? 'sel' : 'sel sel-empty', cnt: r.cnt, cntOff: !r.per,
+        freqShowSrc: !!(r.per && r.cnt),
+        mustWarn: r.imp === '필수' && !(r.mode && r.time),
+        delLabel: (r.name || '이 장소') + ' 조건 삭제',
+        setName: function (e) { self.update(id, { name: e.target.value }); },
+        setImp: function (e) { self.update(id, { imp: e.target.value, impSrc: 'me' }); },
+        // 이동수단은 선택 입력(미설정 가능). 미설정이면 편도시간 입력 비활성
+        setMode: function (e) { self.update(id, { mode: e.target.value, modeSrc: 'me', time: e.target.value ? r.time : '' }); },
+        setTime: function (e) { self.update(id, { time: self.digits(e.target.value), timeSrc: 'me' }); },
+        setPer: function (e) { self.update(id, { per: e.target.value, cnt: e.target.value ? r.cnt : '' }); },
+        setCnt: function (e) { self.update(id, { cnt: self.digits(e.target.value).slice(0, 2) }); },
+        askDelete: function () { self.setState({ confirmId: id }); }
+      };
+    });
+    // 데모용 주소 검색 결과 (실제 주소 검색 API 미연결)
+    var places = [
+      { name: '토스 아크플레이스', addr: '서울 강남구 테헤란로 142' },
+      { name: '창훈대교회', addr: '경기 수원시 장안구 연무동' },
+      { name: '수원시청역', addr: '경기 수원시 권선구 효원로 지하270' },
+      { name: '근처 공원', addr: '후보 동네마다 가까운 공원' }
+    ];
+    var q = (st.query || '').replace(/\s/g, '');
+    var results = !q ? [] : places.filter(function (p) {
+      var k = (p.name + p.addr).replace(/\s/g, '');
+      return k.indexOf(q) >= 0 || (q.length >= 2 && k.indexOf(q.slice(0, 2)) >= 0);
+    }).map(function (p) {
+      return { name: p.name, addr: p.addr, pick: function () { self.update(st.searchId, { addr: p.name + ' · ' + p.addr, q: p.name }); self.setState({ searchId: null }); } };
+    });
+    var target = st.rows.filter(function (r) { return r.id === st.confirmId; })[0];
+    return {
+      rows: rows,
+      draft: st.draft,
+      draftEmpty: st.draft.trim().length === 0,
+      onDraft: function (e) { self.setState({ draft: e.target.value }); },
+      // 디자인 단계: 실제 AI 연동 없음
+      noop: function (e) { if (e && e.preventDefault) { e.preventDefault(); } },
+      deposit: st.deposit, rent: st.rent,
+      depositSrc: self.srcLabel(st.depositSrc), depositSrcCls: self.srcCls(st.depositSrc),
+      rentSrc: self.srcLabel(st.rentSrc), rentSrcCls: self.srcCls(st.rentSrc),
+      onDeposit: function (e) { self.setState({ deposit: self.digits(e.target.value, 6), depositSrc: 'me' }); },
+      onRent: function (e) { self.setState({ rent: self.digits(e.target.value), rentSrc: 'me' }); },
+      addrMissing: !!st.findTried && st.rows.some(function (r) { return !r.addr; }),
+      missingNames: st.rows.filter(function (r) { return !r.addr; }).map(function (r) { return r.name || '이름 없는 장소'; }).join(', '),
+      findGuard: function (e) { if (st.rows.some(function (r) { return !r.addr; })) { if (e && e.preventDefault) { e.preventDefault(); } self.setState({ findTried: true }); } },
+      addRow: function () {
+        var n = st.nextId;
+        self.setState({ nextId: n + 1, rows: st.rows.concat([{ id: n, name: '', q: '', addr: '', imp: '', impSrc: '', mode: '', modeSrc: '', time: '', timeSrc: '', per: '', cnt: '', freqSrc: '' }]) });
+        setTimeout(function () { var el = document.getElementById('place-' + n); if (el) { el.focus(); } }, 30);
+      },
+      searchOpen: st.searchId !== null,
+      query: st.query,
+      onQuery: function (e) { self.setState({ query: e.target.value }); },
+      results: results, hasResults: results.length > 0, noResults: !!q && results.length === 0,
+      closeSearch: function () { self.setState({ searchId: null }); },
+      newOpen: !!st.newOpen,
+      askNew: function () { self.setState({ newOpen: true }); },
+      cancelNew: function () { self.setState({ newOpen: false }); },
+      confirmOpen: !!target,
+      confirmTitle: target ? ((target.name ? target.name : '이 장소') + ' 조건을 삭제할까?') : '',
+      cancelDelete: function () { self.setState({ confirmId: null }); },
+      doDelete: function () {
+        self.setState({ rows: st.rows.filter(function (r) { return r.id !== st.confirmId; }), confirmId: null });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -12,6 +12,8 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
   const [error,setError]=useState('')
   const [attempt,setAttempt]=useState(0)
   const fittedMapRef=useRef<MapInstance|null>(null)
+  const fittedViewRef=useRef('')
+  const [mapSize,setMapSize]=useState({ width: 0,height: 0 })
   const lastSelectionRef=useRef<string|null>(null)
   const selectionRef=useRef(onSelect)
   useEffect(() => { selectionRef.current=onSelect },[onSelect])
@@ -24,7 +26,13 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
     loadKakaoMaps().then(sdk => {
       if(cancelled) return
       const map=new sdk.Map(container,{ center: new sdk.LatLng(37.55,126.92),level: 6 })
-      observer=new ResizeObserver(() => { const center=map.getCenter(); map.relayout(); map.setCenter(center) })
+      observer=new ResizeObserver(() => {
+        const center=map.getCenter()
+        map.relayout()
+        map.setCenter(center)
+        const width=container.clientWidth,height=container.clientHeight
+        setMapSize(previous => previous.width===width&&previous.height===height? previous:{ width,height })
+      })
       observer.observe(container)
       setLoaded({ map,sdk })
     }).catch(reason => { if(!cancelled) setError(reason instanceof Error? reason.message:'지도 연결에 실패했어요.') })
@@ -51,13 +59,16 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
 
   useEffect(() => {
     if(!loaded) return
-    if(fittedMapRef.current!==loaded.map&&neighborhoods.length) {
-      if(!selectedId) {
-        const bounds=new loaded.sdk.LatLngBounds()
-        neighborhoods.forEach(item => bounds.extend(new loaded.sdk.LatLng(item.lat,item.lng)))
-        loaded.map.setBounds(bounds)
-      }
+    const viewKey=`${mapSize.width}:${mapSize.height}:${neighborhoods.map(item => `${item.id}:${item.lat}:${item.lng}`).sort().join('|')}`
+    if(!selectedId&&neighborhoods.length&&mapSize.width>0&&mapSize.height>0&&
+      (fittedMapRef.current!==loaded.map||fittedViewRef.current!==viewKey||lastSelectionRef.current!==null)) {
+      loaded.map.relayout()
+      const bounds=new loaded.sdk.LatLngBounds()
+      neighborhoods.forEach(item => bounds.extend(new loaded.sdk.LatLng(item.lat,item.lng)))
+      // Leave room for marker labels, the top tabs, and the bottom controls.
+      loaded.map.setBounds(bounds,Math.min(140,mapSize.height*.3),Math.min(100,mapSize.width*.22),Math.min(100,mapSize.height*.22),Math.min(120,mapSize.width*.25))
       fittedMapRef.current=loaded.map
+      fittedViewRef.current=viewKey
     }
     if(!selectedId) lastSelectionRef.current=null
     const selected=neighborhoods.find(item => item.id===selectedId)
@@ -65,15 +76,14 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
       loaded.map.panTo(new loaded.sdk.LatLng(selected.lat,selected.lng))
       lastSelectionRef.current=selectedId
     }
-  },[loaded,selectedId,neighborhoods])
+  },[loaded,selectedId,neighborhoods,mapSize])
 
   useEffect(() => {
     if(loaded) loaded.map.setMapTypeId(satellite? loaded.sdk.MapTypeId.HYBRID:loaded.sdk.MapTypeId.ROADMAP)
   },[loaded,satellite])
 
   return <section className="
-  relative min-h-[360px] h-full flex-1 overflow-hidden rounded-none max-[760px]:h-[420px]
-  max-[760px]:min-h-[340px] max-[760px]:flex-auto isolate bg-surface
+  relative min-h-0 h-full min-w-0 flex-1 overflow-hidden rounded-none isolate bg-surface
 " aria-label="추천 동네 카카오 지도">
     <div className="absolute inset-0 size-full" ref={containerRef} />
     {!loaded&&<div className="
@@ -97,29 +107,24 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
 
     </>}
     {loaded&&<div className="
-  absolute right-5 bottom-10 z-5 flex flex-col gap-[14px] text-[#102535] [&_button]:grid
-  [&_button]:size-[54px] [&_button]:place-items-center [&_button]:bg-white [&_button]:text-inherit
+  absolute left-4 bottom-9 z-5 flex flex-col gap-2 text-[#102535] [&_button]:grid
+  [&_button]:size-[40px] [&_button]:place-items-center [&_button]:bg-white [&_button]:text-inherit
   [&_button:enabled:hover]:bg-[#f3faf7] [&_button:enabled:hover]:text-primary
   [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-primary
-  [&_button:focus-visible]:outline-offset-[-4px] [&_button:disabled]:opacity-50
-  [&_button:disabled]:cursor-not-allowed max-[760px]:right-[14px] max-[760px]:bottom-[35px]
-  max-[760px]:gap-2.5 max-[760px]:[&_button]:size-[46px]
+  [&_button:focus-visible]:outline-offset-[-4px]
+  [&_button:disabled]:cursor-not-allowed max-[760px]:left-3
 " aria-label="지도 조작">
       <div className="
-  overflow-hidden rounded-[17px] border border-[#edf0f3] bg-white shadow-[0_3px_14px_#17334a16]
+  overflow-hidden rounded-[12px] border border-[#edf0f3] bg-white shadow-[0_3px_14px_#17334a16]
   [&_button+button]:border-t [&_button+button]:border-[#edf0f3]
 ">
-        <button type="button" aria-label="지도 확대" title="확대" onClick={() => loaded.map.setLevel(Math.max(1,loaded.map.getLevel()-1))}><Plus size={27} strokeWidth={1.8} /></button>
-        <button type="button" aria-label="지도 축소" title="축소" onClick={() => loaded.map.setLevel(Math.min(14,loaded.map.getLevel()+1))}><Minus size={27} strokeWidth={1.8} /></button>
+        <button type="button" aria-label="지도 확대" title="확대" onClick={() => loaded.map.setLevel(Math.max(1,loaded.map.getLevel()-1))}><Plus size={21} strokeWidth={1.8} /></button>
+        <button type="button" aria-label="지도 축소" title="축소" onClick={() => loaded.map.setLevel(Math.min(14,loaded.map.getLevel()+1))}><Minus size={21} strokeWidth={1.8} /></button>
       </div>
-      <button type="button" className="rounded-[17px] border border-[#edf0f3] shadow-[0_3px_14px_#17334a16]" aria-label="선택한 동네로 이동" title="선택한 동네로 이동" disabled={!neighborhoods.some(item => item.id===selectedId)} onClick={() => {
+      <button type="button" className="rounded-[12px] border border-[#edf0f3] shadow-[0_3px_14px_#17334a16]" aria-label="선택한 동네로 이동" title="선택한 동네로 이동" disabled={!neighborhoods.some(item => item.id===selectedId)} onClick={() => {
         const selected=neighborhoods.find(item => item.id===selectedId)
         if(selected) loaded.map.panTo(new loaded.sdk.LatLng(selected.lat,selected.lng))
-      }}><LocateFixed size={25} strokeWidth={1.8} /></button>
+      }}><LocateFixed className="text-black" size={21} strokeWidth={1.8} /></button>
     </div>}
-    {loaded&&<div className="
-  pointer-events-none absolute bottom-[38px] left-5 z-5 rounded-lg bg-[#ffffffed] px-4 py-3 text-[11px]
-  text-text-secondary shadow-[0_4px_20px_#172c4110] max-[760px]:bottom-[35px] max-[760px]:text-[10px]
-">{neighborhoods.length? '동네 대표 위치 · 마커를 눌러 선택하세요':'현재 필터에 맞는 동네가 없어요'}</div>}
   </section>
 }
