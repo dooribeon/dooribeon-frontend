@@ -6,7 +6,7 @@ import { searchPlaces } from '../../services/placeSearch'
 import type { ResolvedPlace } from '../../services/placeSearch'
 import ConditionPanel from '../../components/conditions/ConditionPanel'
 import { fromLegacy, toLegacy } from '../../components/conditions/conditionModel'
-import { nextQuestion, primaryReady, receiveAnswer } from '../../components/conditions/conversationFlow'
+import { nextQuestion, conditionsReady, receiveAnswer } from '../../components/conditions/conversationFlow'
 import type { ConditionDraft } from '../../components/conditions/conditionModel'
 
 type Message={ role: 'assistant'|'user'; text: string }
@@ -28,7 +28,7 @@ export default function ConsultationPage() {
   const [candidates,setCandidates]=useState<{ placeId: string; items: ResolvedPlace[]; total: number } | null>(null)
   const searchVersion=useRef(0)
   useEffect(() => () => { searchVersion.current += 1 }, [])
-  const [panelVisible,setPanelVisible]=useState(() => Boolean(location.state?.conditionDraft && primaryReady(location.state.conditionDraft)))
+  const [panelVisible,setPanelVisible]=useState(() => Boolean(location.state?.conditionDraft && conditionsReady(location.state.conditionDraft)))
   const [pendingReply,setPendingReply]=useState(() => nextQuestion(conditionDraft)?.text ?? '조건을 확인하고 원하는 내용을 수정해주세요.')
   const endRef=useRef<HTMLDivElement>(null)
   const sendingRef=useRef(false)
@@ -42,7 +42,7 @@ export default function ConsultationPage() {
       setMessages(current => [...current, { role: 'assistant', text: pendingReply }])
       setTyping(false)
       sendingRef.current=false
-      if(primaryReady(conditionDraft)) setPanelVisible(true)
+      if(conditionsReady(conditionDraft)) setPanelVisible(true)
     }, 850)
     return () => window.clearTimeout(timer)
   },[typing,searching,pendingReply,conditionDraft])
@@ -50,8 +50,8 @@ export default function ConsultationPage() {
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }) },[messages,typing])
 
   function replyFor(next: ConditionDraft, prefix = '') {
-    const reveal=!panelVisible && primaryReady(next)
-    setPendingReply(prefix + (reveal ? '회사·학교의 필수 정보가 모였어요. 조건 패널에서 확인하고 수정할 수 있어요.\n\n' : '') + (nextQuestion(next)?.text ?? '장소를 모두 확인했어요. 조건을 확인하고 ‘이 조건으로 동네 찾기’를 눌러주세요.'))
+    const reveal=!panelVisible && conditionsReady(next)
+    setPendingReply(prefix + (reveal ? '회사·학교의 필수 정보와 모든 거점의 위치를 확인했어요. 조건 패널에서 확인하고 수정할 수 있어요.\n\n' : '') + (nextQuestion(next)?.text ?? '장소를 모두 확인했어요. 조건을 확인하고 ‘이 조건으로 동네 찾기’를 눌러주세요.'))
     setConditionDraft(next)
     setTyping(true)
   }

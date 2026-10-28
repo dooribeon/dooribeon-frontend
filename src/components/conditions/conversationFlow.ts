@@ -7,6 +7,9 @@ export function primaryReady(draft: ConditionDraft): boolean {
   const first = draft.places.find(p => p.source === 'work')
   return Boolean(first && draft.deposit !== '' && draft.rent !== '' && isPlaceResolved(first) && first.mode && Number(first.minutes) > 0)
 }
+export function conditionsReady(draft: ConditionDraft): boolean {
+  return primaryReady(draft) && draft.places.every(isPlaceResolved)
+}
 export function nextQuestion(draft: ConditionDraft): Followup | null {
   const first = draft.places.find(p => p.source === 'work')
   if (!first) return { key: 'primary', text: '가장 먼저 회사나 학교를 기준으로 정리할게요. 다니는 회사 또는 학교와 위치를 알려주세요.' }

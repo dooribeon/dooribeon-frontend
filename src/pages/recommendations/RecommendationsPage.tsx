@@ -11,67 +11,71 @@ export default function RecommendationsPage({ saved,onToggleSaved }: { saved: st
   const { id: detailId }=useParams()
   const navigate=useNavigate()
   const [savedOnly,setSavedOnly]=useState<boolean>(location.state?.listState?.savedOnly??false)
-  const [sort,setSort]=useState<string>(location.state?.listState?.sort??'rank')
-  const visible=recommendations.filter(item => !savedOnly||saved.includes(item.id)).sort((a,b) => sort==='rent'? a.rent-b.rent:sort==='work'? a.work-b.work:a.rank-b.rank)
+  const visible=recommendations.filter(item => !savedOnly||saved.includes(item.id)).sort((a,b) => a.rank-b.rank)
   const activeId=detailId??null
+
+  function showList(onlySaved: boolean) {
+    setSavedOnly(onlySaved)
+    navigate('/recommendations', {
+      replace: true,
+      state: { ...location.state, listState: { savedOnly: onlySaved } },
+    })
+  }
 
   function select(id: string) {
     navigate(`/recommendations/${id}`,{
       replace: Boolean(detailId),
-      state: { ...location.state,listState: { savedOnly,sort } },
+      state: { ...location.state,listState: { savedOnly } },
     })
   }
 
-  return <AppLayout className="bg-[#F4F8F6] text-[var(--text)] tracking-[-.03em] [--header-background:rgba(244,248,246,.94)] [&_select]:cursor-pointer [&_select]:bg-transparent [&_button]:min-h-11 recommendations-refresh" header={{ appearance: 'prototype' }}>
-    <main className="mx-auto w-full max-w-[1680px] px-[clamp(20px,3vw,48px)] pt-6 pb-24 max-[760px]:px-4 max-[760px]:pb-16">
-      <div className="mb-[18px] flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[30px] font-extrabold tracking-[-.05em] text-[var(--ink)] max-[760px]:text-[26px]">동네 추천</h1>
-        <Link to="/consultation" state={location.state} className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[#CFE3DA] bg-white px-4 text-sm font-bold text-[var(--gd)] hover:bg-[var(--gl)]"><ArrowLeft size={16} /> 조건 수정하기</Link>
-      </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(400px,min(40%,560px))] items-start gap-6 max-[1000px]:grid-cols-1">
-      <div className="sticky top-[88px] flex min-w-0 flex-col gap-3 max-[1000px]:relative max-[1000px]:top-auto">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="
-  flex gap-[5px] rounded-3xl border border-[#edf0f3] bg-[#ffffffed] p-1.5 shadow-[0_4px_14px_#172c4110]
-  [&_button]:rounded-3xl [&_button]:bg-[#f4f6f8] [&_button]:px-[17px] [&_button]:py-2.5 [&_button]:text-xs
+  return <AppLayout className="bg-[#F4F8F6] text-[var(--text)] tracking-[-.03em] [--header-background:rgba(244,248,246,.94)] [&_button]:min-h-11 recommendations-refresh min-[1001px]:h-dvh min-[1001px]:overflow-hidden" header={{ appearance: 'prototype' }}>
+    <main className="mx-auto w-full max-w-[1680px] px-[clamp(20px,3vw,48px)] pt-6 pb-6 min-[1001px]:flex min-[1001px]:min-h-0 min-[1001px]:flex-1 min-[1001px]:flex-col max-[760px]:px-4">
+      <h1 className="sr-only">동네 추천</h1>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(400px,min(40%,560px))] min-h-0 gap-6 min-[1001px]:flex-1 min-[1001px]:grid-rows-[minmax(0,1fr)] max-[1000px]:grid-cols-1">
+      <div className="flex min-h-0 min-w-0 flex-col">
+        <div className="relative flex min-h-0 min-[1001px]:flex-1 max-[1000px]:aspect-[3/2] max-[1000px]:max-h-[60svh] max-[1000px]:min-h-[360px] overflow-hidden rounded-[24px] border border-[var(--line-panel)] bg-[#EEF0EC] max-[760px]:min-h-[320px] max-[760px]:rounded-[18px]"><NeighborhoodMap neighborhoods={visible} selectedId={activeId} onSelect={select} />
+          <div className="pointer-events-none absolute inset-x-4 top-4 z-10 flex flex-wrap items-start justify-between gap-2 max-[760px]:inset-x-3 max-[760px]:top-3">
+            <Link to="/consultation" state={location.state} className="pointer-events-auto inline-flex min-h-11 items-center gap-1.5 rounded-3xl bg-white px-[17px] py-1 text-xs font-[550] text-black hover:bg-gray-50 max-[760px]:px-[13px]"><ArrowLeft size={14} />조건 수정</Link>
+            <div className="
+  pointer-events-auto ml-auto flex gap-[5px]
+  [&_button]:rounded-3xl [&_button]:bg-white [&_button]:px-[17px] [&_button]:py-1 [&_button]:text-xs
   [&_button]:font-[550] [&_button]:text-text-secondary [&_button[aria-pressed=true]]:bg-primary
-  [&_button[aria-pressed=true]]:text-white [&_button:last-child]:border [&_button:last-child]:border-[#eef1f5]
-  [&_button:last-child]:bg-white [&_button:last-child]:text-[#24364a] max-[760px]:[&_button]:px-[13px]
-  max-[760px]:[&_button]:py-[9px]
-"><button aria-pressed={!savedOnly} onClick={() => setSavedOnly(false)}>추천 동네 {recommendations.length}</button><button aria-pressed={savedOnly} onClick={() => setSavedOnly(true)}>관심 동네 {saved.length}</button><button onClick={() => { setSavedOnly(false) }}>전체 보기</button></div>
+  [&_button[aria-pressed=true]]:text-white
+  max-[760px]:[&_button]:px-[13px]
+  max-[760px]:[&_button]:py-1
+"><button aria-pressed={!savedOnly} onClick={() => showList(false)}>추천 동네 {recommendations.length}</button><button aria-pressed={savedOnly} onClick={() => showList(true)}>관심 동네 {saved.length}</button></div>
+          </div>
         </div>
-        <div className="relative flex aspect-[3/2] max-h-[calc(100svh-220px)] min-h-[360px] overflow-hidden rounded-[24px] border border-[var(--line-panel)] bg-[#EEF0EC] max-[760px]:min-h-[320px] max-[760px]:rounded-[18px]"><NeighborhoodMap neighborhoods={visible} selectedId={activeId} onSelect={select} /></div>
       </div>
       <div className="flex min-h-0 min-w-0 flex-col max-[760px]:block">
-        {detailId? <div className="detail-refresh flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-[var(--line-panel)] bg-white max-[760px]:block"><NeighborhoodDetailPage saved={saved} onToggleSaved={onToggleSaved} /></div>:<section className="
-  min-w-0 flex-1
+        {detailId? <div className="detail-refresh flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border border-[var(--line-panel)] bg-white max-[760px]:rounded-[18px]"><NeighborhoodDetailPage saved={saved} onToggleSaved={onToggleSaved} /></div>:<section className="
+  flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[24px] border border-[var(--line-panel)] bg-white max-[760px]:rounded-[18px]
 " aria-labelledby="results-title">
           <div className="
-  mb-3 flex flex-wrap items-center justify-between gap-2.5 [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-[var(--ink)]
-  [&_h2_span]:text-[var(--gd)] [&_select]:min-h-11 [&_select]:rounded-[10px] [&_select]:border [&_select]:border-[var(--line-panel)]
-  [&_select]:bg-white [&_select]:px-3 [&_select]:text-xs [&_select]:text-[var(--muted)]
-"><h2 id="results-title">{savedOnly? '관심 동네':'추천 동네 TOP'} <span>{visible.length}</span></h2><label className="sr-only" htmlFor="result-sort">정렬 기준</label><select id="result-sort" value={sort} onChange={e => setSort(e.target.value)}><option value="rank">추천 순</option><option value="rent">월세 낮은 순</option><option value="work">출근 빠른 순</option></select></div>
-          <div className="grid gap-3.5">{visible.map(item => <article className="relative scroll-m-[88px] rounded-[22px] border border-[var(--line-panel)] bg-white p-5 shadow-[0_8px_24px_rgba(15,45,35,.05)] transition-colors hover:border-[#A7D9C2] hover:bg-[#FBFEFC] has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-[var(--g)] max-[760px]:p-4" key={item.id}>
-            <div className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 pr-[82px] max-[380px]:pr-0">
-              <span className="grid size-7 place-items-center rounded-full bg-[#064E3B] text-[13px] font-extrabold text-white">{item.rank}</span>
+  flex shrink-0 flex-wrap items-center justify-between gap-2.5 px-5 pt-5 pb-3 max-[760px]:px-4 [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-[var(--ink)]
+  [&_h2_span]:text-[var(--gd)]
+"><h2 id="results-title">{savedOnly? '관심 동네':'추천 동네 TOP'} <span>{visible.length}</span></h2></div>
+          <div className="panel-scroll min-h-0 flex-1 min-[1001px]:overflow-y-auto min-[1001px]:overscroll-contain">
+          <div className="[&>article+article]:before:absolute [&>article+article]:before:top-0 [&>article+article]:before:inset-x-5 [&>article+article]:before:h-px [&>article+article]:before:bg-[#E5E7EB] [&>article+article]:before:content-['']">{visible.map(item => <article className="relative bg-white p-5 transition-colors hover:bg-[#FBFEFC] has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-[-2px] has-[a:focus-visible]:outline-[var(--g)] max-[760px]:p-4" key={item.id}>
+            <div className="grid grid-cols-[28px_minmax(0,1fr)] items-center gap-x-2.5 gap-y-1 pr-10">
+              <span className="grid size-7 place-items-center rounded-full bg-primary text-[13px] font-extrabold text-white">{item.rank}</span>
               <h3 className="text-[21px] font-extrabold leading-tight tracking-[-.04em] text-[var(--ink)] max-[1250px]:text-lg">{item.name}</h3>
-              <div className="row-span-2 flex flex-col items-center text-xs text-[var(--muted-light)]" aria-label={`추천도 예시 ${item.score}점, 100점 만점`}><span>추천도</span><strong className="text-[22px] font-extrabold leading-tight text-[var(--ink)]">{item.score}<small className="ml-px text-sm">점</small></strong></div>
-              <div className="col-start-2 flex flex-wrap gap-1">{item.tags.map(tag => <span className="rounded-full bg-[var(--gl)] px-[9px] py-0.5 text-[12.5px] font-bold text-[var(--gd)]" key={tag}>{tag}</span>)}</div>
             </div>
-            <button className={`absolute right-3 top-4 z-2 inline-flex items-center gap-1 rounded-full border px-2.5 text-[13px] font-bold max-[380px]:relative max-[380px]:top-auto max-[380px]:right-auto max-[380px]:mt-3 ${saved.includes(item.id)? 'border-[#FBCFE8] bg-[#FFF1F4] text-[#BE185D]':'border-[var(--line)] bg-white text-[var(--muted)] hover:border-[#FBCFE8] hover:bg-[#FFF1F4] hover:text-[#BE185D]'}`} aria-label={`${item.name} 관심 동네 ${saved.includes(item.id)? '해제':'저장'}`} aria-pressed={saved.includes(item.id)} onClick={() => onToggleSaved(item.id)}><Heart size={18} fill={saved.includes(item.id)? 'currentColor':'none'} /><span>관심</span></button>
-            <p className="mt-3 text-[13px] leading-relaxed text-[var(--muted)]">{item.description}</p>
-            <div className="mt-3.5"><small className="block text-xs text-[var(--muted-light)]">월세 예시</small><strong className="mt-0.5 block text-[17px] text-[var(--ink)]">{item.rent}만 원</strong></div>
+            <button className={`absolute right-3 top-3 z-2 inline-flex size-11 items-center justify-center bg-transparent ${saved.includes(item.id)? 'text-[#BE185D]':'text-[var(--muted)] hover:text-[#BE185D]'}`} aria-label={`${item.name} 관심 동네 ${saved.includes(item.id)? '해제':'저장'}`} aria-pressed={saved.includes(item.id)} onClick={() => onToggleSaved(item.id)}><Heart size={20} fill={saved.includes(item.id)? 'currentColor':'none'} /></button>
+            <div className="mt-3.5"><small className="block text-xs text-[var(--muted-light)]">월세</small><strong className="mt-0.5 block text-[17px] text-[var(--ink)]">{item.deposit}/{item.rent}</strong></div>
             <div className="mt-3.5 grid grid-cols-2 gap-2 [&>div]:rounded-[10px] [&>div]:border [&>div]:border-[#EEF2F0] [&>div]:bg-[#FAFCFB] [&>div]:p-3 [&_small]:flex [&_small]:items-center [&_small]:gap-1 [&_small]:text-xs [&_small]:text-[var(--muted-light)] [&_strong]:mt-1 [&_strong]:block [&_strong]:text-[17px] [&_strong]:text-[var(--ink)] [&_span]:text-xs [&_span]:text-[var(--muted)]">
               <div><small><Building2 size={14} />회사 · 여의도</small><strong>{item.work}분</strong><span>환승 {item.transfers}회</span></div>
               <div><small><House size={14} />본가 · 수원</small><strong>{item.family}분</strong><span>환승 1회</span></div>
             </div>
-            <Link className="mt-3 inline-flex min-h-11 items-center text-[13px] font-semibold text-[var(--gd)] after:absolute after:inset-0 after:z-1 after:rounded-[22px] after:content-['']" to={`/recommendations/${item.id}`} state={{ ...location.state,listState: { selectedId: item.id,savedOnly,sort } }} aria-label={`${item.name} 상세 보기`}>상세 보기 →</Link>
+            <Link className="absolute inset-0 z-1" to={`/recommendations/${item.id}`} state={{ ...location.state,listState: { selectedId: item.id,savedOnly } }} aria-label={`${item.name} 상세 보기`}><span className="sr-only">상세 보기</span></Link>
           </article>)}</div>
           {visible.length===0&&<div className="
   px-[15px] py-[60px] text-center text-text-secondary [&>svg]:mx-auto [&>svg]:mb-4 [&_h2]:text-[17px]
   [&_h2]:font-semibold [&_p]:mt-2.5 [&_p]:text-[13px] [&_button]:mt-5 [&_button]:text-primary
 "><Heart size={30} /><h2>{savedOnly? '표시할 관심 동네가 없어요':'조건에 맞는 예시 동네가 없어요'}</h2><p>{savedOnly? '카드의 하트를 눌러 관심 동네를 추가해보세요.':'전체 동네 보기를 눌러 추천 목록을 확인해주세요.'}</p><button onClick={() => { setSavedOnly(false) }}>전체 동네 보기</button></div>}
-          <p className="mt-5 text-center text-[11px] text-text-secondary">관심 동네는 새로고침 전까지 유지돼요.</p>
+          <p className="px-5 py-5 text-center text-[11px] text-text-secondary">관심 동네는 새로고침 전까지 유지돼요.</p>
+          </div>
         </section>}
       </div>
       </div>
