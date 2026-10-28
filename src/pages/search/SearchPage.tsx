@@ -84,7 +84,6 @@ export default function SearchPage() {
           </li>)}</ol>
         </div>
         <p className="sr-only" role="status">{step < 4 ? steps[step].title : '후보 정리 완료. 추천 목록으로 이동합니다.'}</p>
-        <p className="mt-[22px] text-center text-[12.5px] text-[var(--badge-text)]">현재는 예시 추천을 준비하는 화면이에요. 금액·이동시간은 입력 조건으로 계산한 결과가 아닙니다.</p>
       </section>
     </main>
   </AppLayout>

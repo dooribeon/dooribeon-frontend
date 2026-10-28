@@ -12,6 +12,8 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
   const [error,setError]=useState('')
   const [attempt,setAttempt]=useState(0)
   const fittedMapRef=useRef<MapInstance|null>(null)
+  const fittedViewRef=useRef('')
+  const [mapSize,setMapSize]=useState({ width: 0,height: 0 })
   const lastSelectionRef=useRef<string|null>(null)
   const selectionRef=useRef(onSelect)
   useEffect(() => { selectionRef.current=onSelect },[onSelect])
@@ -24,7 +26,13 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
     loadKakaoMaps().then(sdk => {
       if(cancelled) return
       const map=new sdk.Map(container,{ center: new sdk.LatLng(37.55,126.92),level: 6 })
-      observer=new ResizeObserver(() => { const center=map.getCenter(); map.relayout(); map.setCenter(center) })
+      observer=new ResizeObserver(() => {
+        const center=map.getCenter()
+        map.relayout()
+        map.setCenter(center)
+        const width=container.clientWidth,height=container.clientHeight
+        setMapSize(previous => previous.width===width&&previous.height===height? previous:{ width,height })
+      })
       observer.observe(container)
       setLoaded({ map,sdk })
     }).catch(reason => { if(!cancelled) setError(reason instanceof Error? reason.message:'지도 연결에 실패했어요.') })
@@ -51,13 +59,16 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
 
   useEffect(() => {
     if(!loaded) return
-    if(fittedMapRef.current!==loaded.map&&neighborhoods.length) {
-      if(!selectedId) {
-        const bounds=new loaded.sdk.LatLngBounds()
-        neighborhoods.forEach(item => bounds.extend(new loaded.sdk.LatLng(item.lat,item.lng)))
-        loaded.map.setBounds(bounds)
-      }
+    const viewKey=`${mapSize.width}:${mapSize.height}:${neighborhoods.map(item => `${item.id}:${item.lat}:${item.lng}`).sort().join('|')}`
+    if(!selectedId&&neighborhoods.length&&mapSize.width>0&&mapSize.height>0&&
+      (fittedMapRef.current!==loaded.map||fittedViewRef.current!==viewKey||lastSelectionRef.current!==null)) {
+      loaded.map.relayout()
+      const bounds=new loaded.sdk.LatLngBounds()
+      neighborhoods.forEach(item => bounds.extend(new loaded.sdk.LatLng(item.lat,item.lng)))
+      // Leave room for marker labels, the top tabs, and the bottom controls.
+      loaded.map.setBounds(bounds,Math.min(140,mapSize.height*.3),Math.min(100,mapSize.width*.22),Math.min(100,mapSize.height*.22),Math.min(120,mapSize.width*.25))
       fittedMapRef.current=loaded.map
+      fittedViewRef.current=viewKey
     }
     if(!selectedId) lastSelectionRef.current=null
     const selected=neighborhoods.find(item => item.id===selectedId)
@@ -65,15 +76,14 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
       loaded.map.panTo(new loaded.sdk.LatLng(selected.lat,selected.lng))
       lastSelectionRef.current=selectedId
     }
-  },[loaded,selectedId,neighborhoods])
+  },[loaded,selectedId,neighborhoods,mapSize])
 
   useEffect(() => {
     if(loaded) loaded.map.setMapTypeId(satellite? loaded.sdk.MapTypeId.HYBRID:loaded.sdk.MapTypeId.ROADMAP)
   },[loaded,satellite])
 
   return <section className="
-  relative min-h-[360px] h-full flex-1 overflow-hidden rounded-none max-[760px]:h-[420px]
-  max-[760px]:min-h-[340px] max-[760px]:flex-auto isolate bg-surface
+  relative min-h-0 h-full min-w-0 flex-1 overflow-hidden rounded-none isolate bg-surface
 " aria-label="추천 동네 카카오 지도">
     <div className="absolute inset-0 size-full" ref={containerRef} />
     {!loaded&&<div className="

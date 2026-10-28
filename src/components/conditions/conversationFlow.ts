@@ -15,8 +15,8 @@ export function nextQuestion(draft: ConditionDraft): Followup | null {
   if (!first) return { key: 'primary', text: '가장 먼저 회사나 학교를 기준으로 정리할게요. 다니는 회사 또는 학교와 위치를 알려주세요.' }
   if (draft.deposit === '') return { key: 'deposit', text: '보증금은 최대 얼마까지 생각하고 계세요? 예: 2,000만 원' }
   if (draft.rent === '') return { key: 'rent', text: '월세는 최대 얼마까지 생각하고 계세요? 예: 70만 원' }
-  if (!isPlaceResolved(first)) return { key: 'address', placeId: first.id, text: `${first.name} 이름이나 위치를 알려주세요. 예: 강남 파이브가이즈. 장소명 또는 주소로 검색할게요.` }
-  if (!first.mode) return { key: 'mode', placeId: first.id, text: `${first.name}까지 주로 어떻게 이동하시나요? 대중교통, 도보, 자차 중 선택하거나 직접 알려주세요.` }
+  if (!isPlaceResolved(first)) return { key: 'address', placeId: first.id, text: `${first.name} 이름이나 위치를 알려주세요. 예: 네이버 본사. 장소명 또는 주소로 검색할게요.` }
+  if (!first.mode) return { key: 'mode', placeId: first.id, text: `${first.name}까지 주로 어떻게 이동하시나요? 대중교통, 도보 중 선택하거나 직접 알려주세요.` }
   if (Number(first.minutes) <= 0) return { key: 'minutes', placeId: first.id, text: `${first.name}까지 편도로 최대 몇 분까지 괜찮으세요? 예: 45분 이내` }
   const other = draft.places.find(p => p.source !== 'work' && !isPlaceResolved(p))
   return other ? { key: 'address', placeId: other.id, text: `${other.name || '추가 거점'}의 장소명이나 위치를 알려주세요. 검색으로 장소를 확인할게요.` } : null

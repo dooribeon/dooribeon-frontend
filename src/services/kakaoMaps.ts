@@ -7,7 +7,7 @@ export interface MapInstance {
   setCenter(point: MapPoint): void
   getCenter(): MapPoint
   relayout(): void
-  setBounds(bounds: MapBounds): void
+  setBounds(bounds: MapBounds, paddingTop?: number, paddingRight?: number, paddingBottom?: number, paddingLeft?: number): void
   addControl(control: object, position: number): void
 }
 interface MapBounds { extend(point: MapPoint): void }

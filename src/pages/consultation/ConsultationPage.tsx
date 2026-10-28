@@ -33,7 +33,7 @@ export default function ConsultationPage() {
   const endRef=useRef<HTMLDivElement>(null)
   const sendingRef=useRef(false)
   const currentQuestion = nextQuestion(conditionDraft)
-  const quickReplies = currentQuestion?.key === 'mode' ? ['대중교통', '도보', '자차'] : currentQuestion?.key === 'minutes' ? ['30분', '1시간', '1시간 반'] : []
+  const quickReplies = currentQuestion?.key === 'mode' ? ['대중교통', '도보'] : currentQuestion?.key === 'minutes' ? ['30분', '1시간', '1시간 반'] : []
   const conditions: Conditions=location.state?.conditions ?? {}
 
   useEffect(() => {
@@ -114,9 +114,13 @@ export default function ConsultationPage() {
               </div>)}
             </div>
             {typing && <div className="mb-[18px] flex items-start gap-2.5" role="status" aria-label="두리번이 응답을 준비하고 있어요"><BotAvatar /><div className="flex gap-1.5 rounded-[4px_20px_20px_20px] bg-[#F3F6F5] px-[18px] py-5" aria-hidden="true">{[0,1,2].map(dot => <span key={dot} className="chat-thinking size-[7px] rounded-full bg-[#7FA796]" style={{ animationDelay: `${dot * 150}ms` }} />)}</div></div>}
-            {candidates && !typing && <div className="mb-4 ml-11 grid gap-2" aria-label="장소 검색 결과">
-              {candidates.items.map(place => <button key={place.id} type="button" className="rounded-xl border border-[var(--line-panel)] bg-white p-3 text-left hover:bg-[var(--gl)]" onClick={() => choosePlace(candidates.placeId, place)}><strong className="block text-sm">{place.name}</strong><span className="text-xs text-[var(--muted)]">{place.address}</span></button>)}
-              {candidates.total > candidates.items.length && <p className="text-xs text-[var(--muted)]">검색 결과 중 {candidates.items.length}곳을 표시했어요. 원하는 장소가 없다면 지역·지점명을 더 입력해주세요.</p>}
+            {candidates && !typing && <div className="mb-4 ml-11 w-[calc(100%-44px)] max-w-[480px] shrink-0" aria-label="장소 검색 결과">
+              <div className="overflow-hidden rounded-2xl border border-[var(--line-panel)] bg-white">
+                <div key={candidates.items.map(place => place.id).join(',')} className="panel-scroll max-h-[352px] overflow-y-auto overscroll-contain" role="group" aria-label="검색된 장소 선택">
+                  {candidates.items.map(place => <button key={place.id} type="button" className="relative flex h-[88px] w-full flex-col justify-center gap-1 px-4 text-left transition-colors hover:bg-[var(--gl)] focus-visible:bg-[var(--gl)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary [&+button]:before:absolute [&+button]:before:inset-x-4 [&+button]:before:top-0 [&+button]:before:h-px [&+button]:before:bg-[#E5E7EB] [&+button]:before:content-['']" title={`${place.name} · ${place.address}`} onClick={() => choosePlace(candidates.placeId, place)}><strong className="block w-full truncate text-sm leading-5">{place.name}</strong><span className="line-clamp-2 text-xs leading-4 text-[var(--muted)]">{place.address}</span></button>)}
+                </div>
+              </div>
+              {candidates.total > candidates.items.length && <p className="mt-2 text-xs text-[var(--muted)]">검색 결과 중 {candidates.items.length}곳을 표시했어요. 원하는 장소가 없다면 지역·지점명을 더 입력해주세요.</p>}
             </div>}
             {!typing && quickReplies.length > 0 && <div className="mb-4 ml-11 flex flex-wrap gap-2" role="group" aria-label={currentQuestion?.key === 'mode' ? '이동수단 선택' : '최대 편도시간 선택'}>
               {quickReplies.map(option => <button type="button" key={option} className="min-h-11 rounded-full border border-[#CFE3DA] bg-white px-4 text-sm font-semibold text-[var(--gd)] transition-colors hover:border-[var(--g)] hover:bg-[var(--gl)]" onClick={() => void send(option)}>{option}</button>)}
