@@ -5,7 +5,8 @@ import AppLayout from '../../components/layout/AppLayout'
 import { loadKakaoMaps } from '../../services/kakaoMaps'
 import type { MapInstance, MapsSDK } from '../../services/kakaoMaps'
 import type { ConditionDraft } from '../../components/conditions/conditionModel'
-import { recommendations } from '../../mocks/recommendations'
+import { fetchRecommendations } from '../../services/recommendApi'
+import { recommendations } from '../../mocks/recommendations'   // 탐색 중 지도 연출용 핀 위치
 
 function SearchMap({ step }: { step: number }) {
   const container = useRef<HTMLDivElement>(null)
@@ -51,23 +52,30 @@ export default function SearchPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const state = location.state as { condition?: string; conditions?: Record<string, string>; conditionDraft?: ConditionDraft } | null
-  const [step, setStep] = useState(0)
-  const hasConditions = Boolean(state?.conditionDraft || state?.conditions)
-  useEffect(() => {
-    if (!hasConditions) return
-    // Prototype progress only; replace timers with recommendation API progress when connected.
-    const timers = [1100, 2300, 3500, 4600].map((delay, index) => window.setTimeout(() => setStep(index + 1), delay))
-    const finish = window.setTimeout(() => navigate('/recommendations', { replace: true, state: location.state }), 5100)
-    return () => { timers.forEach(window.clearTimeout); window.clearTimeout(finish) }
-  }, [hasConditions, navigate, location.state])
-  if (!hasConditions) return <Navigate to="/consultation" replace />
   const draft = state?.conditionDraft
-  const required = draft?.places.filter(place => place.importance === '필수') ?? []
+  const [step, setStep] = useState(0)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    if (!draft) return
+    let disposed = false
+    const startedAt = Date.now()
+    // 실제 진행률은 알 수 없어서 앞 단계는 시간에 맞춰 넘기고, 응답이 오면 마지막 단계로 이동
+    const timers = [1100, 2300, 3500].map((delay, index) => window.setTimeout(() => setStep(current => Math.max(current, index + 1)), delay))
+    fetchRecommendations(draft).then(results => {
+      if (disposed) return
+      const wait = Math.max(0, 3600 - (Date.now() - startedAt))   // 너무 빨리 끝나도 단계 연출은 보여주기
+      timers.push(window.setTimeout(() => setStep(4), wait))
+      timers.push(window.setTimeout(() => navigate('/recommendations', { replace: true, state: { ...location.state, results } }), wait + 500))
+    }).catch((e: Error) => { if (!disposed) setError(e.message) })
+    return () => { disposed = true; timers.forEach(window.clearTimeout) }
+  }, [draft, navigate, location.state])
+  if (!draft) return <Navigate to="/consultation" replace />
+  const required = draft.places.filter(place => place.importance === '필수')
   const steps = [
-    { title: '예산 확인', description: draft ? `보증금 ${draft.deposit ? `${Number(draft.deposit).toLocaleString()}만 원 이하` : '미설정'} · 월세 ${draft.rent ? `${Number(draft.rent).toLocaleString()}만 원 이하` : '미설정'}` : state?.conditions?.budget || '입력한 예산 확인' },
+    { title: '예산 확인', description: `보증금 ${draft.deposit ? `${Number(draft.deposit).toLocaleString()}만 원 이하` : '미설정'} · 월세 ${draft.rent ? `${Number(draft.rent).toLocaleString()}만 원 이하` : '미설정'}` },
     { title: '필수 조건 확인', description: required.length ? required.map(place => `${place.name || '거점'} ${place.mode || '이동수단 미설정'} ${place.minutes ? `${place.minutes}분 이내` : ''}`).join(' · ') : '필수 시간 조건 없음 · 모든 후보 비교' },
-    { title: '생활거점 이동시간 비교', description: draft?.places.length ? `${draft.places.map(place => place.name || '생활거점').join(' · ')} 이동 조건 확인` : '입력한 생활거점 확인' },
-    { title: '후보 정리', description: `추천 순 · 예시 후보 ${recommendations.length}곳` },
+    { title: '생활거점 이동시간 비교', description: draft.places.length ? `${draft.places.map(place => place.name || '생활거점').join(' · ')} 이동 조건 확인` : '입력한 생활거점 확인' },
+    { title: '후보 정리', description: '중요도를 반영해 상위 5곳 정리' },
   ]
   return <AppLayout header={{ appearance: 'prototype' }} className="bg-[#F4F8F6] text-[var(--text)] [--header-background:rgba(244,248,246,.94)]">
     <main className="flex flex-1 items-center justify-center px-[clamp(16px,3vw,48px)] py-8">
@@ -83,6 +91,7 @@ export default function SearchPage() {
             <div className="pt-0.5"><strong className="text-[15.5px] text-[var(--ink)]">{item.title}</strong><p className="mt-[3px] text-[13.5px] leading-relaxed text-[var(--muted)]">{item.description}</p></div>
           </li>)}</ol>
         </div>
+        {error && <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#F3D2D2] bg-[#FFF7F7] px-5 py-4" role="alert"><p className="text-sm text-[#9F1D1D]">{error}</p><button className="min-h-11 rounded-xl bg-primary px-4 text-sm font-bold text-white" onClick={() => navigate('/consultation', { state: location.state })}>조건 수정하기</button></div>}
         <p className="sr-only" role="status">{step < 4 ? steps[step].title : '후보 정리 완료. 추천 목록으로 이동합니다.'}</p>
       </section>
     </main>

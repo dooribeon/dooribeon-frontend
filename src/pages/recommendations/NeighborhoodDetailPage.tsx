@@ -1,22 +1,15 @@
 import { useEffect,useRef } from 'react'
 import { Link,useLocation,useParams } from 'react-router-dom'
-import { ArrowLeft,Check,CircleAlert,Heart,MapPin,TrainFront } from 'lucide-react'
-import { recommendations } from '../../mocks/recommendations'
-
-const details: Record<string,{ walking: number; reasons: string[]; cautions: string[] }>={
-  hapjeong: { walking: 5,reasons: ['여의도까지 40분 이내인 이동 예시예요.','한강과 주변 상권을 함께 고려할 수 있어요.'],cautions: ['비교 후보 중 월세 예시가 높은 편이에요.','상권 인근은 시간대별 소음 확인이 필요해요.'] },
-  sinchon: { walking: 7,reasons: ['후보 중 월세 예시가 가장 낮아요.','대학가의 생활시설을 고려할 수 있어요.'],cautions: ['수원까지 이동 예시는 48분이에요.','번화가 주변은 야간 환경을 확인해보세요.'] },
-  mangwon: { walking: 9,reasons: ['한강과 동네 상권을 함께 고려할 수 있어요.','월세 예시는 65만 원이에요.'],cautions: ['여의도까지 이동 예시는 40분을 넘어요.','실제 집에서 역까지의 도보 거리를 확인해보세요.'] },
-  sangsu: { walking: 6,reasons: ['홍대 인근 문화 공간을 고려할 수 있어요.','여의도까지 이동 예시는 40분이에요.'],cautions: ['수원까지 이동 예시는 50분이에요.','주말 혼잡도와 야간 소음을 확인해보세요.'] },
-  dangsan: { walking: 4,reasons: ['여의도까지 이동 예시가 후보 중 가장 짧아요.','회사까지 환승 없는 이동 예시예요.'],cautions: ['후보 중 월세 예시가 가장 높아요.','예산과 실제 주거비를 함께 확인해보세요.'] },
-}
+import { ArrowLeft,Check,CircleAlert,Footprints,Heart,MapPin,TrainFront } from 'lucide-react'
+import { toNeighborhoods } from '../../services/recommendApi'
+import type { Recommendation } from '../../services/recommendApi'
 
 export default function NeighborhoodDetailPage({ saved,onToggleSaved }: { saved: string[]; onToggleSaved: (id: string) => void }) {
   const { id }=useParams()
   const location=useLocation()
   const panelRef=useRef<HTMLDivElement>(null)
-  const index=recommendations.findIndex(item => item.id===id)
-  const item=recommendations[index]
+  const recommendations=toNeighborhoods((location.state?.results??[]) as Recommendation[])
+  const item=recommendations.find(item => item.id===id)
   useEffect(() => { panelRef.current?.scrollTo({ top: 0 }) },[id])
   const returnState={ ...location.state,listState: { ...location.state?.listState,selectedId: id } }
 
@@ -24,7 +17,17 @@ export default function NeighborhoodDetailPage({ saved,onToggleSaved }: { saved:
   px-[15px] py-[60px] text-center text-text-secondary [&>svg]:mx-auto [&>svg]:mb-4 [&_h2]:text-[17px]
   [&_h2]:font-semibold [&_p]:mt-2.5 [&_p]:text-[13px] [&_button]:mt-5 [&_button]:text-primary
 "><MapPin size={32} /><h1>동네 정보를 찾을 수 없어요</h1><p>추천 목록에서 동네를 다시 선택해주세요.</p><Link className="mt-3 ml-auto block w-fit py-[5px] text-xs text-primary-hover" to="/recommendations" state={location.state}>추천 목록으로 돌아가기</Link></main>
-  const detail=details[item.id]
+  const required=item.routes.filter(route => route.importance==='REQUIRED')
+  // 데이터로 확인되는 사실만 정리
+  const reasons=[
+    `예산 안에 들어온 2025년 계약이 ${item.budgetContracts.toLocaleString()}건 있어요. (이 동네 전체의 ${item.budgetPercent}%)`,
+    ...required.map(route => `${route.label}까지 ${route.transport==='WALK'? '도보로':'대중교통으로'} ${route.minutes}분이에요.`),
+  ]
+  const cautions=[
+    '2025년 실거래 계약 기준이라 지금 나와 있는 매물과는 다를 수 있어요.',
+    '이동시간은 동네 중심에서 잰 값이라 실제 집 위치에 따라 달라져요.',
+    ...item.routes.filter(route => route.transport==='PUBLIC_TRANSIT'&&route.transfers>=2).map(route => `${route.label}까지는 환승이 ${route.transfers}번 있어요.`),
+  ]
   return <section className="shared-detail-panel flex min-h-0 flex-1 flex-col overflow-hidden bg-white" aria-labelledby="neighborhood-title">
     <nav className="shrink-0 px-5 pt-5 pb-3 max-[760px]:px-4" aria-label="동네 탐색">
       <div className="relative h-6">
@@ -41,33 +44,30 @@ export default function NeighborhoodDetailPage({ saved,onToggleSaved }: { saved:
       <section>
         <h2>주거비 정보</h2>
         <dl className="grid grid-cols-2 gap-2.5 [&>div]:rounded-xl [&>div]:border [&>div]:border-[#EAF0ED] [&>div]:bg-[#F7FAF9] [&>div]:px-3.5 [&>div]:py-3 [&_dt]:text-xs [&_dt]:text-[#6B7280] [&_dd]:mt-0.5 [&_dd]:text-lg [&_dd]:font-bold [&_dd]:text-[var(--ink)]">
-          <div><dt>보증금</dt><dd>{item.deposit}만 원</dd></div>
-          <div><dt>월세</dt><dd>{item.rent}만 원</dd></div>
+          <div><dt>보증금 (보통)</dt><dd>{item.medianDeposit.toLocaleString()}만 원</dd></div>
+          <div><dt>월세 (보통)</dt><dd>{item.medianRent}만 원</dd></div>
         </dl>
+        <p className="mt-2 text-xs text-[#6B7280]">예산 안에 들어온 2025년 계약 {item.budgetContracts.toLocaleString()}건의 중간값이에요.</p>
       </section>
       <section className="border-t border-[#E5E7EB] pt-4">
         <h2>주요 거점까지 이동시간</h2>
         <dl className="flex flex-col gap-2 [&>div]:grid [&>div]:grid-cols-[34px_minmax(0,1fr)_auto] [&>div]:items-center [&>div]:gap-2.5 [&>div]:rounded-xl [&>div]:border [&>div]:border-[#EAF0ED] [&>div]:px-3 [&>div]:py-2.5 [&_dt]:text-[14.5px] [&_dt]:font-bold [&_dt]:text-[var(--ink)] [&_small]:mt-px [&_small]:block [&_small]:text-xs [&_small]:font-normal [&_small]:text-[#6B7280] [&_dd]:text-right [&_dd]:text-base [&_dd]:font-bold [&_dd]:text-[var(--ink)]">
-          <div>
-            <span className="grid size-[34px] place-items-center rounded-[10px] bg-[var(--gl)] text-[var(--gd)]"><TrainFront size={18} aria-hidden="true" /></span>
-            <dt>회사 · 여의도<small>환승 {item.transfers}회 · 도보 {detail.walking}분 포함</small></dt><dd>{item.work}분</dd>
-          </div>
-          <div>
-            <span className="grid size-[34px] place-items-center rounded-[10px] bg-[var(--gl)] text-[var(--gd)]"><TrainFront size={18} aria-hidden="true" /></span>
-            <dt>본가 · 수원<small>환승 1회 · 도보 8분 포함</small></dt><dd>{item.family}분</dd>
-          </div>
+          {item.routes.map(route => <div key={route.label}>
+            <span className="grid size-[34px] place-items-center rounded-[10px] bg-[var(--gl)] text-[var(--gd)]">{route.transport==='WALK'? <Footprints size={18} aria-hidden="true" />:<TrainFront size={18} aria-hidden="true" />}</span>
+            <dt>{route.label}<small>{route.transport==='WALK'? '도보':`대중교통 · 환승 ${route.transfers}회`}</small></dt><dd>{route.minutes}분</dd>
+          </div>)}
         </dl>
       </section>
       <section className="border-t border-[#E5E7EB] pt-4">
         <h2>이런 점이 좋아요</h2>
         <ul className="flex flex-col gap-[7px] [&_li]:flex [&_li]:items-start [&_li]:gap-2 [&_li]:text-sm [&_li]:leading-[1.6] [&_li]:text-[#374151] [&_svg]:mt-0.5 [&_svg]:shrink-0 [&_svg]:text-[var(--gd)]">
-          {detail.reasons.map(reason => <li key={reason}><Check size={17} /><span>{reason}</span></li>)}
+          {reasons.map(reason => <li key={reason}><Check size={17} /><span>{reason}</span></li>)}
         </ul>
       </section>
       <section>
         <h2>이런 점은 고려해 주세요</h2>
         <ul className="flex flex-col gap-[7px] [&_li]:flex [&_li]:items-start [&_li]:gap-2 [&_li]:text-sm [&_li]:leading-[1.6] [&_li]:text-[#374151] [&_svg]:mt-0.5 [&_svg]:shrink-0 [&_svg]:text-[#6B7280]">
-          {detail.cautions.map(caution => <li key={caution}><CircleAlert size={17} /><span>{caution}</span></li>)}
+          {cautions.map(caution => <li key={caution}><CircleAlert size={17} /><span>{caution}</span></li>)}
         </ul>
       </section>
     </div>

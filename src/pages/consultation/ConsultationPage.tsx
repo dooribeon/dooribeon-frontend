@@ -73,7 +73,10 @@ export default function ConsultationPage() {
     setMessages(current => [...current, { role: 'user', text }])
     setDraft('')
     setTyping(true)
-    if (pending?.key === 'address' && pending.placeId) {
+    // 장소 검색 대상: 위치를 묻는 중이거나, 회사·학교 질문에 방금 답한 경우
+    const searchPlaceId = pending?.key === 'address' ? pending.placeId
+      : pending?.key === 'primary' ? next.places.find(p => p.source === 'work' && p.address)?.id : undefined
+    if (searchPlaceId) {
       const version=++searchVersion.current
       setSearching(true)
       try {
@@ -81,10 +84,10 @@ export default function ConsultationPage() {
         if (version !== searchVersion.current) return
         if (result.total === 1 && result.items.length === 1) {
           const place=result.items[0]
-          replyFor({ ...next, places: next.places.map(p => p.id === pending.placeId ? { ...p, address: place.address, resolvedPlace: place } : p) }, `${place.name} (${place.address})로 반영했어요.\n\n`)
+          replyFor({ ...next, places: next.places.map(p => p.id === searchPlaceId ? { ...p, address: place.address, resolvedPlace: place } : p) }, `${place.name} (${place.address})로 반영했어요.\n\n`)
         } else {
           setConditionDraft(next)
-          setCandidates(result.items.length ? { placeId: pending.placeId, ...result } : null)
+          setCandidates(result.items.length ? { placeId: searchPlaceId, ...result } : null)
           setPendingReply(result.items.length ? '여러 장소가 검색됐어요. 아래에서 맞는 장소를 선택하거나 지점명을 더 자세히 알려주세요.' : '검색 결과가 없어요. 지역이나 지점명을 추가해서 다시 알려주세요.')
         }
       } catch (error) {
