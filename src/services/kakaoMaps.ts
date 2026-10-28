@@ -11,7 +11,15 @@ export interface MapInstance {
   addControl(control: object, position: number): void
 }
 interface MapBounds { extend(point: MapPoint): void }
+export interface PlaceSearchItem { id: string; place_name: string; address_name: string; road_address_name: string; x: string; y: string }
+export interface AddressSearchItem { address_name: string; x: string; y: string }
+interface SearchPagination { totalCount: number; hasNextPage: boolean }
 export interface MapsSDK {
+  services: {
+    Status: { OK: string; ZERO_RESULT: string; ERROR: string }
+    Places: new () => { keywordSearch(query: string, callback: (items: PlaceSearchItem[], status: string, pagination: SearchPagination) => void, options?: { size: number }): void }
+    Geocoder: new () => { addressSearch(query: string, callback: (items: AddressSearchItem[], status: string) => void): void }
+  }
   load(callback: () => void): void
   LatLng: new (lat: number, lng: number) => MapPoint
   LatLngBounds: new () => MapBounds
@@ -39,7 +47,7 @@ export function loadKakaoMaps(): Promise<MapsSDK> {
       reject(new Error('지도를 불러오지 못했어요. 네트워크, JavaScript 키, 등록 도메인과 카카오맵 사용 설정을 확인해주세요.'))
     }
     const timer = window.setTimeout(fail, 15000)
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false`
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false&libraries=services`
     script.async = true
     script.onerror = fail
     script.onload = () => {

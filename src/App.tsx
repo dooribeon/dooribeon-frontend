@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter,Route,Routes } from 'react-router-dom'
 import RecommendationsPage from './pages/recommendations/RecommendationsPage'
+import SearchPage from './pages/search/SearchPage'
 import HomePage from './pages/home/HomePage'
 import ConsultationPage from './pages/consultation/ConsultationPage'
 
@@ -12,6 +13,7 @@ export default function App() {
   return <BrowserRouter><Routes>
     <Route path="/" element={<HomePage />} />
     <Route path="/recommendations/:id?" element={<RecommendationsPage saved={saved} onToggleSaved={toggleSaved} />} />
+    <Route path="/search" element={<SearchPage />} />
     <Route path="/consultation" element={<ConsultationPage />} />
   </Routes></BrowserRouter>
 

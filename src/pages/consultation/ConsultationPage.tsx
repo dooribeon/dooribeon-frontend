@@ -1,153 +1,147 @@
 import { useEffect,useRef,useState } from 'react'
-import { useLocation,useNavigate,Link } from 'react-router-dom'
-import { ArrowLeft,ArrowRight,Building2,House,Wallet,Trees,MapPin,Sparkles,Infinity as InfinityIcon,Pencil,Check } from 'lucide-react'
+import { useLocation,useNavigate } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-
-const fields=[
-  { key: 'work',title: '회사 · 학교',icon: Building2,placeholder: '예: 여의도역 인근 회사',question: '회사나 학교의 위치를 알려주세요.',hint: '역 이름이나 주소를 적으면 더 정확하게 조건을 정리할 수 있어요.',options: [] },
-  { key: 'frequency',title: '방문 빈도',icon: MapPin,placeholder: '예: 주 5회',question: '회사나 학교에는 주 몇 회 가시나요?',hint: '자주 방문하는 거점일수록 이동 부담이 중요해요.',options: ['주 5회','주 3~4회','주 1~2회','거의 안 감'] },
-  { key: 'family',title: '다른 생활거점',icon: House,placeholder: '예: 수원 본가, 월 2회 방문',question: '본가나 연인 집 등 다른 생활거점도 있나요?',hint: '위치와 방문 빈도를 함께 알려주세요. 없다면 없다고 적어주세요.',options: ['없어요'] },
-  { key: 'budget',title: '예산',icon: Wallet,placeholder: '예: 보증금 2,000만 원 / 월세 70만 원 이하',question: '생각하시는 보증금과 월세 예산은 얼마인가요?',hint: '보증금과 월세 상한을 함께 입력해주세요.',options: [] },
-  { key: 'preference',title: '선호 조건',icon: Trees,placeholder: '예: 출근 45분 이내, 조용한 동네',question: '꼭 지키고 싶은 조건이나 선호가 있나요?',hint: '이동시간, 환승, 주변 시설 등 자유롭게 알려주세요.',options: ['조용한 동네','환승 적게','역에서 가까운 곳','특별히 없어요'] },
-] as const
+import { searchPlaces } from '../../services/placeSearch'
+import type { ResolvedPlace } from '../../services/placeSearch'
+import ConditionPanel from '../../components/conditions/ConditionPanel'
+import { fromLegacy, toLegacy } from '../../components/conditions/conditionModel'
+import { nextQuestion, primaryReady, receiveAnswer } from '../../components/conditions/conversationFlow'
+import type { ConditionDraft } from '../../components/conditions/conditionModel'
 
 type Message={ role: 'assistant'|'user'; text: string }
 type Conditions=Record<string,string>
+
+function BotAvatar() {
+  return <svg className="-mt-0.5 h-11 w-[34px] shrink-0" viewBox="0 0 96 124" role="img" aria-label="두리번"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="var(--g)" /><ellipse cx="34" cy="44" rx="12" ry="14" fill="white" /><ellipse cx="62" cy="44" rx="12" ry="14" fill="white" /><circle cx="36" cy="47" r="6.5" fill="var(--ink)" /><circle cx="64" cy="47" r="6.5" fill="var(--ink)" /></svg>
+}
 
 export default function ConsultationPage() {
   const location=useLocation()
   const navigate=useNavigate()
   const initial=typeof location.state?.condition==='string'? location.state.condition:''
-  const [messages,setMessages]=useState<Message[]>(() => [
-    { role: 'assistant',text: '안녕하세요! 여러 생활거점과 예산을 함께 고려해 살고 싶은 동네의 조건을 정리해볼게요.' },
-    ...(initial? [{ role: 'user' as const,text: initial }]:[]),
-    { role: 'assistant',text: initial? '입력하신 내용을 확인했어요. 현재는 체험용 대화로, 아래 질문에 답하면 오른쪽 조건 카드에 반영돼요.':'현재는 체험용 대화예요. 아래 질문에 답하며 조건을 하나씩 정리해보세요.' },
-  ])
-  const [conditions,setConditions]=useState<Conditions>(location.state?.conditions??{})
-  const [step,setStep]=useState(location.state?.conditions? fields.length:0)
+  const [conditionDraft,setConditionDraft]=useState<ConditionDraft>(() => location.state?.conditionDraft ?? receiveAnswer(fromLegacy(location.state?.conditions ?? {}), initial, null))
+  const [messages,setMessages]=useState<Message[]>(() => initial ? [{ role: 'user', text: initial }] : [])
   const [draft,setDraft]=useState('')
-  const [editing,setEditing]=useState<string|null>(null)
-  const [editValue,setEditValue]=useState('')
+  const [typing,setTyping]=useState(true)
+  const [searching,setSearching]=useState(false)
+  const [candidates,setCandidates]=useState<{ placeId: string; items: ResolvedPlace[]; total: number } | null>(null)
+  const searchVersion=useRef(0)
+  useEffect(() => () => { searchVersion.current += 1 }, [])
+  const [panelVisible,setPanelVisible]=useState(() => Boolean(location.state?.conditionDraft && primaryReady(location.state.conditionDraft)))
+  const [pendingReply,setPendingReply]=useState(() => nextQuestion(conditionDraft)?.text ?? '조건을 확인하고 원하는 내용을 수정해주세요.')
   const endRef=useRef<HTMLDivElement>(null)
-  const question=fields[step]
+  const sendingRef=useRef(false)
+  const currentQuestion = nextQuestion(conditionDraft)
+  const quickReplies = currentQuestion?.key === 'mode' ? ['대중교통', '도보', '자차'] : currentQuestion?.key === 'minutes' ? ['30분', '1시간', '1시간 반'] : []
+  const conditions: Conditions=location.state?.conditions ?? {}
 
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }) },[messages])
+  useEffect(() => {
+    if(!typing || searching) return
+    const timer=window.setTimeout(() => {
+      setMessages(current => [...current, { role: 'assistant', text: pendingReply }])
+      setTyping(false)
+      sendingRef.current=false
+      if(primaryReady(conditionDraft)) setPanelVisible(true)
+    }, 850)
+    return () => window.clearTimeout(timer)
+  },[typing,searching,pendingReply,conditionDraft])
 
-  function send(value: string) {
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }) },[messages,typing])
+
+  function replyFor(next: ConditionDraft, prefix = '') {
+    const reveal=!panelVisible && primaryReady(next)
+    setPendingReply(prefix + (reveal ? '회사·학교의 필수 정보가 모였어요. 조건 패널에서 확인하고 수정할 수 있어요.\n\n' : '') + (nextQuestion(next)?.text ?? '장소를 모두 확인했어요. 조건을 확인하고 ‘이 조건으로 동네 찾기’를 눌러주세요.'))
+    setConditionDraft(next)
+    setTyping(true)
+  }
+
+  function choosePlace(placeId: string, place: ResolvedPlace) {
+    const next={ ...conditionDraft, places: conditionDraft.places.map(p => p.id === placeId ? { ...p, address: place.address, resolvedPlace: place } : p) }
+    setCandidates(null)
+    setMessages(current => [...current, { role: 'user', text: `${place.name} 선택` }])
+    replyFor(next, `${place.name} (${place.address})로 반영했어요.\n\n`)
+  }
+
+  async function send(value: string) {
     const text=value.trim()
-    if(!text) return
-    if(question) {
-      setConditions(current => ({ ...current,[question.key]: text }))
-      setStep(current => current+1)
-    }
-    setMessages(current => [...current,
-    { role: 'user',text },
-    { role: 'assistant',text: question? (step===fields.length-1? '조건 정리가 끝났어요! 오른쪽 내용을 확인하고, 바꾸고 싶은 항목은 수정해주세요.':'좋아요! 조건에 반영했어요. 다음 내용도 확인할게요.'):'추가로 말씀하신 내용을 선호 조건에 기록했어요.' },
-    ])
-    if(!question) setConditions(current => ({ ...current,preference: [current.preference,text].filter(Boolean).join('\n') }))
+    if(!text || typing || sendingRef.current) return
+    sendingRef.current=true
+    const pending=nextQuestion(conditionDraft)
+    const next=receiveAnswer(conditionDraft,text,pending)
+    setCandidates(null)
+    setMessages(current => [...current, { role: 'user', text }])
     setDraft('')
+    setTyping(true)
+    if (pending?.key === 'address' && pending.placeId) {
+      const version=++searchVersion.current
+      setSearching(true)
+      try {
+        const result=await searchPlaces(text)
+        if (version !== searchVersion.current) return
+        if (result.total === 1 && result.items.length === 1) {
+          const place=result.items[0]
+          replyFor({ ...next, places: next.places.map(p => p.id === pending.placeId ? { ...p, address: place.address, resolvedPlace: place } : p) }, `${place.name} (${place.address})로 반영했어요.\n\n`)
+        } else {
+          setConditionDraft(next)
+          setCandidates(result.items.length ? { placeId: pending.placeId, ...result } : null)
+          setPendingReply(result.items.length ? '여러 장소가 검색됐어요. 아래에서 맞는 장소를 선택하거나 지점명을 더 자세히 알려주세요.' : '검색 결과가 없어요. 지역이나 지점명을 추가해서 다시 알려주세요.')
+        }
+      } catch (error) {
+        if (version !== searchVersion.current) return
+        setPendingReply(error instanceof Error ? error.message : '장소 검색에 실패했어요. 다시 입력해주세요.')
+      } finally {
+        if (version === searchVersion.current) setSearching(false)
+      }
+      return
+    }
+    replyFor(next)
   }
 
   return (
-    <AppLayout className="
-  h-svh flex flex-col [&_button:disabled]:opacity-45 [&_button:disabled]:cursor-not-allowed max-[700px]:h-auto
-  max-[700px]:min-h-svh
-" variant="workspace">
-      <main className="
-  mx-auto grid min-h-0 w-full max-w-[1500px] flex-1 grid-cols-[minmax(0,1.45fr)_minmax(330px,1fr)]
-  max-[900px]:grid-cols-[minmax(0,1.2fr)_minmax(290px,1fr)] max-[700px]:flex max-[700px]:flex-col
-">
-        <section className="
-  flex min-h-0 flex-col border-r border-border px-[26px] pt-5 pb-6 max-[900px]:p-4 max-[700px]:h-[70svh]
-  max-[700px]:min-h-[460px] max-[700px]:border-r-0 max-[700px]:border-b
-" aria-label="조건 정리 대화">
-          <div className="
-  flex items-center justify-between gap-3 pb-[22px] text-xs text-text-secondary [&_a]:flex [&_a]:items-center
-  [&_a]:gap-1.5 [&_a]:text-inherit [&_a]:no-underline max-[700px]:text-[11px]
-"><Link to="/"><ArrowLeft size={16} /> 처음으로</Link><span>체험용 대화 · AI 연결 전</span></div>
-          <div className="flex-1 overflow-y-auto pt-2 pr-2 pb-5">
-            <div role="log" aria-live="polite" aria-relevant="additions">
-              {messages.map((message,index) => <div className={`mb-[22px] flex items-start gap-3 [&.user]:justify-end ${message.role}`} key={index}>
-                {message.role==='assistant'&&<span className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-primary text-white"><InfinityIcon size={22} aria-label="두리번" /></span>}
+    <AppLayout header={{ appearance: 'prototype' }} className="bg-[#F4F8F6] text-[var(--text)] tracking-[-.03em] break-keep [--header-background:rgba(244,248,246,.94)] [&_button:disabled]:opacity-45 [&_button:disabled]:cursor-not-allowed [&_button]:min-h-11">
+      <main className={`consultation-transition mx-auto grid w-full max-w-[1680px] items-start px-[clamp(20px,3vw,48px)] pt-6 pb-10 max-[760px]:px-4 ${panelVisible ? 'is-expanded' : ''}`}>
+        <section className="flex h-[var(--consultation-panel-height)] min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#DFE9E4] bg-white shadow-[0_18px_50px_rgba(15,45,35,.06)] max-[760px]:rounded-[22px]" aria-label="조건 정리 대화">
+          <div className="flex min-h-0 flex-1 flex-col panel-scroll overflow-y-auto overscroll-contain px-6 pt-6 pb-2 max-[1299px]:px-3.5">
+            <div className="" role="log" aria-live="polite" aria-relevant="additions">
+              {messages.map((message,index) => <div className={`mb-[18px] flex items-start gap-2.5 [&.user]:justify-end ${message.role}`} key={index}>
+                {message.role==='assistant'&&<BotAvatar />}
                 <p className="
-  max-w-[84%] rounded-[0_18px_18px] bg-[#f5f6f8] px-[18px] py-4 text-sm leading-[1.85] whitespace-pre-wrap
-  [overflow-wrap:anywhere] [.user_&]:bg-[#e5f8f1] [.user_&]:rounded-[18px_0_18px_18px] max-[700px]:max-w-[88%]
+  max-w-[78%] rounded-[4px_20px_20px_20px] bg-[#F3F6F5] px-[18px] py-3.5 text-[15.5px] leading-[1.75] whitespace-pre-wrap
+  [overflow-wrap:anywhere] [.user_&]:bg-[#DDF5EA] [.user_&]:text-[var(--ink)] [.user_&]:rounded-[20px_4px_20px_20px]
+  max-[1299px]:max-w-[88%] max-[760px]:px-[15px] max-[760px]:py-3 max-[760px]:text-[15px]
 ">{message.text}</p>
               </div>)}
             </div>
-            {question&&<div className="
-  mt-1 mb-6 ml-11 rounded-2xl border border-border p-5 [&>p]:mt-2 [&>p]:ml-[37px] [&>p]:text-[13px]
-  [&>p]:leading-[1.7] [&>p]:text-text-secondary max-[900px]:ml-0
-">
-              <div className="
-  flex items-center gap-2.5 [&>span]:grid [&>span]:size-[27px] [&>span]:shrink-0 [&>span]:place-items-center
-  [&>span]:rounded-full [&>span]:bg-primary [&>span]:text-sm [&>span]:text-white [&_h2]:text-base
-  [&_h2]:font-bold
-"><span>{step+1}</span><h2>{question.question}</h2></div>
-              <p>{question.hint}</p>
-              <div className="
-  flex flex-wrap gap-2 [&:not(:empty)]:mt-[18px] [&_button]:rounded-3xl [&_button]:border
-  [&_button]:border-border [&_button]:bg-surface [&_button]:px-[17px] [&_button]:py-[9px]
-  [&_button]:text-[13px] [&_button:hover]:border-primary [&_button:hover]:text-primary
-  [&_button:hover]:bg-primary-light
-">{question.options.map(option => <button key={option} onClick={() => send(option)}>{option}</button>)}</div>
+            {typing && <div className="mb-[18px] flex items-start gap-2.5" role="status" aria-label="두리번이 응답을 준비하고 있어요"><BotAvatar /><div className="flex gap-1.5 rounded-[4px_20px_20px_20px] bg-[#F3F6F5] px-[18px] py-5" aria-hidden="true">{[0,1,2].map(dot => <span key={dot} className="chat-thinking size-[7px] rounded-full bg-[#7FA796]" style={{ animationDelay: `${dot * 150}ms` }} />)}</div></div>}
+            {candidates && !typing && <div className="mb-4 ml-11 grid gap-2" aria-label="장소 검색 결과">
+              {candidates.items.map(place => <button key={place.id} type="button" className="rounded-xl border border-[var(--line-panel)] bg-white p-3 text-left hover:bg-[var(--gl)]" onClick={() => choosePlace(candidates.placeId, place)}><strong className="block text-sm">{place.name}</strong><span className="text-xs text-[var(--muted)]">{place.address}</span></button>)}
+              {candidates.total > candidates.items.length && <p className="text-xs text-[var(--muted)]">검색 결과 중 {candidates.items.length}곳을 표시했어요. 원하는 장소가 없다면 지역·지점명을 더 입력해주세요.</p>}
+            </div>}
+            {!typing && quickReplies.length > 0 && <div className="mb-4 ml-11 flex flex-wrap gap-2" role="group" aria-label={currentQuestion?.key === 'mode' ? '이동수단 선택' : '최대 편도시간 선택'}>
+              {quickReplies.map(option => <button type="button" key={option} className="min-h-11 rounded-full border border-[#CFE3DA] bg-white px-4 text-sm font-semibold text-[var(--gd)] transition-colors hover:border-[var(--g)] hover:bg-[var(--gl)]" onClick={() => void send(option)}>{option}</button>)}
             </div>}
             <div ref={endRef} />
           </div>
           <form className="
-  flex items-center gap-4 rounded-[18px] border border-border px-4 py-[14px] shadow-[0_2px_8px_#11182703]
-  focus-within:border-primary [&_textarea]:min-w-0 [&_textarea]:flex-1 [&_textarea]:resize-none
-  [&_textarea]:outline-none [&_textarea]:text-sm [&_textarea]:leading-[1.6]
-  [&_textarea]:placeholder:text-[#8995a7] [&>button]:grid [&>button]:size-11 [&>button]:shrink-0
-  [&>button]:place-items-center [&>button]:rounded-full [&>button]:bg-primary [&>button]:text-white
+  mx-6 mt-[18px] mb-6 flex shrink-0 items-center gap-3 rounded-[18px] border-[1.5px] border-[#CFE3DA] bg-white py-3 pl-[18px] pr-3
+  focus-within:border-[var(--g)] focus-within:shadow-[0_0_0_1.5px_#059669] [&_textarea]:min-w-0 [&_textarea]:flex-1 [&_textarea]:resize-none
+  [&_textarea]:h-14 [&_textarea]:outline-none [&_textarea]:text-[15px] [&_textarea]:leading-[1.85]
+  [&_textarea]:placeholder:text-[var(--muted-light)] [&>button]:grid [&>button]:size-11 [&>button]:shrink-0
+  [&>button]:place-items-center [&>button]:rounded-full [&>button]:bg-[var(--gd)] [&>button]:text-white [&>button:enabled:hover]:bg-[var(--hover)] max-[1299px]:m-3.5
 " onSubmit={event => { event.preventDefault(); send(draft) }}>
             <label className="sr-only" htmlFor="chat-message">조건 입력</label>
-            <textarea id="chat-message" rows={2} value={draft} onChange={event => setDraft(event.target.value)} placeholder={question?.placeholder??'추가로 원하는 조건을 말씀해주세요.'} />
-            <button type="submit" disabled={!draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
+            <textarea id="chat-message" rows={2} onKeyDown={event => {
+              if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return
+              event.preventDefault()
+              if (!event.repeat) void send(draft)
+            }} value={draft} onChange={event => setDraft(event.target.value)} placeholder={typing ? '두리번이 응답을 준비하고 있어요…' : '더 알려줄 내용이 있으면 입력해주세요'} />
+            <button type="submit" disabled={typing || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
           </form>
         </section>
-        <aside className="
-  overflow-y-auto bg-[linear-gradient(135deg,#f9fbfa55,white)] p-7 max-[900px]:px-[18px] max-[900px]:py-[22px]
-  max-[700px]:overflow-visible max-[700px]:px-5 max-[700px]:py-[26px]
-" aria-labelledby="summary-title">
-          <div className="
-  flex items-start gap-3 [&>svg]:mt-[3px] [&>svg]:text-primary [&_h1]:text-[23px] [&_h1]:font-[750]
-  [&_h1]:tracking-[-.04em] [&_p]:mt-[5px] [&_p]:text-[13px] [&_p]:text-text-secondary
-"><Sparkles size={24} /><div><h1 id="summary-title">입력하신 조건</h1><p>대화에서 확인한 조건을 모아 보여드려요.</p></div></div>
-          <div className="mt-6 mb-2.5 flex justify-between text-xs text-text-secondary"><span>조건 정리</span><span>{Object.values(conditions).filter(Boolean).length} / {fields.length}</span></div>
-          <div className="flex flex-col gap-3">
-            {fields.map(({ key,title,icon: Icon,placeholder },index) => <section className={`rounded-[15px] border border-[#e8edf0] bg-white px-[18px] py-4 shadow-[0_2px_5px_#11182702] [&>p]:mt-[14px] [&>p]:ml-[35px] [&>p]:text-sm [&>p]:leading-[1.7] [&>p]:whitespace-pre-wrap [&>p]:[overflow-wrap:anywhere] summary-card-${index}`} key={key}>
-              <div className="
-  flex items-center gap-3 [&>svg]:text-primary [.summary-card-0_&>svg]:text-[#2583ed]
-  [.summary-card-2_&>svg]:text-[#f45a7c] [.summary-card-3_&>svg]:text-[#8451e5] [&_h2]:flex-1 [&_h2]:text-base
-  [&_h2]:font-bold [&_button]:flex [&_button]:items-center [&_button]:gap-1 [&_button]:rounded-[18px]
-  [&_button]:border [&_button]:border-border [&_button]:px-2.5 [&_button]:py-1 [&_button]:text-xs
-  [&_button]:text-text-secondary
-"><Icon size={23} /><h2>{title}</h2><button aria-label={`${title} 수정`} onClick={() => { setEditing(key); setEditValue(conditions[key]??'') }}><Pencil size={12} /> 수정</button></div>
-              {editing===key? <form className="
-  mt-[14px] [&_textarea]:w-full [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-primary
-  [&_textarea]:p-2.5 [&_textarea]:text-sm [&>div]:mt-2 [&>div]:flex [&>div]:justify-end [&>div]:gap-3
-  [&_button]:flex [&_button]:items-center [&_button]:gap-1 [&_button]:p-1 [&_button]:text-[13px]
-  [&_button[type=submit]]:text-primary
-" onSubmit={event => {
-                  event.preventDefault()
-                  if(!editValue.trim()) return
-                  setConditions(current => ({ ...current,[key]: editValue.trim() }))
-                  setEditing(null)
-                }}>
-                <label className="sr-only" htmlFor={`edit-${key}`}>{title}</label>
-                <textarea autoFocus id={`edit-${key}`} value={editValue} onChange={event => setEditValue(event.target.value)} placeholder={placeholder} rows={2} />
-                <div><button type="button" onClick={() => setEditing(null)}>취소</button><button type="submit" disabled={!editValue.trim()}><Check size={14} /> 저장</button></div>
-              </form>:<p className={conditions[key]? '':'text-[#8b96a5]'}>{conditions[key]||'아직 입력하지 않았어요'}</p>}
-            </section>)}
-          </div>
-          <div className="
-  mt-6 [&>button]:flex [&>button]:w-full [&>button]:items-center [&>button]:justify-center [&>button]:gap-3
-  [&>button]:rounded-[13px] [&>button]:bg-primary [&>button]:px-3 [&>button]:py-[15px] [&>button]:font-[650]
-  [&>button]:text-white [&>button:enabled:hover]:bg-primary-hover
-"><button disabled={fields.some(field => !conditions[field.key])||editing!==null} onClick={() => navigate('/recommendations',{ state: { condition: initial,conditions } })}><Sparkles size={19} /> 이 조건으로 추천받기 <ArrowRight size={20} /></button>
-          </div>
-        </aside>
+        <div className="condition-reveal min-w-0" inert={!panelVisible} aria-hidden={!panelVisible}>
+          <ConditionPanel value={conditionDraft} onChange={value => { searchVersion.current += 1; setCandidates(null); setSearching(false); setConditionDraft(value) }} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft } })} />
+        </div>
       </main>
     </AppLayout>
   )
