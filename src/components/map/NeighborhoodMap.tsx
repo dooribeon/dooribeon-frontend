@@ -1,10 +1,11 @@
 import { useEffect,useRef,useState } from 'react'
 import { MapPin,RefreshCw,Plus,Minus,LocateFixed } from 'lucide-react'
-import type { Neighborhood } from '../../mocks/recommendations'
 import { loadKakaoMaps } from '../../services/kakaoMaps'
 import type { MapInstance,MapsSDK } from '../../services/kakaoMaps'
 
-type Props={ neighborhoods: Neighborhood[]; selectedId: string|null; onSelect: (id: string) => void; detailControls?: boolean }
+/** 지도에 찍을 동네 (추천 결과에서 필요한 값만) */
+type MapNeighborhood={ id: string; name: string; rank: number; lat: number; lng: number }
+type Props={ neighborhoods: MapNeighborhood[]; selectedId: string|null; onSelect: (id: string) => void; detailControls?: boolean }
 export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,detailControls=false }: Props) {
   const [satellite,setSatellite]=useState(false)
   const containerRef=useRef<HTMLDivElement>(null)
@@ -67,6 +68,8 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
       neighborhoods.forEach(item => bounds.extend(new loaded.sdk.LatLng(item.lat,item.lng)))
       // Leave room for marker labels, the top tabs, and the bottom controls.
       loaded.map.setBounds(bounds,Math.min(140,mapSize.height*.3),Math.min(100,mapSize.width*.22),Math.min(100,mapSize.height*.22),Math.min(120,mapSize.width*.25))
+      // 동네가 1곳뿐이면 너무 확대되지 않게 동네 단위 축척 유지
+      if(loaded.map.getLevel()<6) loaded.map.setLevel(6)
       fittedMapRef.current=loaded.map
       fittedViewRef.current=viewKey
     }

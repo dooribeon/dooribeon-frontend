@@ -42,6 +42,10 @@ export function receiveAnswer(previous: ConditionDraft, text: string, pending: F
   if (!next.places.some(p => p.source === 'work') && /통학|대학교|서울대/.test(text)) {
     next.places.unshift({ ...blankPlace('chat-school', 'work'), name: '학교', importance: '필수', address: '' })
   }
+  // 회사·학교 질문에 '셀트리온'처럼 장소 이름만 답한 경우 → 회사로 등록하고 그 이름으로 검색
+  if (pending?.key === 'primary' && !next.places.some(p => p.source === 'work')) {
+    next.places.unshift({ ...blankPlace('chat-work', 'work'), name: '회사', importance: '필수', address: text.trim() })
+  }
   for (const [label, key] of [['보증금', 'deposit'], ['월세', 'rent']] as const) {
     const match = text.match(new RegExp(`${label}\\s*([\\d,.]+\\s*(?:억|천|만)?(?:\\s*원)?)`))
     if (match) { const value = amount(match[1]); if (value !== null) next[key] = value }
@@ -56,7 +60,6 @@ export function receiveAnswer(previous: ConditionDraft, text: string, pending: F
   if (primary && (!pending || pending.placeId === primary.id || ['primary', 'deposit', 'rent'].includes(pending.key))) {
     if (/대중교통|지하철|버스/.test(text)) primary.mode = '대중교통'
     else if (/도보|걸어/.test(text)) primary.mode = '도보'
-    else if (/자차|자동차|운전/.test(text)) primary.mode = '자차'
     const minutes = text.match(/(\d+)\s*분/)
     const hour = text.match(/(\d+)\s*시간/)
     const total = Number(minutes?.[1] ?? 0) + Number(hour?.[1] ?? 0) * 60 + (hour && /시간\s*반/.test(text) ? 30 : 0)
