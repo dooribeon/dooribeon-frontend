@@ -1,18 +1,12 @@
 import { useEffect,useRef,useState } from 'react'
-import { MapPin,Maximize,RefreshCw,Plus,Minus,LocateFixed } from 'lucide-react'
+import { MapPin,RefreshCw,Plus,Minus,LocateFixed } from 'lucide-react'
 import type { Neighborhood } from '../../mocks/recommendations'
 import { loadKakaoMaps } from '../../services/kakaoMaps'
 import type { MapInstance,MapsSDK } from '../../services/kakaoMaps'
 
-const exampleBases=[
-  { id: 'work',title: '회사',place: '여의도',lat: 37.5219,lng: 126.9245,icon: '▦' },
-  { id: 'family',title: '본가',place: '수원',lat: 37.2663,lng: 126.9998,icon: '⌂' },
-]
-
 type Props={ neighborhoods: Neighborhood[]; selectedId: string|null; onSelect: (id: string) => void; detailControls?: boolean }
 export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,detailControls=false }: Props) {
   const [satellite,setSatellite]=useState(false)
-  const [hiddenBases,setHiddenBases]=useState<string[]>([])
   const containerRef=useRef<HTMLDivElement>(null)
   const [loaded,setLoaded]=useState<{ map: MapInstance; sdk: MapsSDK }|null>(null)
   const [error,setError]=useState('')
@@ -74,39 +68,8 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
   },[loaded,selectedId,neighborhoods])
 
   useEffect(() => {
-    if(!loaded) return
-    const { map,sdk }=loaded
-    const overlays=exampleBases.filter(base => !hiddenBases.includes(base.id)).map(base => {
-      const marker=document.createElement('div')
-      marker.className=`flex items-center gap-2.5 whitespace-nowrap rounded-[14px] border-2 border-white bg-white py-[9px] pl-2 pr-[14px] shadow-[0_4px_18px_#17334a25] [&_strong]:block [&_strong]:text-sm [&_strong]:text-[#102535] [&_small]:mt-[3px] [&_small]:block [&_small]:text-[11px] [&_small]:text-[#64748b] base-marker-${base.id}`
-      marker.setAttribute('aria-label',`${base.title} ${base.place}, 예시 위치`)
-      const icon=document.createElement('span')
-      icon.className='grid h-11 w-10 place-items-center rounded-[22px_22px_22px_4px] bg-[#2388ff] text-[28px] leading-none text-white [.base-marker-family_&]:bg-[#ff557c]'
-      icon.textContent=base.icon
-      icon.setAttribute('aria-hidden','true')
-      const label=document.createElement('div')
-      const title=document.createElement('strong')
-      title.textContent=base.title
-      const place=document.createElement('small')
-      place.textContent=`${base.place} · 예시`
-      label.append(title,place)
-      marker.append(icon,label)
-      return new sdk.CustomOverlay({ map,position: new sdk.LatLng(base.lat,base.lng),content: marker,yAnchor: 1.2,zIndex: 4,clickable: false })
-    })
-    return () => overlays.forEach(overlay => overlay.setMap(null))
-  },[loaded,hiddenBases])
-
-  useEffect(() => {
     if(loaded) loaded.map.setMapTypeId(satellite? loaded.sdk.MapTypeId.HYBRID:loaded.sdk.MapTypeId.ROADMAP)
   },[loaded,satellite])
-
-  function showBases() {
-    if(!loaded) return
-    const bounds=new loaded.sdk.LatLngBounds()
-      ;[...neighborhoods,...exampleBases.filter(base => !hiddenBases.includes(base.id))].forEach(point => bounds.extend(new loaded.sdk.LatLng(point.lat,point.lng)))
-    loaded.map.setBounds(bounds)
-  }
-
 
   return <section className="
   relative min-h-[360px] h-full flex-1 overflow-hidden rounded-none max-[760px]:h-[420px]
@@ -130,16 +93,8 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
   text-[11px] shadow-[0_3px_15px_#10253508] [&_span]:flex [&_span]:items-center [&_span]:gap-[7px]
   [&_span]:before:size-[11px] [&_span]:before:rounded-full [&_span]:before:bg-primary
   [&_span]:before:content-[''] max-[1250px]:top-20 max-[1250px]:left-5
-"><span className="before:!bg-[#2388ff]">회사</span><span className="before:!bg-[#ff557c]">본가</span><span className="legend-neighborhood">추천 동네</span></div>
-      <fieldset className="
-  absolute z-5 bottom-10 left-6 min-w-[185px] rounded-[14px] border-0 bg-white p-5
-  shadow-[0_4px_20px_#10253512] [&_legend]:float-left [&_legend]:mb-3 [&_legend]:w-full [&_legend]:text-sm
-  [&_legend]:font-bold [&_label]:clear-both [&_label]:mt-[9px] [&_label]:flex [&_label]:items-center
-  [&_label]:gap-[9px] [&_label]:text-[13px] [&_label]:text-[#465970] [&_input]:size-[17px]
-  [&_input]:accent-[#2388ff] [&_label:nth-of-type(2)_input]:accent-[#ff557c] [&_small]:mt-3 [&_small]:block
-  [&_small]:text-[10px] [&_small]:text-[#8492a2] max-[760px]:bottom-[35px] max-[760px]:left-[15px]
-  max-[760px]:min-w-[150px] max-[760px]:p-[13px]
-"><legend>표시할 거점</legend>{exampleBases.map(base => <label key={base.id}><input type="checkbox" checked={!hiddenBases.includes(base.id)} onChange={() => setHiddenBases(current => current.includes(base.id)? current.filter(id => id!==base.id):[...current,base.id])} />{base.title} ({base.place})</label>)}<small>예시 위치 기준</small></fieldset>
+"><span className="legend-neighborhood">추천 동네</span></div>
+
     </>}
     {loaded&&<div className="
   absolute right-5 bottom-10 z-5 flex flex-col gap-[14px] text-[#102535] [&_button]:grid
@@ -162,13 +117,9 @@ export default function NeighborhoodMap({ neighborhoods,selectedId,onSelect,deta
         if(selected) loaded.map.panTo(new loaded.sdk.LatLng(selected.lat,selected.lng))
       }}><LocateFixed size={25} strokeWidth={1.8} /></button>
     </div>}
-    {loaded&&<><button className="
-  absolute top-[85px] right-5 z-5 flex items-center gap-[7px] rounded-[10px] border border-border bg-white
-  px-[15px] py-[11px] text-xs text-text-primary shadow-[0_2px_10px_#0000000a] disabled:opacity-50
-  disabled:cursor-not-allowed max-[1350px]:top-[140px]
-" onClick={showBases}><Maximize size={15} /> 전체 위치 보기</button><div className="
+    {loaded&&<div className="
   pointer-events-none absolute bottom-[38px] left-5 z-5 rounded-lg bg-[#ffffffed] px-4 py-3 text-[11px]
   text-text-secondary shadow-[0_4px_20px_#172c4110] max-[760px]:bottom-[35px] max-[760px]:text-[10px]
-">{neighborhoods.length? '동네 대표 위치 · 마커를 눌러 선택하세요':'현재 필터에 맞는 동네가 없어요'}</div></>}
+">{neighborhoods.length? '동네 대표 위치 · 마커를 눌러 선택하세요':'현재 필터에 맞는 동네가 없어요'}</div>}
   </section>
 }
