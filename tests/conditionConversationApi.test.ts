@@ -108,13 +108,16 @@ test('지역과 장소 종류만으로는 후보를 검색하지 않고 구체�
     id: 'work', label: '회사', targetType: 'FIXED_PLACE', query: null, location: null,
     importance: 'REQUIRED', transport: null, maxMinutes: null, frequency: null,
   }
-  for (const query of ['회사', '여의도 회사', '수원 본가', '지금 다니는 교회', '여의도', '부모님 집', '수원 부모님 집']) {
+  for (const query of ['회사', '여의도 회사', '수원 본가', '본가 부산', '부모님 집 수원', '지금 다니는 교회', '여의도', '부산', '서울', '부모님 집', '수원 부모님 집']) {
     assert.equal(placeSearchQuery({ ...place, query }), '', query)
   }
   for (const query of ['창훈대교회', '수원 창훈대교회', '역삼동 아크플레이스', '여의도역', '토스', '서울 강남구 테헤란로 142']) {
     assert.equal(placeSearchQuery({ ...place, query }), query)
   }
   assert.equal(placeSearchQuery({ ...place, label: '여의도 회사' }), '')
+  assert.equal(placeSearchQuery({ ...place, label: '본가 부산' }), '')
+  assert.equal(placeSearchQuery({ ...place, label: '본가 부산', query: '부산' }), '')
+  assert.equal(placeSearchQuery({ ...place, label: '본가 부산', query: '부산역' }), '부산역')
   const location = { placeId: 'k1', placeName: '회사', address: '선택된 주소', lat: 37.5, lng: 127.03 }
   assert.equal(placeSearchQuery({ ...place, location }), '회사')
 })

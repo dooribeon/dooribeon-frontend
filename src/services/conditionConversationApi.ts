@@ -34,9 +34,10 @@ export function placeSearchQuery(place: ConversationConditions['places'][number]
   const query = (place.query || place.location?.placeName || place.location?.address || place.label || '').trim()
   if (place.location) return place.location.placeName || place.location.address || query
   // '여의도 회사', '지금 다니는 교회' 등은 구체적인 이름을 받은 상태가 아니다.
-  if (/(?:^|\s)(?:교회|회사|직장|학교|친구|본가|부모님\s*집)$/.test(query)) return ''
-  const genericLabel = /(?:^|\s)(?:교회|회사|직장|학교|친구|본가|부모님\s*집)$/.test(place.label?.trim() || '')
-  if (genericLabel && /^[가-힣]+(?:시|군|구|동|읍|면|리|도)$/.test(query)) return ''
+  const genericRole = /(?:^|\s)(?:교회|회사|직장|학교|친구|본가|부모님\s*집)(?:\s|$)/
+  if (genericRole.test(query)) return ''
+  const genericLabel = genericRole.test(place.label?.trim() || '')
+  if (genericLabel && /^(?:[가-힣]+(?:시|군|구|동|읍|면|리|도)|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)$/.test(query)) return ''
   return query
 }
 
