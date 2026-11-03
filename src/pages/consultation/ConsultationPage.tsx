@@ -43,7 +43,7 @@ export default function ConsultationPage() {
   const initialRequest = useRef<Promise<ConditionConversation> | null>(null)
   const conditions: Conditions = location.state?.conditions ?? {}
 
-  const previousNotices = useRef(restored?.notices ?? [])
+  const previousNotices = useRef(conversationNotices(restored?.notices ?? []))
 
   function applyResponse(response: ConditionConversation) {
     setDirty(false)
@@ -53,9 +53,10 @@ export default function ConsultationPage() {
     latestCardDraft.current = toConditionDraft(response.conditions)
     setConversation(response)
     setConditionDraft(toConditionDraft(response.conditions))
-    const newNotices = response.notices.filter(notice => !previousNotices.current.includes(notice))
-    previousNotices.current = response.notices
-    const answer = [...conversationNotices(newNotices), response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
+    const notices = conversationNotices(response.notices)
+    const newNotices = notices.filter(notice => !previousNotices.current.includes(notice))
+    previousNotices.current = notices
+    const answer = [newNotices.join(' '), response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
       .filter(Boolean).join('\n\n')
     setMessages(current => [...current, { role: 'assistant', text: answer }])
   }
