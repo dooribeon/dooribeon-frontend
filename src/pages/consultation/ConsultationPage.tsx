@@ -2,7 +2,7 @@ import { useEffect,useRef,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { placeSearchQuery, sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
+import { addConversationPlace, placeSearchQuery, sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
 import type { ConditionConversation } from '../../services/conditionConversationApi'
 import ConversationPlacePicker from '../../components/conditions/ConversationPlacePicker'
 import ConditionPanel from '../../components/conditions/ConditionPanel'
@@ -143,6 +143,25 @@ export default function ConsultationPage() {
     }
   }
 
+  async function addPlace() {
+    if (!conversation || typing || placeBusy || dirty || savingCardsRef.current || sendingRef.current) return
+    sendingRef.current = true
+    setTyping(true)
+    setError('')
+    try {
+      const response = await addConversationPlace(conversation)
+      const previousIds = new Set(conversation.conditions.places.map(place => place.id))
+      applyResponse(response)
+      const added = response.conditions.places.find(place => !previousIds.has(place.id))
+      if (added) setCardPlaceId(added.id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '장소를 추가하지 못했어요. 다시 시도해주세요.')
+    } finally {
+      sendingRef.current = false
+      setTyping(false)
+    }
+  }
+
   function changeCards(value: ConditionDraft) {
     latestCardDraft.current = value
     setConditionDraft(value)
@@ -269,7 +288,7 @@ export default function ConsultationPage() {
         </section>
         {cardRevealed && <div className="condition-reveal min-w-0">
           <ConditionPanel value={conditionDraft} conversation={conversation} busy={typing || placeBusy} dirty={dirty || savingCards} onCommit={value => void saveCards(value)} saveStatus={cardStatus} saveError={cardError} onRetry={() => void saveCards()}
-            onOpenPlace={setCardPlaceId}
+            onOpenPlace={setCardPlaceId} onAddPlace={() => void addPlace()}
             readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !placeBusy && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages, conditionCardRevealed: cardRevealed } })} />
         </div>}
       </main>

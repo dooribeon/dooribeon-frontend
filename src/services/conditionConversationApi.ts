@@ -32,6 +32,7 @@ const conversations = '/api/conditions/conversations'
 
 export function placeSearchQuery(place: ConversationConditions['places'][number]): string {
   const query = (place.query || place.location?.placeName || place.location?.address || place.label || '').trim()
+    .replace(/\s*(?:근처|주변|인근)$/, '').trim()
   if (place.location) return place.location.placeName || place.location.address || query
   // '여의도 회사', '지금 다니는 교회' 등은 구체적인 이름을 받은 상태가 아니다.
   const genericRole = /(?:^|\s)(?:교회|회사|직장|학교|친구|본가|부모님\s*집)(?:\s|$)/
@@ -102,6 +103,12 @@ export async function searchConversationPlace(conversationId: string, placeId: s
 export async function selectConversationPlace(conversationId: string, placeId: string, searchId: string, candidateId: string) {
   const result = await conditionRequest(`${placePath(conversationId, placeId)}/location`, 'PUT', { searchId, candidateId })
   return readConversation(result)
+}
+
+export async function addConversationPlace(conversation: ConditionConversation) {
+  return readConversation(await conditionRequest(`${conversations}/${encodeURIComponent(conversation.conversationId)}/places`, 'POST', {
+    expected: conversation.conditions,
+  }))
 }
 
 const IMPORTANCE = { REQUIRED: '필수', HIGH: '높음', MEDIUM: '중간', LOW: '낮음' }

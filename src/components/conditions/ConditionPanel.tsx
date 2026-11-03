@@ -16,9 +16,10 @@ type Props = { value: ConditionDraft; onChange: (value: ConditionDraft) => void;
   onRetry?: () => void
   dirty?: boolean
   onOpenPlace?: (placeId: string) => void
+  onAddPlace?: () => void
 }
 
-export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation, conversation, busy = false, onOpenPlace, onCommit, saveStatus = '', saveError = false, onRetry, dirty = false }: Props) {
+export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation, conversation, busy = false, onOpenPlace, onAddPlace, onCommit, saveStatus = '', saveError = false, onRetry, dirty = false }: Props) {
   const searchRef = useRef<HTMLDialogElement>(null)
   const deleteRef = useRef<HTMLDialogElement>(null)
   const addRef = useRef<HTMLButtonElement>(null)
@@ -109,7 +110,7 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
       </fieldset>})}
       {!value.places.length && <p className="rounded-2xl border border-dashed border-[#CFE3DA] p-5 text-sm text-[var(--muted)]">대화에서 장소를 알려주시거나 아래 버튼으로 추가해주세요.</p>}
     </div>
-    <button disabled={readOnly || Boolean(conversation)} ref={addRef} type="button" className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-[#A7D9C2] px-4 text-sm font-bold text-[var(--gd)] hover:bg-[var(--gl)]" onClick={() => onChange({ ...value, places: [...value.places, blankPlace(crypto.randomUUID())] })}><Plus size={17} />장소 추가</button>
+    <button disabled={readOnly || busy || dirty || Boolean(conversation?.deletionConfirmation) || Boolean(conversation && !onAddPlace)} ref={addRef} type="button" className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-[#A7D9C2] px-4 text-sm font-bold text-[var(--gd)] hover:bg-[var(--gl)]" onClick={() => conversation ? onAddPlace?.() : onChange({ ...value, places: [...value.places, blankPlace(crypto.randomUUID())] })}><Plus size={17} />장소 추가</button>
     </fieldset>
     </div>
     <div className="shrink-0 border-t border-[#EEF2F0] bg-white px-6 pt-4 pb-6 text-center max-[760px]:px-3.5">
