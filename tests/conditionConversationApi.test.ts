@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
+import { searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
 import type { ConditionConversation, ConversationConditions } from '../src/services/conditionConversationApi.ts'
 
 const conditions: ConversationConditions = { maxDeposit: null, maxRent: 50, places: [] }
@@ -51,5 +51,27 @@ test('서버 실패와 잘못된 응답은 성공 조건으로 반환하지 않�
     await assert.rejects(sendConditionMessage('입력'), /AI 설정/)
     globalThis.fetch = async () => Response.json({})
     await assert.rejects(sendConditionMessage('입력'), /응답을 확인하지/)
+  } finally { globalThis.fetch = originalFetch }
+})
+
+test('선택한 장소의 검색·후보 번호만 보내고 서버가 저장한 위치를 카드에 반영한다', async () => {
+  const originalFetch = globalThis.fetch
+  const location = { placeId: 'map-123', placeName: '아크플레이스', address: '테스트 주소', lat: 37.5, lng: 127.03 }
+  const place = { id: 'work', importance: 'REQUIRED', location, maxMinutes: 60, frequency: null }
+  const calls: { url: string; method: string | undefined; body: unknown }[] = []
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: new URL(String(url)).pathname, method: options?.method, body: JSON.parse(String(options?.body)) })
+    return Response.json(calls.length === 1
+      ? { searchId: 'search1', placeId: 'work', candidates: [{ candidateId: 'candidate1', location }] }
+      : { ...reply, conditions: { ...conditions, places: [place] } })
+  }
+  try {
+    const found = await searchConversationPlace('chat', 'work', '아크플레이스', 'KEYWORD')
+    const saved = await selectConversationPlace('chat', 'work', found.searchId, found.candidates[0].candidateId)
+    assert.deepEqual(calls, [
+      { method: 'POST', url: '/api/conditions/conversations/chat/places/work/search', body: { query: '아크플레이스', type: 'KEYWORD', page: 1 } },
+      { method: 'PUT', url: '/api/conditions/conversations/chat/places/work/location', body: { searchId: 'search1', candidateId: 'candidate1' } },
+    ])
+    assert.equal(toConditionDraft(saved.conditions).places[0].resolvedPlace?.id, 'map-123')
   } finally { globalThis.fetch = originalFetch }
 })

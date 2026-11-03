@@ -28,14 +28,15 @@ export type ConditionConversation = {
 
 const API_BASE = (import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
 
-export async function sendConditionMessage(text: string, conversationId?: string): Promise<ConditionConversation> {
-  const path = '/api/conditions/conversations' + (conversationId ? `/${encodeURIComponent(conversationId)}/messages` : '')
+const conversations = '/api/conditions/conversations'
+
+async function conditionRequest(path: string, method: 'POST' | 'PUT', body: object) {
   let response: Response
   try {
     response = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(body),
       signal: AbortSignal.timeout(120000),
     })
   } catch {
@@ -43,11 +44,45 @@ export async function sendConditionMessage(text: string, conversationId?: string
   }
   const result = await response.json().catch(() => null)
   if (!response.ok) throw new Error(result?.message ?? 'AI 조건 서버에서 요청을 처리하지 못했어요.')
+  return result
+}
+
+function readConversation(result: ConditionConversation | null): ConditionConversation {
   if (!result?.conversationId || !result.conditions || !Array.isArray(result.conditions.places)
       || !Array.isArray(result.notices) || typeof result.readyForRecommendation !== 'boolean') {
     throw new Error('서버의 조건 응답을 확인하지 못했어요.')
   }
   return result
+}
+
+export async function sendConditionMessage(text: string, conversationId?: string) {
+  const path = conversationId ? `${conversations}/${encodeURIComponent(conversationId)}/messages` : conversations
+  return readConversation(await conditionRequest(path, 'POST', { text }))
+}
+
+type CandidateLocation = NonNullable<ConversationConditions['places'][number]['location']>
+export type PlaceSearchType = 'KEYWORD' | 'ADDRESS'
+type PlaceSearchResult = {
+  searchId: string
+  placeId: string
+  candidates: { candidateId: string; location: CandidateLocation }[]
+}
+
+function placePath(conversationId: string, placeId: string) {
+  return `${conversations}/${encodeURIComponent(conversationId)}/places/${encodeURIComponent(placeId)}`
+}
+
+export async function searchConversationPlace(conversationId: string, placeId: string, query: string, type: PlaceSearchType): Promise<PlaceSearchResult> {
+  const result = await conditionRequest(`${placePath(conversationId, placeId)}/search`, 'POST', { query, type, page: 1 })
+  if (!result?.searchId || result.placeId !== placeId || !Array.isArray(result.candidates)) {
+    throw new Error('장소 검색 결과를 확인하지 못했어요. 다시 검색해주세요.')
+  }
+  return result
+}
+
+export async function selectConversationPlace(conversationId: string, placeId: string, searchId: string, candidateId: string) {
+  const result = await conditionRequest(`${placePath(conversationId, placeId)}/location`, 'PUT', { searchId, candidateId })
+  return readConversation(result)
 }
 
 const IMPORTANCE = { REQUIRED: '필수', HIGH: '높음', MEDIUM: '중간', LOW: '낮음' }
