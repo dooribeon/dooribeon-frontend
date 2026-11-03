@@ -16,16 +16,20 @@ type Props = { value: ConditionDraft; onChange: (value: ConditionDraft) => void;
   onRetry?: () => void
   dirty?: boolean
   onOpenPlace?: (placeId: string) => void
+  onDeletePlace?: (placeId: string, confirmationText: string) => Promise<void>
   onAddPlace?: () => void
 }
 
-export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation, conversation, busy = false, onOpenPlace, onAddPlace, onCommit, saveStatus = '', saveError = false, onRetry, dirty = false }: Props) {
+export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation, conversation, busy = false, onOpenPlace, onAddPlace, onDeletePlace, onCommit, saveStatus = '', saveError = false, onRetry, dirty = false }: Props) {
   const searchRef = useRef<HTMLDialogElement>(null)
   const deleteRef = useRef<HTMLDialogElement>(null)
   const addRef = useRef<HTMLButtonElement>(null)
   const returnFocusRef = useRef<HTMLButtonElement | null>(null)
   const [searchId, setSearchId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [confirmation, setConfirmation] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ResolvedPlace[]>([])
   const [searchMessage, setSearchMessage] = useState('')
@@ -35,6 +39,22 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
   const [tried, setTried] = useState(false)
   const issue = validationMessage(value)
   const target = value.places.find(p => p.id === deleteId)
+  const deleteName = target?.name || target?.address || '이 장소'
+  const confirmText = deleteName + ' 삭제하기'
+  async function confirmDeletion() {
+    if (!target || deleting) return
+    if (conversation) {
+      if (!onDeletePlace || confirmation.trim() !== confirmText) return
+      setDeleting(true)
+      try { await onDeletePlace(target.id, confirmation) }
+      catch (err) { setDeleteError(err instanceof Error ? err.message : '삭제하지 못했어요. 다시 시도해주세요.'); return }
+      finally { setDeleting(false) }
+    } else {
+      onChange({ ...value, places: value.places.filter(p => p.id !== target.id) })
+    }
+    deleteRef.current?.close()
+  }
+
   function update(id: string, patch: Partial<PlaceCondition>, commit = false) {
     const next = { ...value, places: value.places.map(p => p.id === id ? { ...p, ...patch } : p) }
     onChange(next)
@@ -91,7 +111,7 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
                 aria-label={`${place.name || '장소'} 위치 ${serverPlace.location ? '변경' : '선택'}`}
                 className={`${inputClass} mt-1 flex items-center gap-2 text-left text-[var(--gd)]`}>
                 <MapPin size={16} className="shrink-0" />
-                <span>{serverPlace.location?.address || serverPlace.location?.placeName || `${serverPlace.query || ''} · 위치 선택`}</span>
+                <span>{serverPlace.location?.address || serverPlace.location?.placeName || [serverPlace.query || serverPlace.areaHint, '위치 선택'].filter(Boolean).join(' · ')}</span>
               </button>
               : <button disabled={readOnly} type="button" className={`${inputClass} mt-1 flex items-center gap-2 text-left hover:border-[var(--g)] hover:bg-[var(--gl)]`} aria-label={`${place.name || '장소'} 주소 ${place.address ? '변경' : '찾기'}${place.address ? `: ${place.address}` : ''}`} title={place.address || '주소 찾기'} onClick={event => { returnFocusRef.current = event.currentTarget; setSearchId(place.id); setQuery(place.resolvedPlace?.name || place.address); setResults([]); setSearchMessage(''); setSearching(false); searchRef.current?.showModal() }}>
               <MapPin size={14} className="shrink-0 text-[var(--g)]" aria-hidden="true" />
@@ -99,7 +119,7 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
             </button>}
           </div>
         </div>
-        <button disabled={readOnly || Boolean(conversation)} type="button" className="absolute right-2 top-5 grid size-11 place-items-center rounded-[10px] text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label={`${place.name || '장소'} 삭제`} onClick={event => { returnFocusRef.current = event.currentTarget; setDeleteId(place.id); deleteRef.current?.showModal() }}><Trash2 size={18} /></button>
+        <button disabled={readOnly || busy || dirty || Boolean(conversation && !onDeletePlace) || Boolean(conversation?.deletionConfirmation && conversation.deletionConfirmation.placeId !== place.id)} type="button" className="absolute right-2 top-5 grid size-11 place-items-center rounded-[10px] text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label={`${place.name || '장소'} 삭제`} onClick={event => { returnFocusRef.current = event.currentTarget; setDeleteId(place.id); setConfirmation(''); setDeleteError(''); deleteRef.current?.showModal() }}><Trash2 size={18} /></button>
         <fieldset disabled={Boolean(conversation) && !serverPlace?.location} className="mt-3 grid grid-cols-[92px_minmax(0,1fr)] gap-3 @min-[560px]:grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] @max-[320px]:grid-cols-1">
           <label className="flex min-w-0 flex-col"><span className="block text-xs leading-4 text-[var(--muted-light)]">중요도</span><select disabled={readOnly} className={`${inputClass} mt-1`} value={place.importance} onChange={e => update(place.id, { importance: e.target.value }, true)}><option value="">미설정</option>{['필수', '높음', '중간', '낮음'].map(v => <option key={v}>{v}</option>)}</select></label>
           <div className="min-w-0"><span className="block text-xs leading-4 text-[var(--muted-light)]">이동수단 · 편도시간</span><div className="mt-1 flex items-center gap-1.5"><select disabled={readOnly} aria-label={`${place.name || '장소'} 이동수단`} className={`${inputClass} flex-1`} value={place.mode} onChange={e => update(place.id, { mode: e.target.value, minutes: e.target.value ? place.minutes : '' }, true)}><option value="">미설정</option><option>도보</option><option>대중교통</option></select><input aria-label={`${place.name || '장소'} 편도시간 (분)`} inputMode="numeric" className={`${inputClass} !w-14 text-right`} disabled={readOnly || !place.mode} value={place.minutes} onChange={e => update(place.id, { minutes: digits(e.target.value).slice(0, 3) })} placeholder="-" /><span className="text-sm">분</span></div></div>
@@ -131,8 +151,18 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
       <ul className="panel-scroll flex min-h-0 max-h-[376px] flex-col gap-2 overflow-y-auto overscroll-contain" aria-label="장소 검색 결과">{results.map(result => <li key={result.id} className="shrink-0"><button type="button" className="flex h-[88px] w-full flex-col justify-center gap-1 rounded-xl border border-[var(--line-subtle)] p-3 text-left hover:bg-[var(--gl)]" title={`${result.name} · ${result.address}`} onClick={() => applyPlace(result)}><strong className="block w-full truncate text-sm leading-5">{result.name}</strong><span className="line-clamp-2 text-xs leading-4 text-[var(--muted)]">{result.address}</span></button></li>)}</ul>
 
     </dialog>
-    <dialog ref={deleteRef} onClose={() => { if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus(); else addRef.current?.focus() }} className="m-auto w-[min(400px,calc(100%-32px))] rounded-[22px] border-0 bg-white p-6 shadow-[var(--shadow-modal)] backdrop:bg-black/40" aria-labelledby="delete-place-title">
-      <h2 id="delete-place-title" className="text-lg font-extrabold">{target?.name || '이 장소'} 조건을 삭제할까요?</h2><p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">이 장소와 연결된 설정이 이번 추천 조건에서 빠져요.</p><div className="mt-5 flex gap-2.5"><button type="button" className="flex-1 rounded-xl border border-[var(--line)]" onClick={() => deleteRef.current?.close()}>취소</button><button type="button" className="flex-1 rounded-xl bg-red-600 text-white" onClick={() => { onChange({ ...value, places: value.places.filter(p => p.id !== deleteId) }); deleteRef.current?.close() }}>삭제</button></div>
+    <dialog ref={deleteRef} onCancel={e => { if (deleting) e.preventDefault() }} onClose={() => { if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus(); else addRef.current?.focus() }} className="m-auto w-[min(400px,calc(100%-32px))] rounded-[22px] border-0 bg-white p-6 shadow-[var(--shadow-modal)] backdrop:bg-black/40" aria-labelledby="delete-place-title">
+      <h2 id="delete-place-title" className="text-lg font-extrabold">{deleteName} 조건을 삭제할까요?</h2>
+      <p className="mt-3 text-sm">{target?.resolvedPlace?.address || '등록된 주소 없음'}</p>
+      {conversation && <label className="mt-3 block text-sm">확인을 위해 ‘{confirmText}’를 입력해 주세요.
+        <input className={`${inputClass} mt-2 w-full`} value={confirmation} disabled={deleting}
+          onChange={e => setConfirmation(e.target.value)} aria-label="삭제 확인 문구" />
+      </label>}
+      {deleteError && <p role="alert" className="mt-2 text-sm text-red-700">{deleteError}</p>}
+      <div className="mt-5 flex gap-2.5">
+        <button type="button" disabled={deleting} className="flex-1 rounded-xl border border-[var(--line)]" onClick={() => deleteRef.current?.close()}>취소</button>
+        <button type="button" disabled={deleting || Boolean(conversation && confirmation.trim() !== confirmText)} className="flex-1 rounded-xl bg-red-600 text-white" onClick={() => void confirmDeletion()}>삭제</button>
+      </div>
     </dialog>
   </aside>
 }
