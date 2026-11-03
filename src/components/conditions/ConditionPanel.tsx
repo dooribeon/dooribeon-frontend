@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, MapPin, Plus, Search, Trash2, X } from 'lucide-react'
-import ConversationPlacePicker from './ConversationPlacePicker'
 import type { ConditionConversation } from '../../services/conditionConversationApi'
 import { searchPlaces } from '../../services/placeSearch'
 import type { ResolvedPlace } from '../../services/placeSearch'
@@ -16,10 +15,10 @@ type Props = { value: ConditionDraft; onChange: (value: ConditionDraft) => void;
   saveError?: boolean
   onRetry?: () => void
   dirty?: boolean
-  onLocationSelected?: (response: ConditionConversation) => void
+  onOpenPlace?: (placeId: string) => void
 }
 
-export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation, conversation, busy = false, onLocationSelected, onCommit, saveStatus = '', saveError = false, onRetry, dirty = false }: Props) {
+export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation, conversation, busy = false, onOpenPlace, onCommit, saveStatus = '', saveError = false, onRetry, dirty = false }: Props) {
   const searchRef = useRef<HTMLDialogElement>(null)
   const deleteRef = useRef<HTMLDialogElement>(null)
   const addRef = useRef<HTMLButtonElement>(null)
@@ -86,8 +85,13 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
           <div className="min-w-0">
             <span className="block text-xs leading-4 text-[var(--muted-light)]">{serverPlace?.targetType === 'NEARBY_FACILITY' ? '주변 시설' : '주소'}</span>
             {serverPlace?.targetType === 'NEARBY_FACILITY' ? <p className="py-3 text-sm">{serverPlace.query || serverPlace.label}</p>
-              : serverPlace?.targetType === 'FIXED_PLACE' && conversation && onLocationSelected ? <ConversationPlacePicker
-                conversationId={conversation.conversationId} place={serverPlace} disabled={busy || dirty || Boolean(conversation.deletionConfirmation)} onSelected={onLocationSelected} />
+              : serverPlace?.targetType === 'FIXED_PLACE' && onOpenPlace ? <button type="button"
+                disabled={busy || dirty || Boolean(conversation?.deletionConfirmation)} onClick={() => onOpenPlace(place.id)}
+                aria-label={`${place.name || '장소'} 위치 ${serverPlace.location ? '변경' : '선택'}`}
+                className={`${inputClass} mt-1 flex items-center gap-2 text-left text-[var(--gd)]`}>
+                <MapPin size={16} className="shrink-0" />
+                <span>{serverPlace.location?.address || serverPlace.location?.placeName || `${serverPlace.query || ''} · 위치 선택`}</span>
+              </button>
               : <button disabled={readOnly} type="button" className={`${inputClass} mt-1 flex items-center gap-2 text-left hover:border-[var(--g)] hover:bg-[var(--gl)]`} aria-label={`${place.name || '장소'} 주소 ${place.address ? '변경' : '찾기'}${place.address ? `: ${place.address}` : ''}`} title={place.address || '주소 찾기'} onClick={event => { returnFocusRef.current = event.currentTarget; setSearchId(place.id); setQuery(place.resolvedPlace?.name || place.address); setResults([]); setSearchMessage(''); setSearching(false); searchRef.current?.showModal() }}>
               <MapPin size={14} className="shrink-0 text-[var(--g)]" aria-hidden="true" />
               <span className={`min-w-0 flex-1 truncate ${place.address ? '' : 'text-[var(--muted-light)]'}`}>{place.address || '주소를 찾아주세요'}</span>

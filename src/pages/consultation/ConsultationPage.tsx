@@ -2,8 +2,9 @@ import { useEffect,useRef,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
+import { placeSearchQuery, sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
 import type { ConditionConversation } from '../../services/conditionConversationApi'
+import ConversationPlacePicker from '../../components/conditions/ConversationPlacePicker'
 import ConditionPanel from '../../components/conditions/ConditionPanel'
 import { toLegacy } from '../../components/conditions/conditionModel'
 import type { ConditionDraft } from '../../components/conditions/conditionModel'
@@ -11,6 +12,11 @@ import { conversationNotices } from './conversationNotices'
 
 type Message={ role: 'assistant'|'user'; text: string }
 type Conditions=Record<string,string>
+
+function locationQuestionPlace(conversation: ConditionConversation | null) {
+  const index = conversation?.issues[0]?.path.match(/^places\[(\d+)\]\.location$/)?.[1]
+  return index == null ? undefined : conversation?.conditions.places[Number(index)]
+}
 
 function BotAvatar() {
   return <svg className="-mt-0.5 h-11 w-[34px] shrink-0" viewBox="0 0 96 124" role="img" aria-label="두리번"><path d="M48 4C25 4 7 22 7 45c0 29 41 67 41 67s41-38 41-67C89 22 71 4 48 4z" fill="var(--g)" /><ellipse cx="34" cy="44" rx="12" ry="14" fill="white" /><ellipse cx="62" cy="44" rx="12" ry="14" fill="white" /><circle cx="36" cy="47" r="6.5" fill="var(--ink)" /><circle cx="64" cy="47" r="6.5" fill="var(--ink)" /></svg>
@@ -26,6 +32,8 @@ export default function ConsultationPage() {
   const [messages, setMessages] = useState<Message[]>(() => location.state?.aiMessages ?? (initial ? [{ role: 'user', text: initial }] : [
     { role: 'assistant', text: '예산과 생활 조건을 알려주세요.' },
   ]))
+  const [cardPlaceId, setCardPlaceId] = useState<string | null>(null)
+  const [placeBusy, setPlaceBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [savingCards, setSavingCards] = useState(false)
   const [cardStatus, setCardStatus] = useState('')
@@ -46,6 +54,7 @@ export default function ConsultationPage() {
   const previousNotices = useRef(conversationNotices(restored?.notices ?? []))
 
   function applyResponse(response: ConditionConversation) {
+    setCardPlaceId(null)
     setDirty(false)
     setCardStatus('')
     setCardError(false)
@@ -56,7 +65,11 @@ export default function ConsultationPage() {
     const notices = conversationNotices(response.notices)
     const newNotices = notices.filter(notice => !previousNotices.current.includes(notice))
     previousNotices.current = notices
-    const answer = [newNotices.join(' '), response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
+    const place = locationQuestionPlace(response)
+    const question = place && !placeSearchQuery(place)
+      ? `${place.label || '장소'}의 이름이나 주소를 알려주세요. 조건 카드에서 직접 위치를 선택하셔도 돼요.`
+      : response.nextQuestion
+    const answer = [newNotices.join(' '), question ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
       .filter(Boolean).join('\n\n')
     setMessages(current => [...current, { role: 'assistant', text: answer }])
   }
@@ -82,7 +95,7 @@ export default function ConsultationPage() {
 
   async function send(value: string) {
     const text = value.trim()
-    if (!text || typing || dirty || savingCardsRef.current || sendingRef.current) return
+    if (!text || typing || placeBusy || dirty || savingCardsRef.current || sendingRef.current) return
     sendingRef.current = true
     setTyping(true)
     setError('')
@@ -108,7 +121,7 @@ export default function ConsultationPage() {
   }
 
   async function saveCards(value = latestCardDraft.current) {
-    if (!conversationRef.current || typing || sendingRef.current) return
+    if (!conversationRef.current || typing || placeBusy || sendingRef.current) return
     // 주·월 선택 직후처럼 아직 입력 중인 빈도는 서버로 보내지 않는다.
     if (value.places.some(place => Boolean(place.period) !== Boolean(place.count))) {
       pendingCardDraft.current = null
@@ -161,6 +174,11 @@ export default function ConsultationPage() {
     }
   }
 
+  const questionPlace = locationQuestionPlace(conversation)
+  const chatPlace = questionPlace && placeSearchQuery(questionPlace) ? questionPlace : undefined
+  const activePlace = cardPlaceId ? conversation?.conditions.places.find(place => place.id === cardPlaceId) : chatPlace
+  const showPicker = conversation && activePlace?.targetType === 'FIXED_PLACE' && !typing && !dirty && !savingCards && !conversation.deletionConfirmation
+
   return (
     <AppLayout header={{ appearance: 'prototype' }} className="bg-[#F4F8F6] text-[var(--text)] tracking-[-.03em] break-keep [--header-background:rgba(244,248,246,.94)] [&_button:disabled]:opacity-45 [&_button:disabled]:cursor-not-allowed [&_button]:min-h-11">
       <main className={`consultation-transition mx-auto grid w-full max-w-[1680px] items-start px-[clamp(20px,3vw,48px)] pt-6 pb-10 max-[760px]:px-4 ${conversation ? 'is-expanded' : ''}`}>
@@ -173,11 +191,16 @@ export default function ConsultationPage() {
   max-w-[78%] rounded-[4px_20px_20px_20px] bg-[#F3F6F5] px-[18px] py-3.5 text-[15.5px] leading-[1.75] whitespace-pre-wrap
   [overflow-wrap:anywhere] [.user_&]:bg-[#DDF5EA] [.user_&]:text-[var(--ink)] [.user_&]:rounded-[20px_4px_20px_20px]
   max-[1299px]:max-w-[88%] max-[760px]:px-[15px] max-[760px]:py-3 max-[760px]:text-[15px]
-">{message.text}</p>
+">{message.text.replaceAll('의 위치를 검색한 뒤 지도나 목록에서 선택해 주세요.', '의 위치를 목록에서 선택해 주세요.').replaceAll('지도나 목록', '목록')}</p>
               </div>)}
             </div>
             {typing && <div className="mb-[18px] flex items-start gap-2.5" role="status" aria-label="두리번이 응답을 준비하고 있어요"><BotAvatar /><div className="flex gap-1.5 rounded-[4px_20px_20px_20px] bg-[#F3F6F5] px-[18px] py-5" aria-hidden="true">{[0,1,2].map(dot => <span key={dot} className="chat-thinking size-[7px] rounded-full bg-[#7FA796]" style={{ animationDelay: `${dot * 150}ms` }} />)}</div></div>}
             {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error} 입력 내용을 확인하고 다시 보내주세요.</p>}
+            {showPicker && <ConversationPlacePicker
+              key={JSON.stringify([conversation.conditions, activePlace.id])}
+              conversationId={conversation.conversationId} place={activePlace} modal={Boolean(cardPlaceId)}
+              onClose={() => setCardPlaceId(null)} onBusyChange={setPlaceBusy}
+              onSelected={response => { setError(''); applyResponse(response) }} />}
             <div ref={endRef} />
           </div>
           <form className="
@@ -194,13 +217,13 @@ export default function ConsultationPage() {
               event.preventDefault()
               if (!event.repeat) void send(draft)
             }} value={draft} onChange={event => setDraft(event.target.value)} placeholder={typing ? '두리번이 응답을 준비하고 있어요…' : '더 알려줄 내용이 있으면 입력해주세요'} />
-            <button type="submit" disabled={typing || dirty || savingCards || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
+            <button type="submit" disabled={typing || placeBusy || dirty || savingCards || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
           </form>
         </section>
         <div className="condition-reveal min-w-0" inert={!conversation} aria-hidden={!conversation}>
-          <ConditionPanel value={conditionDraft} conversation={conversation} busy={typing} dirty={dirty || savingCards} onCommit={value => void saveCards(value)} saveStatus={cardStatus} saveError={cardError} onRetry={() => void saveCards()}
-            onLocationSelected={response => { setError(''); applyResponse(response) }}
-            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
+          <ConditionPanel value={conditionDraft} conversation={conversation} busy={typing || placeBusy} dirty={dirty || savingCards} onCommit={value => void saveCards(value)} saveStatus={cardStatus} saveError={cardError} onRetry={() => void saveCards()}
+            onOpenPlace={setCardPlaceId}
+            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !placeBusy && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
         </div>
       </main>
     </AppLayout>

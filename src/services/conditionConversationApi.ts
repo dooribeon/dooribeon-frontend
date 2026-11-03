@@ -30,6 +30,11 @@ const API_BASE = (import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:8080')
 
 const conversations = '/api/conditions/conversations'
 
+export function placeSearchQuery(place: ConversationConditions['places'][number]): string {
+  const query = (place.query || place.location?.placeName || place.location?.address || place.label || '').trim()
+  return ['교회', '회사', '직장', '학교', '친구', '본가'].includes(query) ? '' : query
+}
+
 async function conditionRequest(path: string, method: 'POST' | 'PUT', body: object) {
   let response: Response
   try {
@@ -65,6 +70,7 @@ export type PlaceSearchType = 'KEYWORD' | 'ADDRESS'
 type PlaceSearchResult = {
   searchId: string
   placeId: string
+  query?: string
   candidates: { candidateId: string; location: CandidateLocation }[]
 }
 
@@ -72,10 +78,17 @@ function placePath(conversationId: string, placeId: string) {
   return `${conversations}/${encodeURIComponent(conversationId)}/places/${encodeURIComponent(placeId)}`
 }
 
-export async function searchConversationPlace(conversationId: string, placeId: string, query: string, type: PlaceSearchType): Promise<PlaceSearchResult> {
+export async function searchConversationPlace(conversationId: string, placeId: string, query: string, type: PlaceSearchType, initialLabel?: string | null): Promise<PlaceSearchResult> {
   const result = await conditionRequest(`${placePath(conversationId, placeId)}/search`, 'POST', { query, type, page: 1 })
   if (!result?.searchId || result.placeId !== placeId || !Array.isArray(result.candidates)) {
     throw new Error('장소 검색 결과를 확인하지 못했어요. 다시 검색해주세요.')
+  }
+  const label = initialLabel?.trim()
+  if (label && !result.candidates.length && type === 'KEYWORD') {
+    let building = ''
+    if (query.endsWith(' ' + label)) building = query.slice(0, -label.length).trim()
+    else if (query.startsWith(label + ' ')) building = query.slice(label.length).trim()
+    if (building) return searchConversationPlace(conversationId, placeId, building, type)
   }
   return result
 }
