@@ -7,6 +7,7 @@ export type ConversationConditions = {
     id: string
     label: string | null
     targetType: 'FIXED_PLACE' | 'NEARBY_FACILITY' | null
+    areaHint?: string | null
     query: string | null
     location: { placeId: string | null; placeName: string | null; address: string | null; lat: number; lng: number } | null
     importance: 'REQUIRED' | 'HIGH' | 'MEDIUM' | 'LOW' | null
@@ -31,11 +32,12 @@ const API_BASE = (import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:8080')
 const conversations = '/api/conditions/conversations'
 
 export function placeSearchQuery(place: ConversationConditions['places'][number]): string {
-  const query = (place.query || place.location?.placeName || place.location?.address || place.label || '').trim()
+  const query = (place.query || place.location?.placeName || place.location?.address || '').trim()
     .replace(/\s*(?:근처|주변|인근)$/, '').trim()
   if (place.location) return place.location.placeName || place.location.address || query
+  if (place.areaHint === query) return ''
   // '여의도 회사', '지금 다니는 교회' 등은 구체적인 이름을 받은 상태가 아니다.
-  const genericRole = /(?:^|\s)(?:교회|회사|직장|학교|친구|본가|부모님\s*집)(?:\s|$)/
+  const genericRole = /(?:^|\s)(?:교회|회사|직장|학교|여자친구|남자친구|연인|애인|친구|본가|부모님\s*집)(?:\s|$)/
   if (genericRole.test(query)) return ''
   const genericLabel = genericRole.test(place.label?.trim() || '')
   if (genericLabel && /^(?:[가-힣]+(?:시|군|구|동|읍|면|리|도)|서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)$/.test(query)) return ''
@@ -103,6 +105,12 @@ export async function searchConversationPlace(conversationId: string, placeId: s
 export async function selectConversationPlace(conversationId: string, placeId: string, searchId: string, candidateId: string) {
   const result = await conditionRequest(`${placePath(conversationId, placeId)}/location`, 'PUT', { searchId, candidateId })
   return readConversation(result)
+}
+
+export async function deleteConversationPlace(conversation: ConditionConversation, placeId: string, confirmationText: string) {
+  return readConversation(await conditionRequest(`${placePath(conversation.conversationId, placeId)}/delete`, 'POST', {
+    expected: conversation.conditions, confirmationText,
+  }))
 }
 
 export async function addConversationPlace(conversation: ConditionConversation) {

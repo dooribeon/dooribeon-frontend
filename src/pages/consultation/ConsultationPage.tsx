@@ -2,7 +2,7 @@ import { useEffect,useRef,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { addConversationPlace, placeSearchQuery, sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
+import { addConversationPlace, deleteConversationPlace, placeSearchQuery, sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
 import type { ConditionConversation } from '../../services/conditionConversationApi'
 import ConversationPlacePicker from '../../components/conditions/ConversationPlacePicker'
 import ConditionPanel from '../../components/conditions/ConditionPanel'
@@ -73,8 +73,8 @@ export default function ConsultationPage() {
     const newNotices = notices.filter(notice => !previousNotices.current.includes(notice))
     previousNotices.current = notices
     const place = locationQuestionPlace(response)
-    const question = place && !placeSearchQuery(place)
-      ? `${place.label || '장소'}의 이름이나 주소를 알려주세요.${wasCardRevealed ? ' 조건 카드에서 직접 위치를 선택하셔도 돼요.' : ''}`
+    const question = !response.deletionConfirmation && place && !placeSearchQuery(place)
+      ? `${place.label || '장소'}${place.areaHint ? ' (' + place.areaHint + ')' : ''}의 정확한 주소나 기준으로 삼을 건물·역 이름을 알려주세요.${wasCardRevealed ? ' 조건 카드에서 직접 위치를 선택하셔도 돼요.' : ''}`
       : response.nextQuestion
     const confirmation = !wasCardRevealed && response.readyForRecommendation
       ? '필수 조건을 모두 확인했어요. 조건 카드에서 확인하거나 채팅으로 수정해주세요.'
@@ -137,6 +137,21 @@ export default function ConsultationPage() {
       applyResponse(await saveConditionEdits(conversation, updated))
     } catch (err) {
       setError(err instanceof Error ? err.message : '선택한 조건을 저장하지 못했어요.')
+    } finally {
+      sendingRef.current = false
+      setTyping(false)
+    }
+  }
+
+  async function deletePlace(placeId: string, confirmationText: string) {
+    if (!conversation || typing || placeBusy || dirty || savingCardsRef.current || sendingRef.current) {
+      throw new Error('현재 요청이 끝나면 다시 시도해주세요.')
+    }
+    sendingRef.current = true
+    setTyping(true)
+    try {
+      applyResponse(await deleteConversationPlace(conversation, placeId, confirmationText))
+      setError('')
     } finally {
       sendingRef.current = false
       setTyping(false)
@@ -288,7 +303,7 @@ export default function ConsultationPage() {
         </section>
         {cardRevealed && <div className="condition-reveal min-w-0">
           <ConditionPanel value={conditionDraft} conversation={conversation} busy={typing || placeBusy} dirty={dirty || savingCards} onCommit={value => void saveCards(value)} saveStatus={cardStatus} saveError={cardError} onRetry={() => void saveCards()}
-            onOpenPlace={setCardPlaceId} onAddPlace={() => void addPlace()}
+            onDeletePlace={deletePlace} onOpenPlace={setCardPlaceId} onAddPlace={() => void addPlace()}
             readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !placeBusy && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages, conditionCardRevealed: cardRevealed } })} />
         </div>}
       </main>

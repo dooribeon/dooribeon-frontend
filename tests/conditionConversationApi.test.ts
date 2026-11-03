@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { addConversationPlace, placeSearchQuery, saveConditionEdits, searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
+import { addConversationPlace, deleteConversationPlace, placeSearchQuery, saveConditionEdits, searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
 import type { ConditionConversation, ConversationConditions } from '../src/services/conditionConversationApi.ts'
 
 const conditions: ConversationConditions = { maxDeposit: null, maxRent: 50, places: [] }
@@ -114,7 +114,12 @@ test('지역과 장소 종류만으로는 후보를 검색하지 않고 구체�
   for (const query of ['창훈대교회', '수원 창훈대교회', '역삼동 아크플레이스', '여의도역', '토스', '서울 강남구 테헤란로 142']) {
     assert.equal(placeSearchQuery({ ...place, query }), query)
   }
-  assert.equal(placeSearchQuery({ ...place, label: '여의도 회사' }), '')
+  for (const label of ['여자친구 잠실', '여의도 회사', '수원 본가', '토스']) {
+    assert.equal(placeSearchQuery({ ...place, label }), '')
+  }
+  assert.equal(placeSearchQuery({ ...place, label: '여자친구', query: '여자친구 잠실' }), '')
+  assert.equal(placeSearchQuery({ ...place, label: '여자친구', areaHint: '잠실', query: '잠실' }), '')
+  assert.equal(placeSearchQuery({ ...place, label: '여자친구', areaHint: '잠실', query: '잠실역' }), '잠실역')
   assert.equal(placeSearchQuery({ ...place, label: '본가 부산' }), '')
   assert.equal(placeSearchQuery({ ...place, label: '본가 부산', query: '부산' }), '')
   assert.equal(placeSearchQuery({ ...place, label: '본가 부산', query: '부산역' }), '부산역')
@@ -138,5 +143,23 @@ test('카드 장소 추가는 최신 조건을 보내고 서버가 발급한 장
     const result = await addConversationPlace(reply)
     assert.equal(toConditionDraft(result.conditions).places[0].id, 'server-issued')
     assert.equal(toConditionDraft(result.conditions).places[0].name, '')
+  } finally { globalThis.fetch = originalFetch }
+})
+
+test('카드 삭제는 지정한 서버 장소 번호와 확인 문구를 보내고 서버 응답으로 목록을 갱신한다', async () => {
+  const originalFetch = globalThis.fetch
+  const initial: ConditionConversation = { ...reply, conditions: { ...conditions, places: [{
+    id: 'selected-card', label: '여자친구', areaHint: '잠실', query: null, location: null, targetType: 'FIXED_PLACE',
+    importance: null, transport: null, maxMinutes: null, frequency: null,
+  }] } }
+  globalThis.fetch = async (url, options) => {
+    assert.ok(String(url).endsWith('/conversations/test-conversation/places/selected-card/delete'))
+    assert.equal(options?.method, 'POST')
+    assert.deepEqual(JSON.parse(String(options?.body)), { expected: initial.conditions, confirmationText: '여자친구 삭제하기' })
+    return Response.json(reply)
+  }
+  try {
+    const result = await deleteConversationPlace(initial, 'selected-card', '여자친구 삭제하기')
+    assert.equal(result.conditions.places.length, 0)
   } finally { globalThis.fetch = originalFetch }
 })
