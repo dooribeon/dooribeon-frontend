@@ -30,13 +30,26 @@ export default function ConversationPlacePicker({ conversationId, place, disable
     setSearching(false)
   }
 
-  async function search(text: string, searchType: PlaceSearchType) {
+  async function search(text: string, searchType: PlaceSearchType, initialLabel?: string | null) {
     const version = ++request.current
     setResult(null)
     setError('')
     setSearching(true)
     try {
-      const found = await searchConversationPlace(conversationId, place.id, text.trim(), searchType)
+      const keyword = text.trim()
+      let found = await searchConversationPlace(conversationId, place.id, keyword, searchType)
+      if (version !== request.current) return
+      // 첫 검색어 끝이나 처음에 붙은 거점명이 건물 검색을 막을 때만 재시도한다.
+      const label = initialLabel?.trim()
+      if (label && !found.candidates.length) {
+        let building = ''
+        if (keyword.endsWith(' ' + label)) building = keyword.slice(0, -label.length).trim()
+        else if (keyword.startsWith(label + ' ')) building = keyword.slice(label.length).trim()
+        if (building) {
+          setQuery(building)
+          found = await searchConversationPlace(conversationId, place.id, building, searchType)
+        }
+      }
       if (request.current === version) setResult(found)
     } catch (err) {
       if (request.current === version) setError(err instanceof Error ? err.message : '다시 검색해주세요.')
@@ -51,7 +64,7 @@ export default function ConversationPlacePicker({ conversationId, place, disable
     setQuery(text)
     setType('KEYWORD')
     dialog.current?.showModal()
-    if (text.trim()) void search(text, 'KEYWORD')
+    if (text.trim()) void search(text, 'KEYWORD', place.label)
   }
 
   async function select(candidateId: string) {
