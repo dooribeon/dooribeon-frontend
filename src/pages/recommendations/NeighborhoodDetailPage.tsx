@@ -1,13 +1,14 @@
 import { useEffect,useRef } from 'react'
 import { Link,useLocation,useParams } from 'react-router-dom'
 import { ArrowLeft,Check,CircleAlert,Footprints,Heart,MapPin,TrainFront } from 'lucide-react'
-import { toNeighborhoods } from '../../services/recommendApi'
+import { budgetFromState,compareTime,importanceLabel,timeCheckColor,toNeighborhoods } from '../../services/recommendApi'
 import type { Recommendation } from '../../services/recommendApi'
 
 export default function NeighborhoodDetailPage({ saved,onToggleSaved }: { saved: string[]; onToggleSaved: (id: string) => void }) {
   const { id }=useParams()
   const location=useLocation()
   const panelRef=useRef<HTMLDivElement>(null)
+  const budget=budgetFromState(location.state)
   const recommendations=toNeighborhoods((location.state?.results??[]) as Recommendation[])
   const item=recommendations.find(item => item.id===id)
   useEffect(() => { panelRef.current?.scrollTo({ top: 0 }) },[id])
@@ -44,18 +45,19 @@ export default function NeighborhoodDetailPage({ saved,onToggleSaved }: { saved:
       <section>
         <h2>주거비 정보</h2>
         <dl className="grid grid-cols-2 gap-2.5 [&>div]:rounded-xl [&>div]:border [&>div]:border-[#EAF0ED] [&>div]:bg-[#F7FAF9] [&>div]:px-3.5 [&>div]:py-3 [&_dt]:text-xs [&_dt]:text-[#6B7280] [&_dd]:mt-0.5 [&_dd]:text-lg [&_dd]:font-bold [&_dd]:text-[var(--ink)]">
-          <div><dt>보증금 (보통)</dt><dd>{item.medianDeposit.toLocaleString()}만 원</dd></div>
-          <div><dt>월세 (보통)</dt><dd>{item.medianRent}만 원</dd></div>
+          <div><dt>보증금 (보통)</dt><dd>{item.medianDeposit.toLocaleString()}만 원</dd>{budget.maxDeposit!==null&&<p className="mt-0.5 text-xs font-semibold text-[var(--gd)]">예산 {budget.maxDeposit.toLocaleString()}만 원 이하</p>}</div>
+          <div><dt>월세 (보통)</dt><dd>{item.medianRent}만 원</dd>{budget.maxRent!==null&&<p className="mt-0.5 text-xs font-semibold text-[var(--gd)]">예산 {budget.maxRent}만 원 이하</p>}</div>
         </dl>
         <p className="mt-2 text-xs text-[#6B7280]">예산 안에 들어온 2025년 계약 {item.budgetContracts.toLocaleString()}건의 중간값이에요.</p>
       </section>
       <section className="border-t border-[#E5E7EB] pt-4">
-        <h2>주요 거점까지 이동시간</h2>
+        <h2>주요 거점까지 이동시간 · 편도</h2>
         <dl className="flex flex-col gap-2 [&>div]:grid [&>div]:grid-cols-[34px_minmax(0,1fr)_auto] [&>div]:items-center [&>div]:gap-2.5 [&>div]:rounded-xl [&>div]:border [&>div]:border-[#EAF0ED] [&>div]:px-3 [&>div]:py-2.5 [&_dt]:text-[14.5px] [&_dt]:font-bold [&_dt]:text-[var(--ink)] [&_small]:mt-px [&_small]:block [&_small]:text-xs [&_small]:font-normal [&_small]:text-[#6B7280] [&_dd]:text-right [&_dd]:text-base [&_dd]:font-bold [&_dd]:text-[var(--ink)]">
-          {item.routes.map(route => <div key={route.label}>
+          {item.routes.map(route => { const check=compareTime(route); return <div key={route.placeId} className={check.kind==='over'? '!border-[#F3D9B4] !bg-[#FFF8F0]':''}>
             <span className="grid size-[34px] place-items-center rounded-[10px] bg-[var(--gl)] text-[var(--gd)]">{route.transport==='WALK'? <Footprints size={18} aria-hidden="true" />:<TrainFront size={18} aria-hidden="true" />}</span>
-            <dt>{route.label}<small>{route.transport==='WALK'? '도보':`대중교통 · 환승 ${route.transfers}회`}</small></dt><dd>{route.minutes}분</dd>
-          </div>)}
+            <dt>{route.label}<small>{route.transport==='WALK'? '도보':`대중교통 · 환승 ${route.transfers}회`} · 중요도 {importanceLabel(route.importance)}</small></dt>
+            <dd className={check.kind==='over'? '!text-[#B45309]':''}>{route.minutes}분<span className={`mt-px block text-xs font-semibold ${timeCheckColor(check.kind)}`}>{check.text}</span></dd>
+          </div> })}
         </dl>
       </section>
       <section className="border-t border-[#E5E7EB] pt-4">
