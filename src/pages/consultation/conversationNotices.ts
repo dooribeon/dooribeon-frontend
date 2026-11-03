@@ -18,7 +18,7 @@ export function conversationNotices(notices: string[]): string[] {
     }
   }
   const summary = []
-  if (defaults.size) summary.push([...defaults].join(' '))
+  summary.push(...defaults)
   if (unclearVisits.size) summary.push([...unclearVisits].join('·') + ' 방문 횟수는 미설정이에요.')
   return [...summary, ...other]
 }
