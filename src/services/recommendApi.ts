@@ -58,23 +58,42 @@ function toPlace(place: PlaceCondition) {
   }
 }
 
-// 같은 조건으로 두 번 부르지 않게 마지막 요청을 기억 (개발 모드 StrictMode 중복 호출 방지)
-let lastRequest: { key: string; promise: Promise<Recommendation[]> } | null = null
+// 같은 조건으로 두 번 부르지 않게 주소별 마지막 요청을 기억 (개발 모드 StrictMode 중복 호출 방지)
+const lastRequests = new Map<string, { key: string; promise: Promise<unknown> }>()
 
-/** 추천 요청. 같은 조건이면 진행 중인 요청을 재사용 */
-export function fetchRecommendations(draft: ConditionDraft, confirmed?: ConversationConditions): Promise<Recommendation[]> {
-  const body = JSON.stringify(confirmed ?? toConditions(draft))
-  if (lastRequest?.key === body) return lastRequest.promise
-  const promise = request(body)
-  lastRequest = { key: body, promise }
-  promise.catch(() => { if (lastRequest?.promise === promise) lastRequest = null })   // 실패하면 다시 시도할 수 있게
+function post<T>(path: string, body: string): Promise<T> {
+  const last = lastRequests.get(path)
+  if (last?.key === body) return last.promise as Promise<T>
+  const promise = request<T>(path, body)
+  lastRequests.set(path, { key: body, promise })
+  promise.catch(() => { if (lastRequests.get(path)?.promise === promise) lastRequests.delete(path) })   // 실패하면 다시 시도할 수 있게
   return promise
 }
 
-async function request(body: string): Promise<Recommendation[]> {
+const requestBody = (draft: ConditionDraft, confirmed?: ConversationConditions) => JSON.stringify(confirmed ?? toConditions(draft))
+
+/** 추천 요청 (카카오 경로 조회 포함, 10~30초). 같은 조건이면 진행 중인 요청을 재사용 */
+export function fetchRecommendations(draft: ConditionDraft, confirmed?: ConversationConditions): Promise<Recommendation[]> {
+  return post<Recommendation[]>('/api/recommend', requestBody(draft, confirmed))
+}
+
+// ---- 탐색 화면용 후보 (POST /api/recommend/candidates) ----
+export type Spot = { id: string; name: string; lat: number; lng: number }
+export type CandidatesResult = {
+  totalNeighborhoods: number   // 전체 동네 수
+  budgetPassed: Spot[]         // 예산 필터 통과 동네 (가까운 순)
+  candidates: Spot[]           // 경로를 확인할 후보 (최대 20곳)
+}
+
+/** 예산·거리로 걸러지는 후보 (경로 조회 없음, 빠름) */
+export function fetchCandidates(draft: ConditionDraft, confirmed?: ConversationConditions): Promise<CandidatesResult> {
+  return post<CandidatesResult>('/api/recommend/candidates', requestBody(draft, confirmed))
+}
+
+async function request<T>(path: string, body: string): Promise<T> {
   let response: Response
   try {
-    response = await fetch(`${API_BASE}/api/recommend`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+    response = await fetch(`${API_BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
   } catch {
     throw new Error('추천 서버에 연결하지 못했어요. 서버가 켜져 있는지 확인해주세요.')
   }

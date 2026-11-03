@@ -130,12 +130,27 @@
   font-size: 13px; font-weight: 800; box-shadow: 0 4px 10px #04785755;
   animation: search-drop .5s ease-out both;
 }
+.search-dot {
+  display: block; width: 9px; height: 9px; border-radius: 50%;
+  background: #10b981; border: 1.5px solid white; opacity: .75;
+  transition: opacity .6s, transform .6s, background .6s;
+  animation: search-pop .4s ease-out both;
+}
+.search-dot.is-candidate { width: 14px; height: 14px; background: #047857; opacity: 1; animation: search-pulse 1.2s ease-in-out infinite; }
+.search-dot.is-faded { opacity: .18; }
+.search-place {
+  display: block; white-space: nowrap; padding: 2px 8px; border-radius: 10px;
+  background: #0B2A22; color: white; font-size: 11px; font-weight: 700; opacity: .85;
+  box-shadow: 0 2px 6px #0b2a2230;
+}
+@keyframes search-pop { from { opacity: 0; transform: scale(.2); } }
+@keyframes search-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.35); } }
 @keyframes search-scan { from { background-position: -160% 0; } to { background-position: 260% 0; } }
 @keyframes search-sway { 0%,100% { transform: rotate(0); } 25%,40% { transform: rotate(-6deg); } 60%,75% { transform: rotate(6deg); } }
 @keyframes search-look { 0%,100% { transform: translateX(0); } 25%,40% { transform: translateX(-4px); } 60%,75% { transform: translateX(4px); } }
 @keyframes search-drop { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion:reduce) {
-  .search-scan,.search-look-pin,.search-pupils,.search-candidate-pin { animation: none; }
+  .search-scan,.search-look-pin,.search-pupils,.search-candidate-pin,.search-dot { animation: none; }
 }
 
 /* Keep only the scroll thumb visible inside conversation panels. */
