@@ -28,6 +28,8 @@ export default function ConsultationPage() {
   const initial=typeof location.state?.condition==='string'? location.state.condition:''
   const restored = location.state?.aiConversation as ConditionConversation | undefined
   const [conversation, setConversation] = useState<ConditionConversation | null>(restored ?? null)
+  const [cardRevealed, setCardRevealed] = useState(Boolean(location.state?.conditionCardRevealed || restored?.readyForRecommendation))
+  const cardRevealedRef = useRef(cardRevealed)
   const [conditionDraft, setConditionDraft] = useState<ConditionDraft>(() => restored ? toConditionDraft(restored.conditions) : { deposit: '', rent: '', preference: '', places: [] })
   const [messages, setMessages] = useState<Message[]>(() => location.state?.aiMessages ?? (initial ? [{ role: 'user', text: initial }] : [
     { role: 'assistant', text: '예산과 생활 조건을 알려주세요.' },
@@ -54,6 +56,11 @@ export default function ConsultationPage() {
   const previousNotices = useRef(conversationNotices(restored?.notices ?? []))
 
   function applyResponse(response: ConditionConversation) {
+    const wasCardRevealed = cardRevealedRef.current
+    if (response.readyForRecommendation) {
+      cardRevealedRef.current = true
+      setCardRevealed(true)
+    }
     setCardPlaceId(null)
     setDirty(false)
     setCardStatus('')
@@ -67,9 +74,12 @@ export default function ConsultationPage() {
     previousNotices.current = notices
     const place = locationQuestionPlace(response)
     const question = place && !placeSearchQuery(place)
-      ? `${place.label || '장소'}의 이름이나 주소를 알려주세요. 조건 카드에서 직접 위치를 선택하셔도 돼요.`
+      ? `${place.label || '장소'}의 이름이나 주소를 알려주세요.${wasCardRevealed ? ' 조건 카드에서 직접 위치를 선택하셔도 돼요.' : ''}`
       : response.nextQuestion
-    const answer = [newNotices.join(' '), question ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
+    const confirmation = !wasCardRevealed && response.readyForRecommendation
+      ? '필수 조건을 모두 확인했어요. 조건 카드에서 확인하거나 채팅으로 수정해주세요.'
+      : '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.'
+    const answer = [newNotices.join(' '), question ?? confirmation]
       .filter(Boolean).join('\n\n')
     setMessages(current => [...current, { role: 'assistant', text: answer }])
   }
@@ -109,6 +119,27 @@ export default function ConsultationPage() {
     } finally {
       setTyping(false)
       sendingRef.current = false
+    }
+  }
+
+  async function chooseTravelCondition(placeId: string, field: 'mode' | 'minutes', value: string) {
+    if (!conversation || typing || placeBusy || dirty || savingCardsRef.current || sendingRef.current) return
+    sendingRef.current = true
+    setTyping(true)
+    setError('')
+    const place = conditionDraft.places.find(item => item.id === placeId)
+    if (!place) { sendingRef.current = false; setTyping(false); return }
+    const text = field === 'mode' ? value : value + '분'
+    setMessages(current => [...current, { role: 'user', text }])
+    const updated = { ...conditionDraft, places: conditionDraft.places.map(item =>
+      item.id === placeId ? { ...item, [field]: value } : item) }
+    try {
+      applyResponse(await saveConditionEdits(conversation, updated))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '선택한 조건을 저장하지 못했어요.')
+    } finally {
+      sendingRef.current = false
+      setTyping(false)
     }
   }
 
@@ -178,10 +209,17 @@ export default function ConsultationPage() {
   const chatPlace = questionPlace && placeSearchQuery(questionPlace) ? questionPlace : undefined
   const activePlace = cardPlaceId ? conversation?.conditions.places.find(place => place.id === cardPlaceId) : chatPlace
   const showPicker = conversation && activePlace?.targetType === 'FIXED_PLACE' && !typing && !dirty && !savingCards && !conversation.deletionConfirmation
+  const travelIssue = conversation?.issues[0]
+  const travelPath = travelIssue?.kind === 'MISSING' ? travelIssue.path.match(/^places\[(\d+)\]\.(transport|maxMinutes)$/) : null
+  const travelPlace = travelPath ? conversation?.conditions.places[Number(travelPath[1])] : undefined
+  const travelField = travelPath?.[2] === 'transport' ? 'mode' : 'minutes'
+  const timeOptions = travelPlace?.transport === 'WALK' ? ['5', '10', '15'] : ['30', '45', '60', '90']
+  const travelOptions = travelField === 'mode' ? ['대중교통', '도보'] : timeOptions
+  const showTravelChoices = travelPlace?.location && !conversation?.deletionConfirmation && !typing
 
   return (
     <AppLayout header={{ appearance: 'prototype' }} className="bg-[#F4F8F6] text-[var(--text)] tracking-[-.03em] break-keep [--header-background:rgba(244,248,246,.94)] [&_button:disabled]:opacity-45 [&_button:disabled]:cursor-not-allowed [&_button]:min-h-11">
-      <main className={`consultation-transition mx-auto grid w-full max-w-[1680px] items-start px-[clamp(20px,3vw,48px)] pt-6 pb-10 max-[760px]:px-4 ${conversation ? 'is-expanded' : ''}`}>
+      <main className={`consultation-transition mx-auto grid w-full max-w-[1680px] items-start px-[clamp(20px,3vw,48px)] pt-6 pb-10 max-[760px]:px-4 ${cardRevealed ? 'is-expanded' : ''}`}>
         <section className="flex h-[var(--consultation-panel-height)] min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#DFE9E4] bg-white shadow-[0_18px_50px_rgba(15,45,35,.06)] max-[760px]:rounded-[22px]" aria-label="조건 정리 대화">
           <div className="flex min-h-0 flex-1 flex-col panel-scroll overflow-y-auto overscroll-contain px-6 pt-6 pb-2 max-[1299px]:px-3.5">
             <div className="" role="log" aria-live="polite" aria-relevant="additions">
@@ -201,6 +239,15 @@ export default function ConsultationPage() {
               conversationId={conversation.conversationId} place={activePlace} modal={Boolean(cardPlaceId)}
               onClose={() => setCardPlaceId(null)} onBusyChange={setPlaceBusy}
               onSelected={response => { setError(''); applyResponse(response) }} />}
+            {showTravelChoices && <div className="mb-4" role="group" aria-label={travelField === 'mode' ? '이동수단 선택' : '최대 편도시간 선택'}>
+              <div className="flex flex-wrap gap-2">{travelOptions.map(option => <button type="button" key={option}
+                disabled={dirty || savingCards || placeBusy}
+                className="rounded-full border border-[var(--g)] bg-white px-4 text-sm font-bold text-[var(--gd)] hover:bg-[var(--gl)]"
+                onClick={() => void chooseTravelCondition(travelPlace.id, travelField, option)}>
+                {travelField === 'mode' ? option : option + '분'}
+              </button>)}</div>
+              <p className="mt-2 text-xs text-[var(--muted)]">원하는 값이 없으면 채팅으로 직접 알려주세요.</p>
+            </div>}
             <div ref={endRef} />
           </div>
           <form className="
@@ -220,11 +267,11 @@ export default function ConsultationPage() {
             <button type="submit" disabled={typing || placeBusy || dirty || savingCards || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
           </form>
         </section>
-        <div className="condition-reveal min-w-0" inert={!conversation} aria-hidden={!conversation}>
+        {cardRevealed && <div className="condition-reveal min-w-0">
           <ConditionPanel value={conditionDraft} conversation={conversation} busy={typing || placeBusy} dirty={dirty || savingCards} onCommit={value => void saveCards(value)} saveStatus={cardStatus} saveError={cardError} onRetry={() => void saveCards()}
             onOpenPlace={setCardPlaceId}
-            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !placeBusy && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
-        </div>
+            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !placeBusy && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages, conditionCardRevealed: cardRevealed } })} />
+        </div>}
       </main>
     </AppLayout>
   )

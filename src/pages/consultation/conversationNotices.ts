@@ -13,6 +13,8 @@ export function conversationNotices(notices: string[]): string[] {
       defaults.add('선택 장소의 이동수단을 비워 두면 대중교통으로 계산해요.')
     } else if (notice.endsWith(frequencySuffix)) {
       unclearVisits.add(notice.slice(0, -frequencySuffix.length))
+    } else if (notice === '카드에서 수정한 조건을 저장했어요.') {
+      other.push('선택한 조건을 반영했어요.')
     } else {
       other.push(notice)
     }
