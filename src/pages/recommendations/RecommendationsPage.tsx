@@ -4,7 +4,7 @@ import { ArrowLeft,Building2,Heart,House } from 'lucide-react'
 import NeighborhoodDetailPage from './NeighborhoodDetailPage'
 import AppLayout from '../../components/layout/AppLayout'
 import NeighborhoodMap from '../../components/map/NeighborhoodMap'
-import { toNeighborhoods,transportLabel } from '../../services/recommendApi'
+import { budgetFromState,compareTime,timeCheckColor,toNeighborhoods,transportLabel } from '../../services/recommendApi'
 import type { Recommendation } from '../../services/recommendApi'
 
 export default function RecommendationsPage({ saved,onToggleSaved }: { saved: string[]; onToggleSaved: (id: string) => void }) {
@@ -12,6 +12,7 @@ export default function RecommendationsPage({ saved,onToggleSaved }: { saved: st
   const { id: detailId }=useParams()
   const navigate=useNavigate()
   const [savedOnly,setSavedOnly]=useState<boolean>(location.state?.listState?.savedOnly??false)
+  const budget=budgetFromState(location.state)
   const recommendations=toNeighborhoods((location.state?.results??[]) as Recommendation[])
   const visible=recommendations.filter(item => !savedOnly||saved.includes(item.id)).sort((a,b) => a.rank-b.rank)
   const activeId=detailId??null
@@ -65,9 +66,9 @@ export default function RecommendationsPage({ saved,onToggleSaved }: { saved: st
               <h3 className="text-[21px] font-extrabold leading-tight tracking-[-.04em] text-[var(--ink)] max-[1250px]:text-lg">{item.name}</h3>
             </div>
             <button className={`absolute right-3 top-3 z-2 inline-flex size-11 items-center justify-center bg-transparent ${saved.includes(item.id)? 'text-[#BE185D]':'text-[var(--muted)] hover:text-[#BE185D]'}`} aria-label={`${item.name} 관심 동네 ${saved.includes(item.id)? '해제':'저장'}`} aria-pressed={saved.includes(item.id)} onClick={() => onToggleSaved(item.id)}><Heart size={20} fill={saved.includes(item.id)? 'currentColor':'none'} /></button>
-            <div className="mt-3.5"><small className="block text-xs text-[var(--muted-light)]">예산 안 보통 시세 (보증금/월세)</small><strong className="mt-0.5 block text-[17px] text-[var(--ink)]">{item.medianDeposit.toLocaleString()}/{item.medianRent}</strong></div>
+            <div className="mt-3.5"><small className="block text-xs text-[var(--muted-light)]">예산 안 보통 시세 (보증금/월세)</small><strong className="mt-0.5 block text-[17px] text-[var(--ink)]">{item.medianDeposit.toLocaleString()}/{item.medianRent}</strong>{budget.maxDeposit!==null&&budget.maxRent!==null&&<span className="mt-0.5 block text-xs font-semibold text-[var(--gd)]">예산 {budget.maxDeposit.toLocaleString()}/{budget.maxRent} 이하</span>}</div>
             <div className="mt-3.5 grid grid-cols-2 gap-2 [&>div]:rounded-[10px] [&>div]:border [&>div]:border-[#EEF2F0] [&>div]:bg-[#FAFCFB] [&>div]:p-3 [&_small]:flex [&_small]:items-center [&_small]:gap-1 [&_small]:text-xs [&_small]:text-[var(--muted-light)] [&_strong]:mt-1 [&_strong]:block [&_strong]:text-[17px] [&_strong]:text-[var(--ink)] [&_span]:text-xs [&_span]:text-[var(--muted)]">
-              {item.routes.map(route => <div key={route.label}><small>{route.importance==='REQUIRED'? <Building2 size={14} />:<House size={14} />}{route.label}</small><strong>{route.minutes}분</strong><span>{route.transport==='WALK'? transportLabel(route.transport):`${transportLabel(route.transport)} · 환승 ${route.transfers}회`}</span></div>)}
+              {item.routes.map(route => { const check=compareTime(route); return <div key={route.placeId} className={check.kind==='over'? '!border-[#F3D9B4] !bg-[#FFF8F0]':''}><small>{route.importance==='REQUIRED'? <Building2 size={14} />:<House size={14} />}{route.label}</small><strong className={check.kind==='over'? '!text-[#B45309]':''}>{route.minutes}분</strong><span>{route.transport==='WALK'? transportLabel(route.transport):`${transportLabel(route.transport)} · 환승 ${route.transfers}회`}</span><p className={`mt-0.5 text-xs font-semibold ${timeCheckColor(check.kind)}`}>{check.text}</p></div> })}
             </div>
             <Link className="absolute inset-0 z-1" to={`/recommendations/${item.id}`} state={{ ...location.state,listState: { selectedId: item.id,savedOnly } }} aria-label={`${item.name} 상세 보기`}><span className="sr-only">상세 보기</span></Link>
           </article>)}</div>

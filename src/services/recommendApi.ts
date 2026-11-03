@@ -1,12 +1,14 @@
-import type { ConversationConditions } from './conditionConversationApi'
+import type { ConditionConversation, ConversationConditions } from './conditionConversationApi'
 import type { ConditionDraft, PlaceCondition } from '../components/conditions/conditionModel'
 
 // ---- 백엔드 응답 모양 (POST /api/recommend) ----
 export type PlaceRoute = {
+  placeId: string
   label: string
   importance: 'REQUIRED' | 'HIGH' | 'MEDIUM' | 'LOW'
   transport: 'PUBLIC_TRANSIT' | 'WALK'
   minutes: number
+  maxMinutes: number | null   // 사용자가 정한 편도 기준 (미설정이면 null)
   transfers: number
 }
 export type Recommendation = {
@@ -89,3 +91,29 @@ export function toNeighborhoods(results: Recommendation[]): NeighborhoodResult[]
 }
 
 export const transportLabel = (transport: PlaceRoute['transport']) => transport === 'WALK' ? '도보' : '대중교통'
+
+const IMPORTANCE_LABEL: Record<PlaceRoute['importance'], string> = { REQUIRED: '필수', HIGH: '높음', MEDIUM: '중간', LOW: '낮음' }
+export const importanceLabel = (importance: PlaceRoute['importance']) => IMPORTANCE_LABEL[importance]
+
+/** 화면 state에서 사용자가 정한 예산 꺼내기 (AI 대화로 확정된 조건 우선) */
+export function budgetFromState(state: unknown): { maxDeposit: number | null; maxRent: number | null } {
+  const saved = state as { aiConversation?: ConditionConversation; conditionDraft?: ConditionDraft } | null
+  const confirmed = saved?.aiConversation?.conditions
+  if (confirmed) return { maxDeposit: confirmed.maxDeposit, maxRent: confirmed.maxRent }
+  const draft = saved?.conditionDraft
+  return { maxDeposit: draft?.deposit ? Number(draft.deposit) : null, maxRent: draft?.rent ? Number(draft.rent) : null }
+}
+
+/** 편도시간을 사용자 기준과 비교: 이내(초록) / 넘음(주황, 중요도 여유 안이라 통과) / 기준 없음(회색) */
+export type TimeCheck = { kind: 'within' | 'over' | 'unset'; text: string }
+export function compareTime(route: PlaceRoute): TimeCheck {
+  if (route.maxMinutes == null) return { kind: 'unset', text: '기준 미설정 · 참고' }
+  const diff = route.minutes - route.maxMinutes
+  return diff <= 0
+    ? { kind: 'within', text: `기준 ${route.maxMinutes}분 이내` }
+    : { kind: 'over', text: `기준보다 ${diff}분 더` }
+}
+
+/** 비교 결과별 글자색 */
+export const timeCheckColor = (kind: TimeCheck['kind']) =>
+  kind === 'within' ? 'text-[var(--gd)]' : kind === 'over' ? 'text-[#B45309]' : 'text-[var(--muted)]'
