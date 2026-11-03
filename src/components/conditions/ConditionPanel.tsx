@@ -6,9 +6,9 @@ import type { ConditionDraft, PlaceCondition } from './conditionModel'
 import { blankPlace, digits, validationMessage } from './conditionModel'
 
 const inputClass = 'h-11 w-full min-w-0 rounded-[10px] border border-[var(--line-secondary)] bg-white px-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--g)] focus:ring-1 focus:ring-[var(--g)] disabled:bg-gray-50 disabled:text-gray-400'
-type Props = { value: ConditionDraft; onChange: (value: ConditionDraft) => void; onRecommend: () => void }
+type Props = { value: ConditionDraft; onChange: (value: ConditionDraft) => void; onRecommend: () => void; readOnly?: boolean; readyForRecommendation?: boolean }
 
-export default function ConditionPanel({ value, onChange, onRecommend }: Props) {
+export default function ConditionPanel({ value, onChange, onRecommend, readOnly = false, readyForRecommendation }: Props) {
   const searchRef = useRef<HTMLDialogElement>(null)
   const deleteRef = useRef<HTMLDialogElement>(null)
   const addRef = useRef<HTMLButtonElement>(null)
@@ -51,7 +51,8 @@ export default function ConditionPanel({ value, onChange, onRecommend }: Props) 
   }
   return <aside className="@container flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#DFE9E4] bg-white shadow-[var(--shadow-card)] max-[760px]:rounded-[22px]" aria-labelledby="conditions-title">
     <h1 id="conditions-title" className="shrink-0 px-6 pt-7 pb-4 max-[760px]:px-3.5 text-[26px] font-extrabold tracking-[-.05em] text-[var(--ink)] max-[760px]:text-[22px]">조건 확인 및 수정</h1>
-    <div className="min-h-0 flex-1 panel-scroll overflow-y-auto overscroll-contain px-6 pb-5 max-[760px]:px-3.5">
+    {readOnly && <p className="px-6 pb-3 text-sm text-[var(--muted)]">조건은 채팅으로 수정할 수 있어요.</p>}
+    <fieldset disabled={readOnly} className="min-h-0 flex-1 panel-scroll overflow-y-auto overscroll-contain px-6 pb-5 max-[760px]:px-3.5">
     <h2 className="mt-2 mb-3 text-[15px] font-extrabold text-[var(--ink)]">예산</h2>
     <div className="grid grid-cols-2 gap-2 @max-[450px]:grid-cols-1">
       {([{ key: 'deposit', label: '보증금' }, { key: 'rent', label: '월세' }] as const).map(field => <label key={field.key} className="flex min-w-0 flex-wrap items-center gap-2 rounded-[14px] border border-[var(--line-subtle)] bg-[#FAFCFB] p-3 text-sm">
@@ -83,10 +84,10 @@ export default function ConditionPanel({ value, onChange, onRecommend }: Props) 
       {!value.places.length && <p className="rounded-2xl border border-dashed border-[#CFE3DA] p-5 text-sm text-[var(--muted)]">대화에서 장소를 알려주시거나 아래 버튼으로 추가해주세요.</p>}
     </div>
     <button ref={addRef} type="button" className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-[#A7D9C2] px-4 text-sm font-bold text-[var(--gd)] hover:bg-[var(--gl)]" onClick={() => onChange({ ...value, places: [...value.places, blankPlace(crypto.randomUUID())] })}><Plus size={17} />장소 추가</button>
-    </div>
+    </fieldset>
     <div className="shrink-0 border-t border-[#EEF2F0] bg-white px-6 pt-4 pb-6 text-center max-[760px]:px-3.5">
-      {tried && issue && <p role="alert" className="mb-3 max-h-20 panel-scroll overflow-y-auto overscroll-contain rounded-xl bg-red-50 p-3 text-left text-sm text-red-700">{issue}</p>}
-      <button type="button" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--gd)] px-4 font-bold text-white hover:bg-[var(--hover)]" onClick={() => { setTried(true); if (!issue) onRecommend() }}><Search size={18} />이 조건으로 동네 찾기</button>
+      {!readOnly && tried && issue && <p role="alert" className="mb-3 max-h-20 panel-scroll overflow-y-auto overscroll-contain rounded-xl bg-red-50 p-3 text-left text-sm text-red-700">{issue}</p>}
+      <button type="button" disabled={readOnly && !readyForRecommendation} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--gd)] px-4 font-bold text-white hover:bg-[var(--hover)]" onClick={() => { setTried(true); if (readOnly ? readyForRecommendation : !issue) onRecommend() }}><Search size={18} />이 조건으로 동네 찾기</button>
     </div>
     <dialog ref={searchRef} onClose={() => { requestRef.current += 1; setSearching(false); returnFocusRef.current?.focus() }} className="m-auto max-h-[calc(100svh-32px)] w-[min(440px,calc(100%-32px))] flex-col overflow-hidden open:flex rounded-[22px] border-0 bg-white p-6 shadow-[var(--shadow-modal)] backdrop:bg-black/40" aria-labelledby="address-title">
       <div className="flex shrink-0 items-center justify-between"><h2 id="address-title" className="text-lg font-extrabold">주소 찾기</h2><button type="button" aria-label="주소 찾기 닫기" className="grid size-11 place-items-center" onClick={() => searchRef.current?.close()}><X size={20} /></button></div>

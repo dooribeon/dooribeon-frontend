@@ -2,11 +2,10 @@ import { useEffect,useRef,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { searchPlaces } from '../../services/placeSearch'
-import type { ResolvedPlace } from '../../services/placeSearch'
+import { sendConditionMessage, toConditionDraft } from '../../services/conditionConversationApi'
+import type { ConditionConversation } from '../../services/conditionConversationApi'
 import ConditionPanel from '../../components/conditions/ConditionPanel'
-import { fromLegacy, toLegacy } from '../../components/conditions/conditionModel'
-import { nextQuestion, conditionsReady, receiveAnswer } from '../../components/conditions/conversationFlow'
+import { toLegacy } from '../../components/conditions/conditionModel'
 import type { ConditionDraft } from '../../components/conditions/conditionModel'
 
 type Message={ role: 'assistant'|'user'; text: string }
@@ -20,90 +19,70 @@ export default function ConsultationPage() {
   const location=useLocation()
   const navigate=useNavigate()
   const initial=typeof location.state?.condition==='string'? location.state.condition:''
-  const [conditionDraft,setConditionDraft]=useState<ConditionDraft>(() => location.state?.conditionDraft ?? receiveAnswer(fromLegacy(location.state?.conditions ?? {}), initial, null))
-  const [messages,setMessages]=useState<Message[]>(() => initial ? [{ role: 'user', text: initial }] : [])
-  const [draft,setDraft]=useState('')
-  const [typing,setTyping]=useState(true)
-  const [searching,setSearching]=useState(false)
-  const [candidates,setCandidates]=useState<{ placeId: string; items: ResolvedPlace[]; total: number } | null>(null)
-  const searchVersion=useRef(0)
-  useEffect(() => () => { searchVersion.current += 1 }, [])
-  const [panelVisible,setPanelVisible]=useState(() => Boolean(location.state?.conditionDraft && conditionsReady(location.state.conditionDraft)))
-  const [pendingReply,setPendingReply]=useState(() => nextQuestion(conditionDraft)?.text ?? '조건을 확인하고 원하는 내용을 수정해주세요.')
-  const endRef=useRef<HTMLDivElement>(null)
-  const sendingRef=useRef(false)
-  const currentQuestion = nextQuestion(conditionDraft)
-  const quickReplies = currentQuestion?.key === 'mode' ? ['대중교통', '도보'] : currentQuestion?.key === 'minutes' ? ['30분', '1시간', '1시간 반'] : []
-  const conditions: Conditions=location.state?.conditions ?? {}
+  const restored = location.state?.aiConversation as ConditionConversation | undefined
+  const [conversation, setConversation] = useState<ConditionConversation | null>(restored ?? null)
+  const [conditionDraft, setConditionDraft] = useState<ConditionDraft>(() => restored ? toConditionDraft(restored.conditions) : { deposit: '', rent: '', preference: '', places: [] })
+  const [messages, setMessages] = useState<Message[]>(() => location.state?.aiMessages ?? (initial ? [{ role: 'user', text: initial }] : [
+    { role: 'assistant', text: '예산과 생활 조건을 알려주세요.' },
+  ]))
+  const [draft, setDraft] = useState('')
+  const [typing, setTyping] = useState(Boolean(initial) && !restored)
+  const [error, setError] = useState('')
+  const endRef = useRef<HTMLDivElement>(null)
+  const sendingRef = useRef(false)
+  // StrictMode에서 첫 입력이 두 번 전송되어 대화 두 개가 만들어지는 것을 막는다.
+  const initialRequest = useRef<Promise<ConditionConversation> | null>(null)
+  const conditions: Conditions = location.state?.conditions ?? {}
+
+  function applyResponse(response: ConditionConversation) {
+    setConversation(response)
+    setConditionDraft(toConditionDraft(response.conditions))
+    const answer = [...response.notices, response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
+      .filter(Boolean).join('\n\n')
+    setMessages(current => [...current, { role: 'assistant', text: answer }])
+  }
 
   useEffect(() => {
-    if(!typing || searching) return
-    const timer=window.setTimeout(() => {
-      setMessages(current => [...current, { role: 'assistant', text: pendingReply }])
-      setTyping(false)
-      sendingRef.current=false
-      if(conditionsReady(conditionDraft)) setPanelVisible(true)
-    }, 850)
-    return () => window.clearTimeout(timer)
-  },[typing,searching,pendingReply,conditionDraft])
+    if (!initial || restored) return
+    let active = true
+    initialRequest.current ??= sendConditionMessage(initial)
+    initialRequest.current.then(response => {
+      if (active) applyResponse(response)
+    }).catch(error => {
+      if (active) {
+        setError(error instanceof Error ? error.message : '조건을 확인하지 못했어요.')
+        setDraft(initial)
+      }
+    }).finally(() => {
+      if (active) setTyping(false)
+    })
+    return () => { active = false }
+  }, [initial, restored])
 
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }) },[messages,typing])
-
-  function replyFor(next: ConditionDraft, prefix = '') {
-    const reveal=!panelVisible && conditionsReady(next)
-    setPendingReply(prefix + (reveal ? '회사·학교의 필수 정보와 모든 거점의 위치를 확인했어요. 조건 패널에서 확인하고 수정할 수 있어요.\n\n' : '') + (nextQuestion(next)?.text ?? '장소를 모두 확인했어요. 조건을 확인하고 ‘이 조건으로 동네 찾기’를 눌러주세요.'))
-    setConditionDraft(next)
-    setTyping(true)
-  }
-
-  function choosePlace(placeId: string, place: ResolvedPlace) {
-    const next={ ...conditionDraft, places: conditionDraft.places.map(p => p.id === placeId ? { ...p, address: place.address, resolvedPlace: place } : p) }
-    setCandidates(null)
-    setMessages(current => [...current, { role: 'user', text: `${place.name} 선택` }])
-    replyFor(next, `${place.name} (${place.address})로 반영했어요.\n\n`)
-  }
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }) }, [messages, typing, error])
 
   async function send(value: string) {
-    const text=value.trim()
-    if(!text || typing || sendingRef.current) return
-    sendingRef.current=true
-    const pending=nextQuestion(conditionDraft)
-    const next=receiveAnswer(conditionDraft,text,pending)
-    setCandidates(null)
+    const text = value.trim()
+    if (!text || typing || sendingRef.current) return
+    sendingRef.current = true
+    setTyping(true)
+    setError('')
     setMessages(current => [...current, { role: 'user', text }])
     setDraft('')
-    setTyping(true)
-    // 장소 검색 대상: 위치를 묻는 중이거나, 회사·학교 질문에 방금 답한 경우
-    const searchPlaceId = pending?.key === 'address' ? pending.placeId
-      : pending?.key === 'primary' ? next.places.find(p => p.source === 'work' && p.address)?.id : undefined
-    if (searchPlaceId) {
-      const version=++searchVersion.current
-      setSearching(true)
-      try {
-        const result=await searchPlaces(text)
-        if (version !== searchVersion.current) return
-        if (result.total === 1 && result.items.length === 1) {
-          const place=result.items[0]
-          replyFor({ ...next, places: next.places.map(p => p.id === searchPlaceId ? { ...p, address: place.address, resolvedPlace: place } : p) }, `${place.name} (${place.address})로 반영했어요.\n\n`)
-        } else {
-          setConditionDraft(next)
-          setCandidates(result.items.length ? { placeId: searchPlaceId, ...result } : null)
-          setPendingReply(result.items.length ? '여러 장소가 검색됐어요. 아래에서 맞는 장소를 선택하거나 지점명을 더 자세히 알려주세요.' : '검색 결과가 없어요. 지역이나 지점명을 추가해서 다시 알려주세요.')
-        }
-      } catch (error) {
-        if (version !== searchVersion.current) return
-        setPendingReply(error instanceof Error ? error.message : '장소 검색에 실패했어요. 다시 입력해주세요.')
-      } finally {
-        if (version === searchVersion.current) setSearching(false)
-      }
-      return
+    try {
+      applyResponse(await sendConditionMessage(text, conversation?.conversationId))
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '조건을 확인하지 못했어요.')
+      setDraft(text)
+    } finally {
+      setTyping(false)
+      sendingRef.current = false
     }
-    replyFor(next)
   }
 
   return (
     <AppLayout header={{ appearance: 'prototype' }} className="bg-[#F4F8F6] text-[var(--text)] tracking-[-.03em] break-keep [--header-background:rgba(244,248,246,.94)] [&_button:disabled]:opacity-45 [&_button:disabled]:cursor-not-allowed [&_button]:min-h-11">
-      <main className={`consultation-transition mx-auto grid w-full max-w-[1680px] items-start px-[clamp(20px,3vw,48px)] pt-6 pb-10 max-[760px]:px-4 ${panelVisible ? 'is-expanded' : ''}`}>
+      <main className={`consultation-transition mx-auto grid w-full max-w-[1680px] items-start px-[clamp(20px,3vw,48px)] pt-6 pb-10 max-[760px]:px-4 ${conversation ? 'is-expanded' : ''}`}>
         <section className="flex h-[var(--consultation-panel-height)] min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#DFE9E4] bg-white shadow-[0_18px_50px_rgba(15,45,35,.06)] max-[760px]:rounded-[22px]" aria-label="조건 정리 대화">
           <div className="flex min-h-0 flex-1 flex-col panel-scroll overflow-y-auto overscroll-contain px-6 pt-6 pb-2 max-[1299px]:px-3.5">
             <div className="" role="log" aria-live="polite" aria-relevant="additions">
@@ -117,17 +96,7 @@ export default function ConsultationPage() {
               </div>)}
             </div>
             {typing && <div className="mb-[18px] flex items-start gap-2.5" role="status" aria-label="두리번이 응답을 준비하고 있어요"><BotAvatar /><div className="flex gap-1.5 rounded-[4px_20px_20px_20px] bg-[#F3F6F5] px-[18px] py-5" aria-hidden="true">{[0,1,2].map(dot => <span key={dot} className="chat-thinking size-[7px] rounded-full bg-[#7FA796]" style={{ animationDelay: `${dot * 150}ms` }} />)}</div></div>}
-            {candidates && !typing && <div className="mb-4 ml-11 w-[calc(100%-44px)] max-w-[480px] shrink-0" aria-label="장소 검색 결과">
-              <div className="overflow-hidden rounded-2xl border border-[var(--line-panel)] bg-white">
-                <div key={candidates.items.map(place => place.id).join(',')} className="panel-scroll max-h-[352px] overflow-y-auto overscroll-contain" role="group" aria-label="검색된 장소 선택">
-                  {candidates.items.map(place => <button key={place.id} type="button" className="relative flex h-[88px] w-full flex-col justify-center gap-1 px-4 text-left transition-colors hover:bg-[var(--gl)] focus-visible:bg-[var(--gl)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary [&+button]:before:absolute [&+button]:before:inset-x-4 [&+button]:before:top-0 [&+button]:before:h-px [&+button]:before:bg-[#E5E7EB] [&+button]:before:content-['']" title={`${place.name} · ${place.address}`} onClick={() => choosePlace(candidates.placeId, place)}><strong className="block w-full truncate text-sm leading-5">{place.name}</strong><span className="line-clamp-2 text-xs leading-4 text-[var(--muted)]">{place.address}</span></button>)}
-                </div>
-              </div>
-              {candidates.total > candidates.items.length && <p className="mt-2 text-xs text-[var(--muted)]">검색 결과 중 {candidates.items.length}곳을 표시했어요. 원하는 장소가 없다면 지역·지점명을 더 입력해주세요.</p>}
-            </div>}
-            {!typing && quickReplies.length > 0 && <div className="mb-4 ml-11 flex flex-wrap gap-2" role="group" aria-label={currentQuestion?.key === 'mode' ? '이동수단 선택' : '최대 편도시간 선택'}>
-              {quickReplies.map(option => <button type="button" key={option} className="min-h-11 rounded-full border border-[#CFE3DA] bg-white px-4 text-sm font-semibold text-[var(--gd)] transition-colors hover:border-[var(--g)] hover:bg-[var(--gl)]" onClick={() => void send(option)}>{option}</button>)}
-            </div>}
+            {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error} 입력 내용을 확인하고 다시 보내주세요.</p>}
             <div ref={endRef} />
           </div>
           <form className="
@@ -146,8 +115,8 @@ export default function ConsultationPage() {
             <button type="submit" disabled={typing || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
           </form>
         </section>
-        <div className="condition-reveal min-w-0" inert={!panelVisible} aria-hidden={!panelVisible}>
-          <ConditionPanel value={conditionDraft} onChange={value => { searchVersion.current += 1; setCandidates(null); setSearching(false); setConditionDraft(value) }} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft } })} />
+        <div className="condition-reveal min-w-0" inert={!conversation} aria-hidden={!conversation}>
+          <ConditionPanel value={conditionDraft} readOnly readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !error} onChange={setConditionDraft} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
         </div>
       </main>
     </AppLayout>
