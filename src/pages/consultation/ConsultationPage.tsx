@@ -34,10 +34,14 @@ export default function ConsultationPage() {
   const initialRequest = useRef<Promise<ConditionConversation> | null>(null)
   const conditions: Conditions = location.state?.conditions ?? {}
 
+  const previousNotices = useRef(restored?.notices ?? [])
+
   function applyResponse(response: ConditionConversation) {
     setConversation(response)
     setConditionDraft(toConditionDraft(response.conditions))
-    const answer = [...response.notices, response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
+    const newNotices = response.notices.filter(notice => !previousNotices.current.includes(notice))
+    previousNotices.current = response.notices
+    const answer = [...newNotices, response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
       .filter(Boolean).join('\n\n')
     setMessages(current => [...current, { role: 'assistant', text: answer }])
   }
@@ -116,7 +120,9 @@ export default function ConsultationPage() {
           </form>
         </section>
         <div className="condition-reveal min-w-0" inert={!conversation} aria-hidden={!conversation}>
-          <ConditionPanel value={conditionDraft} readOnly readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !error} onChange={setConditionDraft} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
+          <ConditionPanel value={conditionDraft} readOnly conversation={conversation} busy={typing}
+            onLocationSelected={response => { setError(''); applyResponse(response) }}
+            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !error} onChange={setConditionDraft} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
         </div>
       </main>
     </AppLayout>

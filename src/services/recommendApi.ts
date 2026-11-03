@@ -1,3 +1,4 @@
+import type { ConversationConditions } from './conditionConversationApi'
 import type { ConditionDraft, PlaceCondition } from '../components/conditions/conditionModel'
 
 // ---- 백엔드 응답 모양 (POST /api/recommend) ----
@@ -59,8 +60,8 @@ function toPlace(place: PlaceCondition) {
 let lastRequest: { key: string; promise: Promise<Recommendation[]> } | null = null
 
 /** 추천 요청. 같은 조건이면 진행 중인 요청을 재사용 */
-export function fetchRecommendations(draft: ConditionDraft): Promise<Recommendation[]> {
-  const body = JSON.stringify(toConditions(draft))
+export function fetchRecommendations(draft: ConditionDraft, confirmed?: ConversationConditions): Promise<Recommendation[]> {
+  const body = JSON.stringify(confirmed ?? toConditions(draft))
   if (lastRequest?.key === body) return lastRequest.promise
   const promise = request(body)
   lastRequest = { key: body, promise }

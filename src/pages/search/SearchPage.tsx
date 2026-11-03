@@ -4,6 +4,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import AppLayout from '../../components/layout/AppLayout'
 import { loadKakaoMaps } from '../../services/kakaoMaps'
 import type { MapInstance, MapsSDK } from '../../services/kakaoMaps'
+import type { ConditionConversation } from '../../services/conditionConversationApi'
 import type { ConditionDraft } from '../../components/conditions/conditionModel'
 import { fetchRecommendations } from '../../services/recommendApi'
 import { recommendations } from '../../mocks/recommendations'   // 탐색 중 지도 연출용 핀 위치
@@ -51,8 +52,9 @@ function SearchMap({ step }: { step: number }) {
 export default function SearchPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const state = location.state as { condition?: string; conditions?: Record<string, string>; conditionDraft?: ConditionDraft } | null
+  const state = location.state as { condition?: string; conditions?: Record<string, string>; conditionDraft?: ConditionDraft; aiConversation?: ConditionConversation } | null
   const draft = state?.conditionDraft
+  const confirmed = state?.aiConversation?.conditions
   const [step, setStep] = useState(0)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -61,14 +63,14 @@ export default function SearchPage() {
     const startedAt = Date.now()
     // 실제 진행률은 알 수 없어서 앞 단계는 시간에 맞춰 넘기고, 응답이 오면 마지막 단계로 이동
     const timers = [1100, 2300, 3500].map((delay, index) => window.setTimeout(() => setStep(current => Math.max(current, index + 1)), delay))
-    fetchRecommendations(draft).then(results => {
+    fetchRecommendations(draft, confirmed).then(results => {
       if (disposed) return
       const wait = Math.max(0, 3600 - (Date.now() - startedAt))   // 너무 빨리 끝나도 단계 연출은 보여주기
       timers.push(window.setTimeout(() => setStep(4), wait))
       timers.push(window.setTimeout(() => navigate('/recommendations', { replace: true, state: { ...location.state, results } }), wait + 500))
     }).catch((e: Error) => { if (!disposed) setError(e.message) })
     return () => { disposed = true; timers.forEach(window.clearTimeout) }
-  }, [draft, navigate, location.state])
+  }, [draft, confirmed, navigate, location.state])
   if (!draft) return <Navigate to="/consultation" replace />
   const required = draft.places.filter(place => place.importance === '필수')
   const steps = [
