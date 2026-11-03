@@ -113,3 +113,30 @@ export function toConditionDraft(conditions: ConversationConditions): ConditionD
     })),
   }
 }
+
+export async function saveConditionEdits(conversation: ConditionConversation, draft: ConditionDraft) {
+  const importance = { '필수': 'REQUIRED', '높음': 'HIGH', '중간': 'MEDIUM', '낮음': 'LOW' } as const
+  const transport = { '대중교통': 'PUBLIC_TRANSIT', '도보': 'WALK' } as const
+  const original = toConditionDraft(conversation.conditions)
+  const values: ConversationConditions = {
+    ...conversation.conditions,
+    maxDeposit: draft.deposit === '' ? null : Number(draft.deposit),
+    maxRent: draft.rent === '' ? null : Number(draft.rent),
+    places: conversation.conditions.places.map((place, index) => {
+      const edited = draft.places.find(item => item.id === place.id)
+      if (!edited) throw new Error('장소 목록이 바뀌었어요. 다시 확인해주세요.')
+      if (Boolean(edited.period) !== Boolean(edited.count)) throw new Error('방문 빈도는 주·월과 횟수를 함께 입력해주세요.')
+      return {
+        ...place,
+        label: edited.name === original.places[index].name ? place.label : edited.name.trim() || null,
+        importance: importance[edited.importance as keyof typeof importance] ?? null,
+        transport: transport[edited.mode as keyof typeof transport] ?? null,
+        maxMinutes: edited.minutes === '' ? null : Number(edited.minutes),
+        frequency: edited.period ? { period: edited.period === '주' ? 'WEEK' : 'MONTH', count: Number(edited.count) } : null,
+      }
+    }),
+  }
+  return readConversation(await conditionRequest(`${conversations}/${encodeURIComponent(conversation.conversationId)}/conditions`, 'PUT', {
+    expected: conversation.conditions, values,
+  }))
+}

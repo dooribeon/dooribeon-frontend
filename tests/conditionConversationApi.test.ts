@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
+import { saveConditionEdits, searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
 import type { ConditionConversation, ConversationConditions } from '../src/services/conditionConversationApi.ts'
 
 const conditions: ConversationConditions = { maxDeposit: null, maxRent: 50, places: [] }
@@ -73,5 +73,32 @@ test('선택한 장소의 검색·후보 번호만 보내고 서버가 저장한
       { method: 'PUT', url: '/api/conditions/conversations/chat/places/work/location', body: { searchId: 'search1', candidateId: 'candidate1' } },
     ])
     assert.equal(toConditionDraft(saved.conditions).places[0].resolvedPlace?.id, 'map-123')
+  } finally { globalThis.fetch = originalFetch }
+})
+
+test('카드 편집은 위치와 서버 id를 보존하고 이름 비우기와 0을 그대로 전송한다', async () => {
+  const originalFetch = globalThis.fetch
+  const location = { placeId: 'k1', placeName: '건물', address: '주소', lat: 37.5, lng: 127.03 }
+  const initial: ConditionConversation = { ...reply, conditions: { ...conditions, places: [{
+    id: 'church', label: '교회', targetType: 'FIXED_PLACE', query: '건물', location,
+    importance: null, transport: null, maxMinutes: null, frequency: null,
+  }] } }
+  const draft = toConditionDraft(initial.conditions)
+  draft.deposit = '0'
+  draft.places[0] = { ...draft.places[0], name: '', importance: '높음', mode: '대중교통', minutes: '70', period: '주', count: '1' }
+  let sent: Record<string, unknown> = {}
+  globalThis.fetch = async (_url, options) => {
+    sent = JSON.parse(String(options?.body))
+    return Response.json({ ...initial, conditions: sent.values })
+  }
+  try {
+    const saved = await saveConditionEdits(initial, draft)
+    assert.deepEqual(sent.expected, initial.conditions)
+    const place = saved.conditions.places[0]
+    assert.equal(place.label, null)
+    assert.deepEqual(place.location, location)
+    assert.equal(place.id, 'church')
+    assert.equal(saved.conditions.maxDeposit, 0)
+    assert.deepEqual(place.frequency, { period: 'WEEK', count: 1 })
   } finally { globalThis.fetch = originalFetch }
 })
