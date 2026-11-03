@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { placeSearchQuery, saveConditionEdits, searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
+import { addConversationPlace, placeSearchQuery, saveConditionEdits, searchConversationPlace, selectConversationPlace, sendConditionMessage, toConditionDraft } from '../src/services/conditionConversationApi.ts'
 import type { ConditionConversation, ConversationConditions } from '../src/services/conditionConversationApi.ts'
 
 const conditions: ConversationConditions = { maxDeposit: null, maxRent: 50, places: [] }
@@ -118,6 +118,25 @@ test('지역과 장소 종류만으로는 후보를 검색하지 않고 구체�
   assert.equal(placeSearchQuery({ ...place, label: '본가 부산' }), '')
   assert.equal(placeSearchQuery({ ...place, label: '본가 부산', query: '부산' }), '')
   assert.equal(placeSearchQuery({ ...place, label: '본가 부산', query: '부산역' }), '부산역')
+  assert.equal(placeSearchQuery({ ...place, label: '친구', query: '혜화역 근처' }), '혜화역')
+  assert.equal(placeSearchQuery({ ...place, label: '연인', query: '잠실역 주변' }), '잠실역')
   const location = { placeId: 'k1', placeName: '회사', address: '선택된 주소', lat: 37.5, lng: 127.03 }
   assert.equal(placeSearchQuery({ ...place, location }), '회사')
+})
+
+test('카드 장소 추가는 최신 조건을 보내고 서버가 발급한 장소 id를 그대로 사용한다', async () => {
+  const originalFetch = globalThis.fetch
+  const added = { id: 'server-issued', label: null, targetType: 'FIXED_PLACE' as const, query: null, location: null,
+    importance: null, transport: null, maxMinutes: null, frequency: null }
+  globalThis.fetch = async (url, options) => {
+    assert.ok(String(url).endsWith('/conversations/test-conversation/places'))
+    assert.equal(options?.method, 'POST')
+    assert.deepEqual(JSON.parse(String(options?.body)), { expected: conditions })
+    return Response.json({ ...reply, conditions: { ...conditions, places: [added] } })
+  }
+  try {
+    const result = await addConversationPlace(reply)
+    assert.equal(toConditionDraft(result.conditions).places[0].id, 'server-issued')
+    assert.equal(toConditionDraft(result.conditions).places[0].name, '')
+  } finally { globalThis.fetch = originalFetch }
 })
