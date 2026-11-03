@@ -2,11 +2,12 @@ import { useEffect,useRef,useState } from 'react'
 import { useLocation,useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import { sendConditionMessage, toConditionDraft } from '../../services/conditionConversationApi'
+import { sendConditionMessage, saveConditionEdits, toConditionDraft } from '../../services/conditionConversationApi'
 import type { ConditionConversation } from '../../services/conditionConversationApi'
 import ConditionPanel from '../../components/conditions/ConditionPanel'
 import { toLegacy } from '../../components/conditions/conditionModel'
 import type { ConditionDraft } from '../../components/conditions/conditionModel'
+import { conversationNotices } from './conversationNotices'
 
 type Message={ role: 'assistant'|'user'; text: string }
 type Conditions=Record<string,string>
@@ -25,6 +26,14 @@ export default function ConsultationPage() {
   const [messages, setMessages] = useState<Message[]>(() => location.state?.aiMessages ?? (initial ? [{ role: 'user', text: initial }] : [
     { role: 'assistant', text: '예산과 생활 조건을 알려주세요.' },
   ]))
+  const [dirty, setDirty] = useState(false)
+  const [savingCards, setSavingCards] = useState(false)
+  const [cardStatus, setCardStatus] = useState('')
+  const [cardError, setCardError] = useState(false)
+  const conversationRef = useRef(conversation)
+  const latestCardDraft = useRef(conditionDraft)
+  const pendingCardDraft = useRef<ConditionDraft | null>(null)
+  const savingCardsRef = useRef(false)
   const [draft, setDraft] = useState('')
   const [typing, setTyping] = useState(Boolean(initial) && !restored)
   const [error, setError] = useState('')
@@ -37,11 +46,16 @@ export default function ConsultationPage() {
   const previousNotices = useRef(restored?.notices ?? [])
 
   function applyResponse(response: ConditionConversation) {
+    setDirty(false)
+    setCardStatus('')
+    setCardError(false)
+    conversationRef.current = response
+    latestCardDraft.current = toConditionDraft(response.conditions)
     setConversation(response)
     setConditionDraft(toConditionDraft(response.conditions))
     const newNotices = response.notices.filter(notice => !previousNotices.current.includes(notice))
     previousNotices.current = response.notices
-    const answer = [...newNotices, response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
+    const answer = [...conversationNotices(newNotices), response.nextQuestion ?? '조건을 확인했어요. 수정할 내용이 있으면 채팅으로 알려주세요.']
       .filter(Boolean).join('\n\n')
     setMessages(current => [...current, { role: 'assistant', text: answer }])
   }
@@ -67,7 +81,7 @@ export default function ConsultationPage() {
 
   async function send(value: string) {
     const text = value.trim()
-    if (!text || typing || sendingRef.current) return
+    if (!text || typing || dirty || savingCardsRef.current || sendingRef.current) return
     sendingRef.current = true
     setTyping(true)
     setError('')
@@ -81,6 +95,68 @@ export default function ConsultationPage() {
     } finally {
       setTyping(false)
       sendingRef.current = false
+    }
+  }
+
+  function changeCards(value: ConditionDraft) {
+    latestCardDraft.current = value
+    setConditionDraft(value)
+    setDirty(true)
+    setCardError(false)
+    setCardStatus('입력을 마치면 자동 저장돼요.')
+  }
+
+  async function saveCards(value = latestCardDraft.current) {
+    if (!conversationRef.current || typing || sendingRef.current) return
+    // 주·월 선택 직후처럼 아직 입력 중인 빈도는 서버로 보내지 않는다.
+    if (value.places.some(place => Boolean(place.period) !== Boolean(place.count))) {
+      pendingCardDraft.current = null
+      setCardStatus('방문 빈도의 주·월과 횟수를 함께 입력해주세요.')
+      return
+    }
+    if (!savingCardsRef.current && JSON.stringify(value) === JSON.stringify(toConditionDraft(conversationRef.current.conditions))) {
+      setDirty(false)
+      setCardError(false)
+      setCardStatus('저장됨')
+      return
+    }
+    pendingCardDraft.current = value
+    if (savingCardsRef.current) return
+    savingCardsRef.current = true
+    setSavingCards(true)
+    setCardError(false)
+    try {
+      while (pendingCardDraft.current) {
+        const submitted = pendingCardDraft.current
+        pendingCardDraft.current = null
+        if (JSON.stringify(submitted) === JSON.stringify(toConditionDraft(conversationRef.current.conditions))) {
+          if (latestCardDraft.current === submitted) {
+            setDirty(false)
+            setCardStatus('저장됨')
+          }
+          continue
+        }
+        setCardStatus('저장 중…')
+        const response = await saveConditionEdits(conversationRef.current, submitted)
+        conversationRef.current = response
+        setConversation(response)
+        // 저장 응답을 기다리는 동안 새로 입력한 값은 보존한다.
+        if (latestCardDraft.current === submitted) {
+          latestCardDraft.current = toConditionDraft(response.conditions)
+          setConditionDraft(latestCardDraft.current)
+          setDirty(false)
+          setCardStatus('저장됨')
+        } else {
+          setCardStatus('입력을 마치면 자동 저장돼요.')
+        }
+      }
+    } catch (err) {
+      pendingCardDraft.current = null
+      setCardError(true)
+      setCardStatus('저장 실패 · ' + (err instanceof Error ? err.message : '다시 시도해주세요.'))
+    } finally {
+      savingCardsRef.current = false
+      setSavingCards(false)
     }
   }
 
@@ -110,19 +186,20 @@ export default function ConsultationPage() {
   [&_textarea]:placeholder:text-[var(--muted-light)] [&>button]:grid [&>button]:size-11 [&>button]:shrink-0
   [&>button]:place-items-center [&>button]:rounded-full [&>button]:bg-[var(--gd)] [&>button]:text-white [&>button:enabled:hover]:bg-[var(--hover)] max-[1299px]:m-3.5
 " onSubmit={event => { event.preventDefault(); send(draft) }}>
+            {dirty && <p className="text-xs text-[var(--muted)]">카드의 자동 저장이 끝나면 메시지를 보낼 수 있어요.</p>}
             <label className="sr-only" htmlFor="chat-message">조건 입력</label>
             <textarea id="chat-message" rows={2} onKeyDown={event => {
               if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return
               event.preventDefault()
               if (!event.repeat) void send(draft)
             }} value={draft} onChange={event => setDraft(event.target.value)} placeholder={typing ? '두리번이 응답을 준비하고 있어요…' : '더 알려줄 내용이 있으면 입력해주세요'} />
-            <button type="submit" disabled={typing || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
+            <button type="submit" disabled={typing || dirty || savingCards || !draft.trim()} aria-label="메시지 보내기"><ArrowRight size={23} /></button>
           </form>
         </section>
         <div className="condition-reveal min-w-0" inert={!conversation} aria-hidden={!conversation}>
-          <ConditionPanel value={conditionDraft} readOnly conversation={conversation} busy={typing}
+          <ConditionPanel value={conditionDraft} conversation={conversation} busy={typing} dirty={dirty || savingCards} onCommit={value => void saveCards(value)} saveStatus={cardStatus} saveError={cardError} onRetry={() => void saveCards()}
             onLocationSelected={response => { setError(''); applyResponse(response) }}
-            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !error} onChange={setConditionDraft} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
+            readyForRecommendation={Boolean(conversation?.readyForRecommendation) && !typing && !error} onChange={changeCards} onRecommend={() => navigate('/search', { state: { condition: initial, conditions: toLegacy(conditionDraft, conditions), conditionDraft, aiConversation: conversation, aiMessages: messages } })} />
         </div>
       </main>
     </AppLayout>
