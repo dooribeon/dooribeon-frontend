@@ -16,7 +16,7 @@ type Props = { value: ConditionDraft; onChange: (value: ConditionDraft) => void;
   onRetry?: () => void
   dirty?: boolean
   onOpenPlace?: (placeId: string) => void
-  onDeletePlace?: (placeId: string, confirmationText: string) => Promise<void>
+  onDeletePlace?: (placeId: string) => Promise<void>
   onAddPlace?: () => void
 }
 
@@ -27,7 +27,6 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
   const returnFocusRef = useRef<HTMLButtonElement | null>(null)
   const [searchId, setSearchId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [confirmation, setConfirmation] = useState('')
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [query, setQuery] = useState('')
@@ -40,13 +39,12 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
   const issue = validationMessage(value)
   const target = value.places.find(p => p.id === deleteId)
   const deleteName = target?.name || target?.address || '이 장소'
-  const confirmText = deleteName + ' 삭제하기'
   async function confirmDeletion() {
     if (!target || deleting) return
     if (conversation) {
-      if (!onDeletePlace || confirmation.trim() !== confirmText) return
+      if (!onDeletePlace) return
       setDeleting(true)
-      try { await onDeletePlace(target.id, confirmation) }
+      try { await onDeletePlace(target.id) }
       catch (err) { setDeleteError(err instanceof Error ? err.message : '삭제하지 못했어요. 다시 시도해주세요.'); return }
       finally { setDeleting(false) }
     } else {
@@ -99,13 +97,16 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
     <div className="grid gap-2.5">
       {value.places.map((place, index) => {
         const serverPlace = conversation?.conditions.places.find(item => item.id === place.id)
+        const typePending = Boolean(serverPlace && !serverPlace.targetType)
+        const needsLocation = Boolean(conversation && serverPlace?.targetType !== 'NEARBY_FACILITY' && !serverPlace?.location)
         return <fieldset key={place.id} className={`relative min-w-0 rounded-2xl border p-3.5 ${place.importance === '필수' ? 'border-[#A7D9C2] bg-[#FBFEFC]' : 'border-[var(--line-subtle)] bg-white'}`}>
         <legend className="sr-only">{place.name || `장소 ${index + 1}`} 조건</legend>
         <div className="grid grid-cols-[minmax(100px,1fr)_minmax(0,2fr)] gap-3 pr-11 @max-[400px]:grid-cols-1">
           <label className="flex min-w-0 flex-col"><span className="block text-xs leading-4 text-[var(--muted-light)]">장소명</span><input disabled={readOnly} aria-label={`장소 ${index + 1} 이름`} className={`${inputClass} mt-1 font-bold`} value={place.name} placeholder="장소명 입력" onChange={e => update(place.id, { name: e.target.value })} /></label>
           <div className="min-w-0">
-            <span className="block text-xs leading-4 text-[var(--muted-light)]">{serverPlace?.targetType === 'NEARBY_FACILITY' ? '주변 시설' : '주소'}</span>
-            {serverPlace?.targetType === 'NEARBY_FACILITY' ? <p className="py-3 text-sm">{serverPlace.query || serverPlace.label}</p>
+            <span className="block text-xs leading-4 text-[var(--muted-light)]">{typePending ? '이용할 장소 유형' : serverPlace?.targetType === 'NEARBY_FACILITY' ? '주변 시설' : '주소'}</span>
+            {typePending ? <p className="py-3 text-sm text-[var(--muted)]">계속 다닐 특정 장소인지, 이사할 동네 주변에서 찾을 시설인지 채팅으로 알려주세요.</p>
+              : serverPlace?.targetType === 'NEARBY_FACILITY' ? <p className="py-3 text-sm">{serverPlace.query || serverPlace.label}</p>
               : serverPlace?.targetType === 'FIXED_PLACE' && onOpenPlace ? <button type="button"
                 disabled={busy || dirty || Boolean(conversation?.deletionConfirmation)} onClick={() => onOpenPlace(place.id)}
                 aria-label={`${place.name || '장소'} 위치 ${serverPlace.location ? '변경' : '선택'}`}
@@ -119,13 +120,13 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
             </button>}
           </div>
         </div>
-        <button disabled={readOnly || busy || dirty || Boolean(conversation && !onDeletePlace) || Boolean(conversation?.deletionConfirmation && conversation.deletionConfirmation.placeId !== place.id)} type="button" className="absolute right-2 top-5 grid size-11 place-items-center rounded-[10px] text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label={`${place.name || '장소'} 삭제`} onClick={event => { returnFocusRef.current = event.currentTarget; setDeleteId(place.id); setConfirmation(''); setDeleteError(''); deleteRef.current?.showModal() }}><Trash2 size={18} /></button>
-        <fieldset disabled={Boolean(conversation) && !serverPlace?.location} className="mt-3 grid grid-cols-[92px_minmax(0,1fr)] gap-3 @min-[560px]:grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] @max-[320px]:grid-cols-1">
+        <button disabled={readOnly || busy || dirty || Boolean(conversation && !onDeletePlace) || Boolean(conversation?.deletionConfirmation && conversation.deletionConfirmation.placeId !== place.id)} type="button" className="absolute right-2 top-5 grid size-11 place-items-center rounded-[10px] text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label={`${place.name || '장소'} 삭제`} onClick={event => { returnFocusRef.current = event.currentTarget; setDeleteId(place.id); setDeleteError(''); deleteRef.current?.showModal() }}><Trash2 size={18} /></button>
+        <fieldset disabled={needsLocation} className="mt-3 grid grid-cols-[92px_minmax(0,1fr)] gap-3 @min-[560px]:grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] @max-[320px]:grid-cols-1">
           <label className="flex min-w-0 flex-col"><span className="block text-xs leading-4 text-[var(--muted-light)]">중요도</span><select disabled={readOnly} className={`${inputClass} mt-1`} value={place.importance} onChange={e => update(place.id, { importance: e.target.value }, true)}><option value="">미설정</option>{['필수', '높음', '중간', '낮음'].map(v => <option key={v}>{v}</option>)}</select></label>
           <div className="min-w-0"><span className="block text-xs leading-4 text-[var(--muted-light)]">이동수단 · 편도시간</span><div className="mt-1 flex items-center gap-1.5"><select disabled={readOnly} aria-label={`${place.name || '장소'} 이동수단`} className={`${inputClass} flex-1`} value={place.mode} onChange={e => update(place.id, { mode: e.target.value, minutes: e.target.value ? place.minutes : '' }, true)}><option value="">미설정</option><option>도보</option><option>대중교통</option></select><input aria-label={`${place.name || '장소'} 편도시간 (분)`} inputMode="numeric" className={`${inputClass} !w-14 text-right`} disabled={readOnly || !place.mode} value={place.minutes} onChange={e => update(place.id, { minutes: digits(e.target.value).slice(0, 3) })} placeholder="-" /><span className="text-sm">분</span></div></div>
           <div className="col-span-full min-w-0 @min-[560px]:col-span-1"><span className="block text-xs leading-4 text-[var(--muted-light)]">방문 빈도</span><div className="mt-1 flex items-center gap-1.5"><select disabled={readOnly} aria-label={`${place.name || '장소'} 빈도 기간`} className={`${inputClass} !w-24`} value={place.period} onChange={e => update(place.id, { period: e.target.value, count: e.target.value ? place.count : '' }, true)}><option value="">미설정</option><option>주</option><option>월</option></select><input aria-label={`${place.name || '장소'} 방문 횟수`} inputMode="numeric" className={`${inputClass} !w-14 text-right`} disabled={readOnly || !place.period} value={place.count} onChange={e => update(place.id, { count: digits(e.target.value).slice(0, 2) })} placeholder="-" /><span className="text-sm">회</span></div></div>
         </fieldset>
-        {conversation && !serverPlace?.location && <p className="mt-3 text-xs text-[var(--muted)]">주소를 등록하면 중요도·이동 조건·방문 빈도를 수정할 수 있어요.</p>}
+        {needsLocation && !typePending && <p className="mt-3 text-xs text-[var(--muted)]">주소를 등록하면 중요도·이동 조건·방문 빈도를 수정할 수 있어요.</p>}
         {place.importance === '필수' && (!place.mode || Number(place.minutes) <= 0) && <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-[var(--badge-text)]"><AlertTriangle size={16} className="shrink-0" />필수로 적용하려면 이동수단과 편도시간을 정해 주세요.</p>}
       </fieldset>})}
       {!value.places.length && <p className="rounded-2xl border border-dashed border-[#CFE3DA] p-5 text-sm text-[var(--muted)]">대화에서 장소를 알려주시거나 아래 버튼으로 추가해주세요.</p>}
@@ -154,14 +155,10 @@ export default function ConditionPanel({ value, onChange, onRecommend, readOnly 
     <dialog ref={deleteRef} onCancel={e => { if (deleting) e.preventDefault() }} onClose={() => { if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus(); else addRef.current?.focus() }} className="m-auto w-[min(400px,calc(100%-32px))] rounded-[22px] border-0 bg-white p-6 shadow-[var(--shadow-modal)] backdrop:bg-black/40" aria-labelledby="delete-place-title">
       <h2 id="delete-place-title" className="text-lg font-extrabold">{deleteName} 조건을 삭제할까요?</h2>
       <p className="mt-3 text-sm">{target?.resolvedPlace?.address || '등록된 주소 없음'}</p>
-      {conversation && <label className="mt-3 block text-sm">확인을 위해 ‘{confirmText}’를 입력해 주세요.
-        <input className={`${inputClass} mt-2 w-full`} value={confirmation} disabled={deleting}
-          onChange={e => setConfirmation(e.target.value)} aria-label="삭제 확인 문구" />
-      </label>}
       {deleteError && <p role="alert" className="mt-2 text-sm text-red-700">{deleteError}</p>}
       <div className="mt-5 flex gap-2.5">
         <button type="button" disabled={deleting} className="flex-1 rounded-xl border border-[var(--line)]" onClick={() => deleteRef.current?.close()}>취소</button>
-        <button type="button" disabled={deleting || Boolean(conversation && confirmation.trim() !== confirmText)} className="flex-1 rounded-xl bg-red-600 text-white" onClick={() => void confirmDeletion()}>삭제</button>
+        <button type="button" disabled={deleting} className="flex-1 rounded-xl bg-red-600 text-white" onClick={() => void confirmDeletion()}>삭제</button>
       </div>
     </dialog>
   </aside>

@@ -143,14 +143,14 @@ export default function ConsultationPage() {
     }
   }
 
-  async function deletePlace(placeId: string, confirmationText: string) {
+  async function deletePlace(placeId: string) {
     if (!conversation || typing || placeBusy || dirty || savingCardsRef.current || sendingRef.current) {
       throw new Error('현재 요청이 끝나면 다시 시도해주세요.')
     }
     sendingRef.current = true
     setTyping(true)
     try {
-      applyResponse(await deleteConversationPlace(conversation, placeId, confirmationText))
+      applyResponse(await deleteConversationPlace(conversation, placeId))
       setError('')
     } finally {
       sendingRef.current = false
