@@ -146,7 +146,7 @@ test('카드 장소 추가는 최신 조건을 보내고 서버가 발급한 장
   } finally { globalThis.fetch = originalFetch }
 })
 
-test('카드 삭제는 지정한 서버 장소 번호와 확인 문구를 보내고 서버 응답으로 목록을 갱신한다', async () => {
+test('카드 삭제는 지정한 서버 장소 번호와 최신 조건을 보내고 목록을 갱신한다', async () => {
   const originalFetch = globalThis.fetch
   const initial: ConditionConversation = { ...reply, conditions: { ...conditions, places: [{
     id: 'selected-card', label: '여자친구', areaHint: '잠실', query: null, location: null, targetType: 'FIXED_PLACE',
@@ -155,11 +155,38 @@ test('카드 삭제는 지정한 서버 장소 번호와 확인 문구를 보내
   globalThis.fetch = async (url, options) => {
     assert.ok(String(url).endsWith('/conversations/test-conversation/places/selected-card/delete'))
     assert.equal(options?.method, 'POST')
-    assert.deepEqual(JSON.parse(String(options?.body)), { expected: initial.conditions, confirmationText: '여자친구 삭제하기' })
+    assert.deepEqual(JSON.parse(String(options?.body)), { expected: initial.conditions })
     return Response.json(reply)
   }
   try {
-    const result = await deleteConversationPlace(initial, 'selected-card', '여자친구 삭제하기')
+    const result = await deleteConversationPlace(initial, 'selected-card')
     assert.equal(result.conditions.places.length, 0)
+  } finally { globalThis.fetch = originalFetch }
+})
+
+test('주변 공원 카드에서 시간을 비워 저장해도 도보와 주소 없는 시설 조건을 유지한다', async () => {
+  const originalFetch = globalThis.fetch
+  const initial: ConditionConversation = { ...reply, conditions: { maxDeposit: 1000, maxRent: 50, places: [{
+    id: 'park', label: '러닝', areaHint: null, targetType: 'NEARBY_FACILITY', query: '공원', location: null,
+    importance: 'REQUIRED', transport: 'WALK', maxMinutes: 15, frequency: { period: 'WEEK', count: 4 },
+  }] }, readyForRecommendation: true, nextQuestion: null }
+  const draft = toConditionDraft(initial.conditions)
+  assert.equal(draft.places[0].mode, '도보')
+  assert.equal(draft.places[0].resolvedPlace, undefined)
+  draft.places[0].importance = '낮음'
+  draft.places[0].minutes = ''
+  globalThis.fetch = async (_url, options) => {
+    const body = JSON.parse(String(options?.body))
+    assert.deepEqual(body.expected, initial.conditions)
+    assert.deepEqual(body.values.places[0], {
+      ...initial.conditions.places[0], importance: 'LOW', maxMinutes: null,
+    })
+    return Response.json({ ...initial, conditions: body.values })
+  }
+  try {
+    const saved = await saveConditionEdits(initial, draft)
+    assert.equal(saved.readyForRecommendation, true)
+    assert.equal(toConditionDraft(saved.conditions).places[0].minutes, '')
+    assert.equal(saved.conditions.places[0].location, null)
   } finally { globalThis.fetch = originalFetch }
 })

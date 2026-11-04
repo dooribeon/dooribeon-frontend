@@ -107,9 +107,9 @@ export async function selectConversationPlace(conversationId: string, placeId: s
   return readConversation(result)
 }
 
-export async function deleteConversationPlace(conversation: ConditionConversation, placeId: string, confirmationText: string) {
+export async function deleteConversationPlace(conversation: ConditionConversation, placeId: string) {
   return readConversation(await conditionRequest(`${placePath(conversation.conversationId, placeId)}/delete`, 'POST', {
-    expected: conversation.conditions, confirmationText,
+    expected: conversation.conditions,
   }))
 }
 
