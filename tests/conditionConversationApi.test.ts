@@ -163,3 +163,30 @@ test('카드 삭제는 지정한 서버 장소 번호와 최신 조건을 보내
     assert.equal(result.conditions.places.length, 0)
   } finally { globalThis.fetch = originalFetch }
 })
+
+test('주변 공원 카드에서 시간을 비워 저장해도 도보와 주소 없는 시설 조건을 유지한다', async () => {
+  const originalFetch = globalThis.fetch
+  const initial: ConditionConversation = { ...reply, conditions: { maxDeposit: 1000, maxRent: 50, places: [{
+    id: 'park', label: '러닝', areaHint: null, targetType: 'NEARBY_FACILITY', query: '공원', location: null,
+    importance: 'REQUIRED', transport: 'WALK', maxMinutes: 15, frequency: { period: 'WEEK', count: 4 },
+  }] }, readyForRecommendation: true, nextQuestion: null }
+  const draft = toConditionDraft(initial.conditions)
+  assert.equal(draft.places[0].mode, '도보')
+  assert.equal(draft.places[0].resolvedPlace, undefined)
+  draft.places[0].importance = '낮음'
+  draft.places[0].minutes = ''
+  globalThis.fetch = async (_url, options) => {
+    const body = JSON.parse(String(options?.body))
+    assert.deepEqual(body.expected, initial.conditions)
+    assert.deepEqual(body.values.places[0], {
+      ...initial.conditions.places[0], importance: 'LOW', maxMinutes: null,
+    })
+    return Response.json({ ...initial, conditions: body.values })
+  }
+  try {
+    const saved = await saveConditionEdits(initial, draft)
+    assert.equal(saved.readyForRecommendation, true)
+    assert.equal(toConditionDraft(saved.conditions).places[0].minutes, '')
+    assert.equal(saved.conditions.places[0].location, null)
+  } finally { globalThis.fetch = originalFetch }
+})
